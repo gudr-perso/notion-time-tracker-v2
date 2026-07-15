@@ -106,3 +106,12 @@ textarea.input { resize:vertical; min-height:56px; }
 :root[data-theme="light"] .icon-btn { background:rgba(11,21,51,.04); }
 :root[data-theme="light"] .btn-grey { background:rgba(11,21,51,.05); }
 :root[data-theme="light"] .stop-duration { background:#f3f5fa; }
+
+/* Toast de confirmation (ex. « ligne créée dans Notion »). Apparaît en bas, centré,
+   puis s'efface tout seul. [hidden] doit l'emporter sur le positionnement fixe. */
+.toast { position:fixed; left:50%; bottom:18px; transform:translateX(-50%) translateY(8px);
+  background:linear-gradient(180deg,#22c55e,#16a34a); color:#fff; font-weight:700; font-size:13px;
+  padding:10px 16px; border-radius:10px; box-shadow:0 6px 22px rgba(3,8,38,.45);
+  opacity:0; transition:opacity .2s ease, transform .2s ease; pointer-events:none; z-index:60; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast[hidden] { display:none; }

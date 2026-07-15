@@ -3,7 +3,7 @@
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
 > Dernière mise à jour : 2026-07-15.
 
-**Version courante : `5.0.0`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/CHANGELOG.md`).
+**Version courante : `5.0.1`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/CHANGELOG.md`).
 
 ---
 
@@ -27,6 +27,10 @@ L'onglet **Stats** est **reporté**.
 **Tests** : `npm test` → `27 passed (4 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.0.1)
+- **Enregistrement rapide** : gel des boutons pendant la sauvegarde + « ⏳ … » sur le bouton déclencheur
+  (favori cliqué **ou** bouton bleu « Enregistrer »), et **toast « ✅ Ligne créée dans Notion »** (favori et saisie manuelle).
 
 ### ✅ Faites (v5.0.0)
 Voir le détail dans `docs/CHANGELOG.md`. En résumé : config en onglet plein écran, popup 700 px,

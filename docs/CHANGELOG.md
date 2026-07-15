@@ -6,6 +6,18 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.0.1] — 2026-07-15
+
+Retour visuel de l'enregistrement rapide par favori + confirmation de création.
+
+### Ajouté
+- **Toast de confirmation « ✅ Ligne créée dans Notion »** après un enregistrement rapide (favori) ou manuel,
+  qui s'affiche en bas du popup et s'efface tout seul (repris de la v1).
+
+### Modifié
+- **Enregistrement rapide** : pendant la sauvegarde, les boutons se **gèlent** (favoris + « Enregistrer » désactivés)
+  et le bouton déclencheur — favori cliqué **ou** bouton bleu « Enregistrer » — affiche « ⏳ … » le temps de l'appel Notion.
+
 ## [5.0.0] — 2026-07-15
 
 Refonte de l'expérience Config + saisie manuelle, corrections de layout, thème clair lisible.

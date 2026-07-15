@@ -6,6 +6,35 @@ import { roundToNearestFiveMinutes, formatDateTimeLocalValue } from '../core/tim
 const $ = (id) => document.getElementById(id);
 let T = null, helpers = null;
 
+let toastTimer = null;
+// Petit message de confirmation en bas de popup, qui s'efface tout seul.
+function showToast(msg) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.hidden = false;
+  void el.offsetWidth; // force un reflow pour rejouer la transition si un toast est déjà là
+  el.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => { el.hidden = true; }, 220); // laisse le fondu se terminer avant de masquer
+  }, 2000);
+}
+
+// Gèle les boutons d'enregistrement pendant l'appel Notion (même sensation que « Enregistrer »).
+// sourceBtn = le favori cliqué, le cas échéant → on y affiche un « ⏳ … » le temps de la sauvegarde.
+function setSaving(on, sourceBtn) {
+  $('btn-primary').disabled = on;
+  document.querySelectorAll('#fav-buttons .btn').forEach((b) => { b.disabled = on; });
+  if (sourceBtn) {
+    if (on) { sourceBtn.dataset.label = sourceBtn.textContent; sourceBtn.textContent = '⏳ …'; }
+    else if (sourceBtn.dataset.label !== undefined) {
+      sourceBtn.textContent = sourceBtn.dataset.label;
+      delete sourceBtn.dataset.label;
+    }
+  }
+}
+
 function prefillManual() {
   const now = roundToNearestFiveMinutes(new Date());
   const start = new Date(now.getTime() - 60 * 60_000);
@@ -43,14 +72,14 @@ function renderFavoriteButtons() {
     const btn = document.createElement('button');
     btn.className = 'btn';
     btn.textContent = label;
-    btn.addEventListener('click', () => saveManualFor(fav.taskId));
+    btn.addEventListener('click', () => saveManualFor(fav.taskId, btn));
     $('fav-buttons').appendChild(btn);
   });
 }
 
 let saving = false; // garde anti double-enregistrement
 
-async function saveManualFor(taskId) {
+async function saveManualFor(taskId, sourceBtn) {
   if (saving) return;
   const task = T.tasks.find((t) => t.id === taskId);
   if (!task) { alert('Tâche du favori introuvable.'); return; }
@@ -61,24 +90,25 @@ async function saveManualFor(taskId) {
   const comment = $('manual-comment').value.trim();
   if (T.config.prefs?.requireComment && !comment) { alert('Le commentaire est obligatoire.'); $('manual-comment').focus(); return; }
   saving = true;
-  $('btn-primary').disabled = true;
+  setSaving(true, sourceBtn);
   try {
     const pageId = await createPage(T.token, T.config.timeDb.id, sessionPropertiesForCreate(task, start, T.timeFields));
     await updatePage(T.token, pageId, sessionPropertiesForUpdate({ endTime: end, comment, pauseMin: 0 }, T.timeFields));
     resetManual();
     await helpers.reloadRecent();
+    showToast('✅ Ligne créée dans Notion');
   } catch (e) {
     alert(`Impossible d'enregistrer la session : ${e.message}`);
   } finally {
     saving = false;
-    $('btn-primary').disabled = false;
+    setSaving(false, sourceBtn);
   }
 }
 
 async function onManualSave() {
   const task = helpers.currentTask();
   if (!task) { alert('Sélectionne une tâche.'); return; }
-  await saveManualFor(task.id);
+  await saveManualFor(task.id, $('btn-primary'));
 }
 
 function resetManual() {
