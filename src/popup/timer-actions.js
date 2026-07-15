@@ -37,7 +37,9 @@ function stopTick() { if (tickInterval) clearInterval(tickInterval); tickInterva
 function enterRunning(session, task) {
   CTX.T.session = session;
   $('current-task-name').textContent = task ? task.name + (task.project ? ` [${task.project}]` : '') : session.taskName;
-  $('current-task-name').dataset.notionUrl = task ? task.notionUrl : '';
+  $('current-task-name').dataset.notionUrl = task
+    ? task.notionUrl
+    : (session.taskId ? `https://notion.so/${String(session.taskId).replace(/-/g, '')}` : '');
   $('btn-pause').textContent = session.isPaused ? '▶️ REPRENDRE' : '⏸ PAUSE';
   showRunning(true);
   startTick();
@@ -46,18 +48,26 @@ function enterRunning(session, task) {
 async function onStart() {
   const task = CTX.helpers.currentTask();
   if (!task) { alert('Sélectionne une tâche.'); return; }
-  const startTime = new Date();
-  const props = sessionPropertiesForCreate(task, startTime, CTX.T.timeFields);
-  const pageId = await createPage(CTX.T.token, CTX.T.config.timeDb.id, props);
-  const session = {
-    pageId, taskId: task.id, taskName: task.name,
-    startTime: startTime.toISOString(), isPaused: false, pauseStartTime: null, totalPauseDuration: 0,
-  };
-  await setCurrentSession(session);
-  await pushTaskHistory(task.id);
-  notifyWorker('sessionStarted');
-  $('session-comment').value = '';
-  enterRunning(session, task);
+  const btn = $('btn-primary');
+  btn.disabled = true; // garde anti double-clic (évite deux pages Notion)
+  try {
+    const startTime = new Date();
+    const props = sessionPropertiesForCreate(task, startTime, CTX.T.timeFields);
+    const pageId = await createPage(CTX.T.token, CTX.T.config.timeDb.id, props);
+    const session = {
+      pageId, taskId: task.id, taskName: task.name,
+      startTime: startTime.toISOString(), isPaused: false, pauseStartTime: null, totalPauseDuration: 0,
+    };
+    await setCurrentSession(session);
+    await pushTaskHistory(task.id);
+    notifyWorker('sessionStarted');
+    $('session-comment').value = '';
+    enterRunning(session, task);
+  } catch (e) {
+    alert(`Impossible de démarrer la session : ${e.message}`);
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 async function onTogglePause() {
@@ -84,7 +94,12 @@ async function finishSession(endTime) {
   let total = s.totalPauseDuration;
   if (s.isPaused && s.pauseStartTime) total += Date.now() - new Date(s.pauseStartTime).getTime();
   const pauseMin = Math.round(total / 60_000);
-  await updatePage(CTX.T.token, s.pageId, sessionPropertiesForUpdate({ endTime, comment, pauseMin }, CTX.T.timeFields));
+  try {
+    await updatePage(CTX.T.token, s.pageId, sessionPropertiesForUpdate({ endTime, comment, pauseMin }, CTX.T.timeFields));
+  } catch (e) {
+    alert(`Impossible d'arrêter la session : ${e.message}`);
+    return false; // on garde la session en cours pour permettre un nouvel essai
+  }
   await clearCurrentSession();
   CTX.T.session = null;
   stopTick();
@@ -149,9 +164,6 @@ export function wireActions(T, helpers) {
   $('stop-at-modal').addEventListener('click', (e) => { if (e.target.id === 'stop-at-modal') closeStopAt(); });
   ['stop-hour', 'stop-min', 'stop-date'].forEach((id) => $(id).addEventListener('input', refreshStopDuration));
   $('stop-confirm').addEventListener('click', async () => { if (await finishSession(stopAtChosenDate())) closeStopAt(); });
-
-  helpers.enterRunning = enterRunning;
-  helpers.finishSession = finishSession;
 
   // Restauration d'une session en cours à l'ouverture du popup.
   getCurrentSession().then((s) => { if (s) { const task = T.tasks.find((t) => t.id === s.taskId); enterRunning(s, task); } });

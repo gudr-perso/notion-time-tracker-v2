@@ -5,7 +5,18 @@ import { sessionFromPage } from '../core/mapping.js';
 import { startOfDay, toNotionDate, workedMs } from '../core/time.js';
 
 const LONG_TIMER_H = 3, END_H = 17, END_M = 45, DAILY_GOAL_H = 8;
-const flags = { lastLongTimerNotif: 0, endOfDayNotified: false, dailyGoalNotified: false, dayStamp: '' };
+const FLAGS_KEY = 'notifFlags';
+const DEFAULT_FLAGS = { lastLongTimerNotif: 0, endOfDayNotified: false, dailyGoalNotified: false, dayStamp: '' };
+
+// Les flags anti-répétition doivent survivre au recyclage du service worker MV3
+// (non persistant) : on les stocke dans chrome.storage.local, pas en mémoire.
+async function loadFlags() {
+  const { [FLAGS_KEY]: f } = await chrome.storage.local.get(FLAGS_KEY);
+  return { ...DEFAULT_FLAGS, ...(f || {}) };
+}
+async function saveFlags(flags) {
+  await chrome.storage.local.set({ [FLAGS_KEY]: flags });
+}
 
 function setBadge(state) {
   const map = { running: { text: '🟢', color: '#22c55e' }, paused: { text: '⏸️', color: '#f59e0b' }, idle: { text: '', color: '#000000' } };
@@ -31,9 +42,15 @@ chrome.runtime.onInstalled.addListener(() => {
   refreshBadgeFromStorage();
 });
 
-function resetDailyFlagsIfNeeded() {
+// Réinitialise les flags quotidiens au changement de jour. Retourne les flags (mutés).
+function resetDailyFlagsIfNeeded(flags) {
   const stamp = new Date().toDateString();
-  if (flags.dayStamp !== stamp) { flags.dayStamp = stamp; flags.endOfDayNotified = false; flags.dailyGoalNotified = false; }
+  if (flags.dayStamp !== stamp) {
+    flags.dayStamp = stamp;
+    flags.endOfDayNotified = false;
+    flags.dailyGoalNotified = false;
+  }
+  return flags;
 }
 
 function notify(id, title, message, buttons) {
@@ -56,7 +73,8 @@ async function getTodayTotalMs() {
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name !== 'tick') return;
-  resetDailyFlagsIfNeeded();
+  const flags = resetDailyFlagsIfNeeded(await loadFlags());
+  let dirty = true; // dayStamp peut avoir changé
   const s = await getCurrentSession();
   setBadge(!s ? 'idle' : (s.isPaused ? 'paused' : 'running'));
 
@@ -64,11 +82,11 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (s && !s.isPaused) {
     const elapsedH = workedMs(s.startTime, Date.now(), s.totalPauseDuration) / 3600_000;
     if (elapsedH >= LONG_TIMER_H && Date.now() - flags.lastLongTimerNotif >= LONG_TIMER_H * 3600_000) {
-      flags.lastLongTimerNotif = Date.now();
+      flags.lastLongTimerNotif = Date.now(); dirty = true;
       notify('long-timer', '⏰ Timer en cours depuis longtemps', `Vous travaillez sur « ${s.taskName} » depuis ${Math.floor(elapsedH)} h.`);
     }
     if (!flags.endOfDayNotified && now.getHours() === END_H && now.getMinutes() >= END_M) {
-      flags.endOfDayNotified = true;
+      flags.endOfDayNotified = true; dirty = true;
       notify('end-of-day', '🏁 Fin de journée — Timer actif', `Timer sur « ${s.taskName} ». N'oubliez pas d'arrêter !`,
         [{ title: 'Arrêter maintenant' }, { title: 'Continuer' }]);
     }
@@ -76,10 +94,11 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (!flags.dailyGoalNotified) {
     const totalH = (await getTodayTotalMs()) / 3600_000;
     if (totalH >= DAILY_GOAL_H) {
-      flags.dailyGoalNotified = true;
+      flags.dailyGoalNotified = true; dirty = true;
       notify('daily-goal', '🎯 Objectif quotidien atteint !', `Vous avez travaillé ${totalH.toFixed(1)} h aujourd'hui. Bravo ! 🎉`);
     }
   }
+  if (dirty) await saveFlags(flags);
 });
 
 chrome.notifications.onButtonClicked.addListener((id, idx) => {

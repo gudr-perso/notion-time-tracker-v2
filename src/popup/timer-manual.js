@@ -45,7 +45,10 @@ function renderFavoriteButtons() {
   });
 }
 
+let saving = false; // garde anti double-enregistrement
+
 async function saveManualFor(taskId) {
+  if (saving) return;
   const task = T.tasks.find((t) => t.id === taskId);
   if (!task) { alert('Tâche du favori introuvable.'); return; }
   if (!$('manual-start').value || !$('manual-end').value) { alert('Renseigne le début et la fin.'); return; }
@@ -53,10 +56,19 @@ async function saveManualFor(taskId) {
   const end = new Date($('manual-end').value);
   if (end <= start) { alert('La fin doit être après le début.'); return; }
   const comment = $('manual-comment').value.trim();
-  const pageId = await createPage(T.token, T.config.timeDb.id, sessionPropertiesForCreate(task, start, T.timeFields));
-  await updatePage(T.token, pageId, sessionPropertiesForUpdate({ endTime: end, comment, pauseMin: 0 }, T.timeFields));
-  resetManual();
-  await helpers.reloadRecent();
+  saving = true;
+  $('btn-primary').disabled = true;
+  try {
+    const pageId = await createPage(T.token, T.config.timeDb.id, sessionPropertiesForCreate(task, start, T.timeFields));
+    await updatePage(T.token, pageId, sessionPropertiesForUpdate({ endTime: end, comment, pauseMin: 0 }, T.timeFields));
+    resetManual();
+    await helpers.reloadRecent();
+  } catch (e) {
+    alert(`Impossible d'enregistrer la session : ${e.message}`);
+  } finally {
+    saving = false;
+    $('btn-primary').disabled = false;
+  }
 }
 
 async function onManualSave() {

@@ -34,7 +34,9 @@ export async function reloadRecent() {
       const dur = formatDuration(sessionDurationMs(s));
       const range = `${formatClock(s.startTime)} → ${formatClock(s.endTime)}`;
       const name = s.name.length > 70 ? s.name.slice(0, 70) + '…' : s.name;
-      return `<div class="sess"><div><div>${esc(name)}</div><div class="muted">${range}</div></div><span class="dur">${dur}</span></div>`;
+      return `<div class="sess"><div><div>${esc(name)}</div><div class="muted">${range}</div></div>` +
+        `<div class="sess-right"><span class="dur">${dur}</span>` +
+        `<button class="icon-link sess-link" data-page="${esc(s.pageId)}" title="Ouvrir dans Notion">🔗</button></div></div>`;
     }).join('');
     return head + rows;
   };
@@ -44,4 +46,8 @@ export async function reloadRecent() {
 export function wireRecent(sharedT, helpers) {
   T = sharedT;
   helpers.reloadRecent = reloadRecent;
+  $('recent-sessions').addEventListener('click', (e) => {
+    const btn = e.target.closest('.sess-link');
+    if (btn) chrome.tabs.create({ url: `https://notion.so/${String(btn.dataset.page).replace(/-/g, '')}` });
+  });
 }
