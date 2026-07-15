@@ -38,7 +38,7 @@ Refonte de l'expérience Config + saisie manuelle, corrections de layout, thème
 - Version passée de `2.0.0` à `5.0.0` (`manifest.json` + `package.json` + `package-lock.json`).
 - Mise en place du suivi documentaire : `docs/ETAT_PROJET.md`, `docs/JOURNAL.md`, ce `CHANGELOG.md`.
 
-## [2.0.0] et antérieur — socle initial
+## [4.9.4] et antérieur — socle initial
 
 Non détaillé ici. Phase A+B du recodage : configuration, onglet Timer (start/pause/stop, stop-at, saisie manuelle,
 favoris, sessions récentes), service worker (badge + notifications via `chrome.alarms`), thème clair/sombre,
