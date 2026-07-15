@@ -1,0 +1,98 @@
+// src/core/notion-api.js — seul point (avec mapping) qui connaît le format Notion.
+const BASE = 'https://api.notion.com/v1';
+const VERSION = '2022-06-28';
+const normId = (id) => String(id).replace(/-/g, '');
+
+function headers(token) {
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Notion-Version': VERSION,
+    'Content-Type': 'application/json',
+  };
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function request(token, path, { method = 'GET', body } = {}, attempt = 0) {
+  const res = await fetch(`${BASE}${path}`, {
+    method,
+    headers: headers(token),
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (res.status === 429 && attempt < 3) {
+    const retryAfter = Number(res.headers.get('retry-after')) || 2 ** attempt;
+    await sleep(retryAfter * 1000);
+    return request(token, path, { method, body }, attempt + 1);
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.message || `Notion ${res.status}`);
+  }
+  return data;
+}
+
+export async function testToken(token) {
+  const user = await request(token, '/users/me');
+  return { ok: true, user };
+}
+
+export async function searchDatabases(token) {
+  const out = [];
+  let cursor;
+  do {
+    const data = await request(token, '/search', {
+      method: 'POST',
+      body: { filter: { value: 'database', property: 'object' }, start_cursor: cursor, page_size: 100 },
+    });
+    for (const r of data.results) {
+      out.push({ id: r.id, name: (r.title || []).map((t) => t.plain_text).join('') || '(sans titre)' });
+    }
+    cursor = data.has_more ? data.next_cursor : undefined;
+  } while (cursor);
+  return out;
+}
+
+export async function getDatabaseSchema(token, dbId) {
+  const data = await request(token, `/databases/${normId(dbId)}`);
+  return Object.entries(data.properties).map(([name, prop]) => ({ name, type: prop.type }));
+}
+
+export async function queryAll(token, dbId, { filter, sorts, pageSize = 100 } = {}) {
+  const out = [];
+  let cursor;
+  do {
+    const body = { page_size: pageSize };
+    if (filter) body.filter = filter;
+    if (sorts) body.sorts = sorts;
+    if (cursor) body.start_cursor = cursor;
+    const data = await request(token, `/databases/${normId(dbId)}/query`, { method: 'POST', body });
+    out.push(...data.results);
+    cursor = data.has_more ? data.next_cursor : undefined;
+  } while (cursor);
+  return out;
+}
+
+// Variante paginée limitée (repos : 1 page) — pour le chargement léger des tâches.
+export async function queryPage(token, dbId, { filter, sorts, pageSize = 20 } = {}) {
+  const body = { page_size: pageSize };
+  if (filter) body.filter = filter;
+  if (sorts) body.sorts = sorts;
+  const data = await request(token, `/databases/${normId(dbId)}/query`, { method: 'POST', body });
+  return data.results;
+}
+
+export async function getPage(token, pageId) {
+  return request(token, `/pages/${normId(pageId)}`);
+}
+
+export async function createPage(token, dbId, properties) {
+  const data = await request(token, '/pages', {
+    method: 'POST',
+    body: { parent: { type: 'database_id', database_id: normId(dbId) }, properties },
+  });
+  return data.id;
+}
+
+export async function updatePage(token, pageId, properties) {
+  await request(token, `/pages/${normId(pageId)}`, { method: 'PATCH', body: { properties } });
+}
