@@ -15,7 +15,7 @@ Notion. Recodage v2 propre de la v1 (`4.9.4`). Documentation d'origine dans `doc
 | Bases Notion | **Deux** bases, toutes deux **mappables** : `timeDb` (écriture) + `tasksDb` (lecture). |
 | Thème | **Clair / sombre**, bascule ☀️/🌙 persistée (`config.theme`), sombre par défaut. |
 | Arrière-plan | Service worker : **badge + notifications** via `chrome.alarms` (pas de `setInterval`). |
-| Largeur popup | ~**440 px** (les captures `doc/screens/` font foi, pas les 700 px de la doc). |
+| Largeur popup | ~**700 px** (préférence validée à l'usage : noms de tâches lisibles sur une ligne). |
 | Langue | **FR uniquement** (pas d'i18n `_locales` pour l'instant). |
 | Migration v1 | **Aucune** (storage neuf). |
 | Périmètre itération 1 | **Config + onglet Timer** (+ SW, thème, socle testé). Onglet **Stats reporté**. |

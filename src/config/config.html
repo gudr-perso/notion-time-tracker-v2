@@ -73,7 +73,7 @@
       <div class="row"><label>🚦 Filtre d'état <span class="type">status/select — optionnel</span></label>
         <div class="cell">
           <select id="t-statusFilter" class="input" data-mapping-tasks></select>
-          <input type="text" id="t-statusExclude" class="input" style="flex:0 0 180px" placeholder="valeur à exclure (ex : clos)" />
+          <input type="text" id="t-statusExclude" class="input" style="flex:1 1 280px" placeholder="valeurs à exclure, séparées par ; (ex : termine;clos)" />
         </div>
       </div>
       <div class="row"><label>↕️ Tri <span class="type">propriété</span></label><div class="cell"><select id="t-sortProperty" class="input" data-mapping-tasks></select></div></div>
@@ -83,10 +83,11 @@
     <section class="card" id="sec-prefs">
       <div class="card-head">⑤ Préférences</div>
       <div class="row"><label>Commentaire obligatoire</label><div class="cell"><input type="checkbox" id="p-requireComment" /></div></div>
+      <div class="row"><label>Saisie manuelle par défaut <span class="type">ouvre le popup en mode oubli</span></label><div class="cell"><input type="checkbox" id="p-manualByDefault" /></div></div>
       <div class="row"><label>Libellé bouton externe</label><div class="cell"><input type="text" id="p-externalLabel" class="input" maxlength="20" value="CLICKUP" /></div></div>
       <div class="row"><label>Heures / semaine</label><div class="cell"><input type="number" id="p-weeklyHours" class="input" step="0.5" min="0" value="39" /></div></div>
       <div class="row"><label>🏖️ Tâche congés <span class="type">optionnel</span></label><div class="cell"><select id="p-vacationTask" class="input"></select></div></div>
-      <div class="row"><label>⭐ Favoris (max 6)</label><div class="cell" style="flex-direction:column;align-items:stretch">
+      <div class="row"><label>⭐ Favoris (max 8)</label><div class="cell" style="flex-direction:column;align-items:stretch">
         <div id="fav-list"></div>
         <button type="button" id="btn-add-fav" class="btn btn-ghost">➕ Ajouter un favori</button>
       </div></div>

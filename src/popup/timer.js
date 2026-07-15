@@ -18,7 +18,11 @@ function buildTasksFilter() {
   const sf = T.tasksFields.statusFilter;
   if (!sf || !sf.property || !sf.excludeValue) return undefined;
   const key = sf.type === 'select' ? 'select' : 'status';
-  return { property: sf.property, [key]: { does_not_equal: sf.excludeValue } };
+  // Plusieurs statuts à exclure, séparés par ';' (ex. "termine;clos").
+  const values = String(sf.excludeValue).split(';').map((v) => v.trim()).filter(Boolean);
+  if (!values.length) return undefined;
+  if (values.length === 1) return { property: sf.property, [key]: { does_not_equal: values[0] } };
+  return { and: values.map((v) => ({ property: sf.property, [key]: { does_not_equal: v } })) };
 }
 
 function buildTasksSorts() {

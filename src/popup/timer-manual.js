@@ -28,6 +28,9 @@ function onVacationToggle(e) {
     T.selectedTaskId = T.config.prefs.vacationTaskId;
     const sel = $('task-select');
     if ([...sel.options].some((o) => o.value === T.selectedTaskId)) sel.value = T.selectedTaskId;
+    $('vacation-hint').hidden = false;
+  } else {
+    $('vacation-hint').hidden = true;
   }
 }
 
@@ -56,6 +59,7 @@ async function saveManualFor(taskId) {
   const end = new Date($('manual-end').value);
   if (end <= start) { alert('La fin doit être après le début.'); return; }
   const comment = $('manual-comment').value.trim();
+  if (T.config.prefs?.requireComment && !comment) { alert('Le commentaire est obligatoire.'); $('manual-comment').focus(); return; }
   saving = true;
   $('btn-primary').disabled = true;
   try {
@@ -80,14 +84,22 @@ async function onManualSave() {
 function resetManual() {
   $('manual-comment').value = '';
   $('manual-vacation').checked = false;
+  $('vacation-hint').hidden = true;
   prefillManual();
 }
 
 export function wireManual(sharedT, sharedHelpers) {
   T = sharedT; helpers = sharedHelpers;
   helpers.onManualSave = onManualSave;
+  $('manual-comment-label').textContent = T.config.prefs?.requireComment
+    ? 'COMMENTAIRE (OBLIGATOIRE)' : 'COMMENTAIRE (OPTIONNEL)';
   $('manual-mode').addEventListener('change', (e) => toggleManual(e.target.checked));
   $('manual-vacation').addEventListener('change', onVacationToggle);
-  $('vacation-hint').hidden = !T.config.prefs?.vacationTaskId;
+  $('vacation-hint').hidden = true;
   renderFavoriteButtons();
+  // Ouverture directe en mode saisie manuelle si l'option est activée en config.
+  if (T.config.prefs?.manualByDefault) {
+    $('manual-mode').checked = true;
+    toggleManual(true);
+  }
 }

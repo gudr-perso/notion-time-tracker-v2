@@ -148,12 +148,12 @@ function renderFavorites() {
       `<button type="button" class="btn btn-ghost fav-del" data-i="${i}">❌</button>`;
     list.appendChild(div);
   });
-  $('btn-add-fav').disabled = state.favorites.length >= 6;
+  $('btn-add-fav').disabled = state.favorites.length >= 8;
 }
 
 function wireFavorites() {
   $('btn-add-fav').addEventListener('click', () => {
-    if (state.favorites.length >= 6) return;
+    if (state.favorites.length >= 8) return;
     state.favorites.push({ taskId: '', customLabel: '' });
     renderFavorites();
   });
@@ -184,15 +184,20 @@ async function onSave() {
     tasksDb: { id: $('tasks-db').value, name: $('tasks-db').selectedOptions[0]?.dataset.name || '', fields: collectTasksFields() },
     prefs: {
       requireComment: $('p-requireComment').checked,
+      manualByDefault: $('p-manualByDefault').checked,
       externalButtonLabel: ($('p-externalLabel').value || 'CLICKUP').toUpperCase().slice(0, 20),
       weeklyHours,
       vacationTaskId: $('p-vacationTask').value || null,
-      favorites: state.favorites.filter((f) => f.taskId).slice(0, 6),
+      favorites: state.favorites.filter((f) => f.taskId).slice(0, 8),
     },
     theme: document.documentElement.getAttribute('data-theme') || 'dark',
   };
   await saveConfig(config);
-  window.location = '../popup/popup.html';
+  status.textContent = 'Configuration enregistrée ✓ — vous pouvez rouvrir l\'extension.';
+  status.className = 'status ok';
+  // La config vit dans son propre onglet : on le referme après sauvegarde.
+  const tab = await chrome.tabs.getCurrent();
+  if (tab?.id) setTimeout(() => chrome.tabs.remove(tab.id), 900);
 }
 
 async function init() {
@@ -208,6 +213,7 @@ async function init() {
     state.favorites = (state.config.prefs?.favorites || []).map((f) => ({ ...f }));
     if (state.token) { $('token').value = state.token; $('token-status').textContent = 'Token présent — retester si besoin.'; }
     $('p-requireComment').checked = !!state.config.prefs?.requireComment;
+    $('p-manualByDefault').checked = !!state.config.prefs?.manualByDefault;
     $('p-externalLabel').value = state.config.prefs?.externalButtonLabel || 'CLICKUP';
     $('p-weeklyHours').value = state.config.prefs?.weeklyHours ?? 39;
     if (state.config.tasksDb?.fields?.statusFilter?.excludeValue) $('t-statusExclude').value = state.config.tasksDb.fields.statusFilter.excludeValue;
@@ -219,6 +225,8 @@ async function init() {
   $('t-title').addEventListener('change', () => loadTasksList($('tasks-db').value, state.config?.tasksDb?.fields || {}));
   $('btn-save').addEventListener('click', onSave);
   wireFavorites();
+  // Charge automatiquement les bases si un token est déjà configuré (évite le clic manuel).
+  if (state.token) await onLoadDb();
 }
 
 init();

@@ -5,10 +5,17 @@ import { initTimer } from './timer.js';
 
 const $ = (id) => document.getElementById(id);
 
+// La config est une page large (max-width 820px) : on l'ouvre dans un onglet
+// plein écran, pas dans le popup contraint à 440px, puis on ferme le popup.
+function openConfig() {
+  chrome.tabs.create({ url: chrome.runtime.getURL('src/config/config.html') });
+  window.close();
+}
+
 async function main() {
   const config = await getConfig();
   if (!config || !config.notionToken || !config.timeDb?.id || !config.tasksDb?.id) {
-    window.location = '../config/config.html';
+    openConfig();
     return;
   }
 
@@ -18,7 +25,7 @@ async function main() {
     const t = await toggleTheme();
     $('theme-toggle').textContent = t === 'dark' ? '🌙' : '☀️';
   });
-  $('btn-config').addEventListener('click', () => { window.location = '../config/config.html'; });
+  $('btn-config').addEventListener('click', openConfig);
 
   document.querySelectorAll('.tab').forEach((tab) => {
     tab.addEventListener('click', () => {

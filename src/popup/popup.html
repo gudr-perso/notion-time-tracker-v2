@@ -27,9 +27,11 @@
           </label>
 
           <div id="manual-fields" class="card" hidden>
-            <div class="field"><label>DÉBUT</label><input type="datetime-local" id="manual-start" class="input" /></div>
-            <div class="field"><label>FIN</label><input type="datetime-local" id="manual-end" class="input" /></div>
-            <div class="field"><label>COMMENTAIRE (OPTIONNEL)</label><textarea id="manual-comment" class="input" placeholder="Décris ton travail…"></textarea></div>
+            <div class="field-row">
+              <div class="field"><label>DÉBUT</label><input type="datetime-local" id="manual-start" class="input" /></div>
+              <div class="field"><label>FIN</label><input type="datetime-local" id="manual-end" class="input" /></div>
+            </div>
+            <div class="field"><label id="manual-comment-label">COMMENTAIRE (OPTIONNEL)</label><textarea id="manual-comment" class="input" placeholder="Décris ton travail…"></textarea></div>
             <label class="check-row"><input type="checkbox" id="manual-vacation" /> Marquer comme congés</label>
             <p class="hint" id="vacation-hint">La tâche congés sera utilisée et le commentaire sera « En congés ».</p>
           </div>

@@ -9,7 +9,10 @@
   --orange:#e05a00; --green:#059669; --red:#dc2626;
 }
 * { box-sizing:border-box; }
-body { margin:0; width:440px; font-family:"Inter","Segoe UI",system-ui,sans-serif;
+/* Réserve en permanence la gouttière de scroll sur l'élément racine (le conteneur de
+   défilement du popup) pour que la largeur ne saute pas quand la scrollbar apparaît. */
+html { scrollbar-gutter:stable; }
+body { margin:0; width:700px; font-family:"Inter","Segoe UI",system-ui,sans-serif;
   color:var(--text); background:var(--bg-deep); }
 .app-header { display:flex; align-items:center; gap:8px; padding:14px 16px;
   background:linear-gradient(180deg,rgba(10,24,112,.5),transparent); }
@@ -25,6 +28,9 @@ main { padding:16px; }
 .card { background:linear-gradient(180deg,rgba(10,24,112,.35),rgba(5,12,63,.35)); }
 .card-lite { background:linear-gradient(180deg,rgba(220,235,255,.06),transparent); display:flex; align-items:center; gap:10px; }
 .field { margin-bottom:12px; display:flex; flex-direction:column; gap:6px; }
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.field-row .field { margin-bottom:0; min-width:0; }
+#manual-fields .field-row { margin-bottom:8px; }
 .field > label { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-muted); font-weight:700; }
 .input { background:var(--bg-deep); color:var(--text); border:1px solid var(--border-soft);
   border-radius:10px; padding:10px 12px; font-size:14px; outline:none; width:100%; }
@@ -39,12 +45,26 @@ textarea.input { resize:vertical; min-height:56px; }
 .btn-grey { background:rgba(255,255,255,.08); border:1px solid var(--border-soft); color:var(--text); }
 .btn-primary { background:linear-gradient(180deg,var(--cyan),var(--cyan-deep)); color:#fff; }
 .btn:disabled { opacity:.45; cursor:not-allowed; }
-.fav-box { border-color:var(--orange); }
-.fav-title { color:var(--orange); font-weight:800; font-size:12px; margin-bottom:10px; }
-.fav-buttons { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+.fav-box { border-color:var(--orange); padding:12px; }
+.fav-title { color:var(--orange); font-weight:800; font-size:12px; margin-bottom:8px; }
+.manual-toggle.card-lite { margin-bottom:10px; }
+.fav-buttons { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
 .fav-buttons .btn { background:linear-gradient(180deg,var(--orange),#c94f00); color:#fff; }
 .hint { color:var(--text-muted); font-size:12px; margin:8px 0 0; }
 .check-row { display:flex; align-items:center; gap:8px; font-size:13px; }
+/* Zone « saisie manuelle » (oubli de timer) : fond clair distinctif, comme la v1. */
+.manual-toggle.card-lite { background:linear-gradient(180deg,#eaf4ff,#dbeafe);
+  border-color:#bcd8f5; color:#0b1533; }
+#manual-fields { background:linear-gradient(180deg,#f4f9ff,#e5f0ff); border-color:#bcd8f5; padding:12px; }
+/* Compactage du mode manuel : faire tenir les 6 favoris dans les 600px max du popup. */
+#manual-fields .field { margin-bottom:8px; }
+#manual-fields textarea.input { min-height:38px; }
+#manual-fields .field > label { color:var(--cyan-deep); }
+#manual-fields .input { background:#fff; color:#0b1533; border-color:#c3dcf6; color-scheme:light; }
+#manual-fields .input::placeholder { color:#8493b3; }
+#manual-fields .check-row { color:#0b1533; background:#fff; border:1px solid #c3dcf6;
+  border-radius:10px; padding:10px 12px; }
+#manual-fields .hint { color:#5a6a99; }
 .timer-card { background:linear-gradient(180deg,#eaf4ff,#dbeafe); color:#0b1533; border-radius:16px; padding:20px; text-align:center; margin-bottom:14px; }
 .timer-label { font-size:12px; letter-spacing:.1em; color:var(--cyan-deep); font-weight:800; }
 .timer-display { font-size:46px; font-weight:800; letter-spacing:2px; }
@@ -65,6 +85,8 @@ textarea.input { resize:vertical; min-height:56px; }
 .sess-link { font-size:14px; }
 .placeholder { text-align:center; color:var(--text-muted); padding:40px 10px; }
 .modal-overlay { position:fixed; inset:0; background:rgba(3,8,38,.7); display:flex; align-items:center; justify-content:center; }
+/* L'attribut [hidden] doit l'emporter sur le display:flex ci-dessus. */
+.modal-overlay[hidden] { display:none; }
 .modal { background:var(--bg-elev); border:1px solid var(--border-soft); border-radius:16px; padding:20px; width:360px; }
 .modal-title { text-align:center; font-weight:800; color:var(--cyan); margin-bottom:16px; }
 .modal-row { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
@@ -75,3 +97,12 @@ textarea.input { resize:vertical; min-height:56px; }
 .stop-duration.err { color:var(--red); }
 .modal-actions { display:flex; gap:10px; }
 .modal-actions .btn { flex:1; }
+
+/* Thème clair : les fonds de cartes codés en dur (bleu foncé translucide) rendent
+   terne sur fond clair — on les repasse en clair. */
+:root[data-theme="light"] .card { background:#ffffff; }
+:root[data-theme="light"] .fav-box { background:#f6f7f9; }
+:root[data-theme="light"] .recent .day-head { background:#eef2fb; }
+:root[data-theme="light"] .icon-btn { background:rgba(11,21,51,.04); }
+:root[data-theme="light"] .btn-grey { background:rgba(11,21,51,.05); }
+:root[data-theme="light"] .stop-duration { background:#f3f5fa; }
