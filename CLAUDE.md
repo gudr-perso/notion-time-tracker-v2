@@ -90,15 +90,27 @@ reste manipule des objets métier `Task` / `Session`. `core/*` n'importe aucune 
 
 ## Structure des fichiers
 
+**Source unique de la carte du code** (ETAT_PROJET.md y renvoie, ne pas dupliquer).
+
 ```
 manifest.json · icons/
 src/
-  background/service-worker.js
-  popup/   popup.html popup.css popup.js timer.js
-  config/  config.html config.css config.js
-  core/    notion-api.js storage.js mapping.js time.js
+  background/service-worker.js   badge + notifications (chrome.alarms, MV3-safe)
+  popup/
+    popup.html/.css/.js          shell, onglets, thème, redirection config (onglet)
+    timer.js                     état partagé + chargement des tâches
+    timer-actions.js             start/pause/stop, stop-at (modale)
+    timer-manual.js              saisie manuelle, congés, favoris (enregistrement rapide)
+    timer-recent.js              sessions récentes
+  config/  config.html/.css/.js  page de config (onglet plein écran)
+  core/                          logique pure, testée (sans API Chrome)
+    notion-api.js                fetch, pagination has_more, retry 429, normId
+    mapping.js                   Page Notion ⇄ Task / Session
+    time.js                      durées, arrondis, toNotionDate (offset local)
+    storage.js                   accès typé chrome.storage.local
   theme.js
 test/      *.test.js (Vitest)
+docs/      ETAT_PROJET.md · JOURNAL.md · CHANGELOG.md · MEMO-suivi-projet.md (+ spec de design)
 ```
 
 ## Modèle de données local (`chrome.storage.local`)

@@ -52,27 +52,7 @@ corrections de layout (débordements, modale, largeur) et thème clair lisible.
 
 ## Carte du code
 
-```
-manifest.json · icons/
-src/
-  background/service-worker.js   badge + notifications (chrome.alarms, MV3-safe)
-  popup/
-    popup.html/.css/.js          shell, onglets, thème, redirection config (onglet)
-    timer.js                     état partagé + chargement des tâches
-    timer-actions.js             start/pause/stop, stop-at (modale)
-    timer-manual.js              saisie manuelle, congés, favoris (enregistrement rapide)
-    timer-recent.js              sessions récentes
-  config/  config.html/.css/.js  page de config (onglet plein écran)
-  core/                          logique pure, testée (sans API Chrome)
-    notion-api.js                fetch, pagination has_more, retry 429, normId
-    mapping.js                   Page Notion ⇄ Task / Session
-    time.js                      durées, arrondis, toNotionDate (offset local)
-    storage.js                   accès typé chrome.storage.local
-  theme.js
-test/                            *.test.js (Vitest) — 27 tests
-docs/                            ETAT_PROJET.md (ce fichier), JOURNAL.md, CHANGELOG.md,
-                                 + doc d'origine et specs
-```
+→ **Structure du code : voir `CLAUDE.md` § « Structure des fichiers »** (source unique, ne pas dupliquer ici).
 
 ## Décisions verrouillées
 
