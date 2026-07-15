@@ -1,8 +1,32 @@
 # Notion Time Tracker v2
 
 Extension Chrome/Edge (Manifest V3) de suivi du temps de travail, écrivant chaque session dans
-Notion. Recodage v2 propre de la v1 (`4.9.4`). Documentation d'origine dans `doc/`, design validé dans
+Notion. Recodage v2 propre de la v1 (`4.9.4`). Documentation d'origine dans `docs/`, design validé dans
 `docs/superpowers/specs/2026-07-13-notion-timer-v2-design.md`.
+
+## Suivi de projet (à lire et tenir à jour)
+
+Trois fichiers dans `docs/` portent la mémoire du projet. **Leur contenu ne se recopie pas ici** — CLAUDE.md
+ne garde que ces pointeurs et les routines ci-dessous :
+
+- **`docs/ETAT_PROJET.md`** — snapshot vivant de l'avancement (fait / à faire / idées non tranchées / prochaine
+  action). À rouvrir **en premier** pour reprendre le projet.
+- **`docs/JOURNAL.md`** — mémoire des pièges techniques (Contexte / Erreur brute / Hypothèse / Action / Résultat /
+  Leçon). Sert à ne pas re-déboguer deux fois la même chose.
+- **`docs/CHANGELOG.md`** — historique des changements **par version** (format Keep a Changelog).
+
+**Version** : la **source de vérité est `manifest.json`** (dupliquée dans `package.json` / `package-lock.json`).
+Ne jamais stocker le numéro ailleurs comme autorité ; `ETAT_PROJET.md` l'affiche en reflet, `CHANGELOG.md` l'historise.
+
+### Routines à appliquer de moi-même (sans qu'on me le demande)
+
+- **Bug non trivial corrigé** (diagnostic non évident au premier coup d'œil) → ajouter une entrée à
+  `docs/JOURNAL.md` au format Contexte / Erreur **brute** / Hypothèse / Action / Résultat / Leçon. Les typos et
+  ajustements CSS triviaux n'y vont **pas**.
+- **Nouvelle version décidée** → bumper `manifest.json` + `package.json` + `package-lock.json`, ajouter la section
+  correspondante dans `docs/CHANGELOG.md`, refléter la version dans `docs/ETAT_PROJET.md` — le tout dans le commit
+  de release (`release: vX.Y.Z`).
+- **Feature terminée, nouvelle demande, ou idée écartée** → mettre à jour `docs/ETAT_PROJET.md`.
 
 ## Décisions de cadrage (validées)
 
