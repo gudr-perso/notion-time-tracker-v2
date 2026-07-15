@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Time Tracker · Configuration</title>
+  <link rel="stylesheet" href="config.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">⏱️ Time Tracker <span class="sub">Configuration</span></div>
+      <button type="button" id="theme-toggle" class="icon-btn" title="Thème">🌙</button>
+    </header>
+
+    <div id="flash" class="flash" hidden></div>
+
+    <!-- ① Connexion -->
+    <section class="card">
+      <div class="card-head">① Connexion Notion</div>
+      <div class="row">
+        <label>Token d'intégration</label>
+        <div class="cell">
+          <input type="password" id="token" class="input" placeholder="ntn_…" autocomplete="new-password" />
+          <button type="button" id="btn-test" class="btn btn-primary">Tester la connexion</button>
+          <span id="token-status" class="status"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ② Bases -->
+    <section class="card" id="sec-bases">
+      <div class="card-head">② Bases de données</div>
+      <div class="row">
+        <label></label>
+        <div class="cell">
+          <button type="button" id="btn-load-db" class="btn btn-ghost">Charger mes bases</button>
+          <span id="db-status" class="status"></span>
+        </div>
+      </div>
+      <div class="row">
+        <label>Base Temps saisis <span class="type">écriture</span></label>
+        <div class="cell"><select id="time-db" class="input"></select></div>
+      </div>
+      <div class="row">
+        <label>Base Tâches <span class="type">lecture</span></label>
+        <div class="cell"><select id="tasks-db" class="input"></select></div>
+      </div>
+    </section>
+
+    <!-- ③ Mapping Temps -->
+    <section class="card" id="sec-time-map">
+      <div class="card-head">③ Mapping — Base Temps</div>
+      <div class="row"><label>📝 Nom de session <span class="type">title *</span></label><div class="cell"><select id="m-taskName" class="input" data-mapping></select></div></div>
+      <div class="row"><label>🕐 Date de début <span class="type">date *</span></label><div class="cell"><select id="m-startDate" class="input" data-mapping></select></div></div>
+      <div class="row"><label>🕑 Date de fin <span class="type">date *</span></label><div class="cell"><select id="m-endDate" class="input" data-mapping></select></div></div>
+      <div class="row"><label>🔢 TaskID <span class="type">rich_text</span></label><div class="cell"><select id="m-taskId" class="input" data-mapping></select></div></div>
+      <div class="row"><label>🎯 Projets <span class="type">relation</span></label><div class="cell"><select id="m-projects" class="input" data-mapping></select></div></div>
+      <div class="row"><label>⏸️ Pause (min) <span class="type">number</span></label><div class="cell"><select id="m-pause" class="input" data-mapping></select></div></div>
+      <div class="row"><label>💬 Commentaire <span class="type">rich_text</span></label><div class="cell"><select id="m-comment" class="input" data-mapping></select></div></div>
+      <div class="row"><label>🔗 URL application <span class="type">url</span></label><div class="cell"><select id="m-externalUrl" class="input" data-mapping></select></div></div>
+      <div class="row"><label>🔗 Relation Tâches <span class="type">relation</span></label><div class="cell"><select id="m-tasksRelation" class="input" data-mapping></select></div></div>
+    </section>
+
+    <!-- ④ Mapping Tâches -->
+    <section class="card" id="sec-tasks-map">
+      <div class="card-head">④ Mapping — Base Tâches</div>
+      <div class="row"><label>📝 Titre <span class="type">title</span></label><div class="cell"><select id="t-title" class="input" data-mapping-tasks></select></div></div>
+      <div class="row"><label>🏷️ Projet <span class="type">rich_text</span></label><div class="cell"><select id="t-project" class="input" data-mapping-tasks></select></div></div>
+      <div class="row"><label>🔢 ID externe <span class="type">rich_text</span></label><div class="cell"><select id="t-externalId" class="input" data-mapping-tasks></select></div></div>
+      <div class="row"><label>🔗 URL externe <span class="type">url</span></label><div class="cell"><select id="t-externalUrl" class="input" data-mapping-tasks></select></div></div>
+      <div class="row"><label>🎯 Relation Projets <span class="type">relation</span></label><div class="cell"><select id="t-projectsRel" class="input" data-mapping-tasks></select></div></div>
+      <div class="row"><label>🚦 Filtre d'état <span class="type">status/select — optionnel</span></label>
+        <div class="cell">
+          <select id="t-statusFilter" class="input" data-mapping-tasks></select>
+          <input type="text" id="t-statusExclude" class="input" style="flex:0 0 180px" placeholder="valeur à exclure (ex : clos)" />
+        </div>
+      </div>
+      <div class="row"><label>↕️ Tri <span class="type">propriété</span></label><div class="cell"><select id="t-sortProperty" class="input" data-mapping-tasks></select></div></div>
+    </section>
+
+    <!-- ⑤ Préférences -->
+    <section class="card" id="sec-prefs">
+      <div class="card-head">⑤ Préférences</div>
+      <div class="row"><label>Commentaire obligatoire</label><div class="cell"><input type="checkbox" id="p-requireComment" /></div></div>
+      <div class="row"><label>Libellé bouton externe</label><div class="cell"><input type="text" id="p-externalLabel" class="input" maxlength="20" value="CLICKUP" /></div></div>
+      <div class="row"><label>Heures / semaine</label><div class="cell"><input type="number" id="p-weeklyHours" class="input" step="0.5" min="0" value="39" /></div></div>
+      <div class="row"><label>🏖️ Tâche congés <span class="type">optionnel</span></label><div class="cell"><select id="p-vacationTask" class="input"></select></div></div>
+      <div class="row"><label>⭐ Favoris (max 6)</label><div class="cell" style="flex-direction:column;align-items:stretch">
+        <div id="fav-list"></div>
+        <button type="button" id="btn-add-fav" class="btn btn-ghost">➕ Ajouter un favori</button>
+      </div></div>
+    </section>
+
+    <div class="save-row">
+      <button type="button" id="btn-save" class="btn btn-primary">✅ Enregistrer</button>
+      <span id="save-status" class="status"></span>
+    </div>
+  </div>
+  <script type="module" src="config.js"></script>
+</body>
+</html>

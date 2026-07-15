@@ -71,7 +71,7 @@ getPage(token, pageId): Promise<Page>
 // mapping.js
 taskFromPage(page, tasksFields): Task
 sessionPropertiesForCreate(task, startTime, timeFields): properties
-sessionPropertiesForUpdate(endTime, comment, pauseMin, timeFields): properties
+sessionPropertiesForUpdate({ endTime, comment, pauseMin }, timeFields): properties
 sessionFromPage(page, timeFields): Session
 
 // time.js
