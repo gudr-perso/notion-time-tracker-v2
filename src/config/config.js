@@ -5,6 +5,7 @@ import { taskFromPage } from '../core/mapping.js';
 import { applyStoredTheme, toggleTheme } from '../theme.js';
 
 const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const state = { token: '', schemaTime: [], schemaTasks: [], tasks: [], favorites: [], config: null };
 
 // Types compatibles par champ logique de la base Temps
@@ -26,12 +27,20 @@ const AUTO_TIME = {
   comment: ['commentaire', 'commentaire de session'], externalUrl: ['taskurl', 'url'],
   tasksRelation: ['tâches', 'taches'],
 };
+const AUTO_TASKS = {
+  title: ['nom', 'name', 'titre'],
+  project: ['projet_texte', 'projet', 'project'],
+  externalId: ['#taskid', 'taskid'],
+  externalUrl: ['taskurl', 'url'],
+  projectsRel: ['🎯 projets', 'projets'],
+  sortProperty: ['dernière modification', 'derniere modification', 'last edited time'],
+};
 
 function fill(select, props, allowedTypes, current) {
   const opts = ['<option value="">— non mappé —</option>'];
   for (const p of props) {
     if (allowedTypes && !allowedTypes.includes(p.type)) continue;
-    opts.push(`<option value="${p.name}" data-type="${p.type}"${p.name === current ? ' selected' : ''}>${p.name} (${p.type})</option>`);
+    opts.push(`<option value="${esc(p.name)}" data-type="${esc(p.type)}"${p.name === current ? ' selected' : ''}>${esc(p.name)} (${esc(p.type)})</option>`);
   }
   select.innerHTML = opts.join('');
 }
@@ -60,7 +69,7 @@ async function onLoadDb() {
   try {
     const dbs = await searchDatabases(state.token);
     const opts = ['<option value="">— choisir —</option>',
-      ...dbs.map((d) => `<option value="${d.id}" data-name="${d.name}">${d.name}</option>`)];
+      ...dbs.map((d) => `<option value="${esc(d.id)}" data-name="${esc(d.name)}">${esc(d.name)}</option>`)];
     $('time-db').innerHTML = opts.join('');
     $('tasks-db').innerHTML = opts.join('');
     if (state.config?.timeDb) $('time-db').value = state.config.timeDb.id;
@@ -86,6 +95,7 @@ async function loadSchemas() {
     const sel = $('t-' + key);
     const cur = key === 'statusFilter' ? (kf.statusFilter?.property || '') : (kf[key] || '');
     fill(sel, state.schemaTasks, TASKS_TYPES[key], cur);
+    if (AUTO_TASKS[key]) autoSelect(sel, state.schemaTasks, AUTO_TASKS[key], cur);
   }
   await loadTasksList(tasksId, kf);
 }
@@ -98,7 +108,7 @@ async function loadTasksList(tasksId, kf) {
   // Tâche congés
   const vac = state.config?.prefs?.vacationTaskId || '';
   $('p-vacationTask').innerHTML = ['<option value="">— aucune —</option>',
-    ...state.tasks.map((t) => `<option value="${t.id}"${t.id === vac ? ' selected' : ''}>${t.name}</option>`)].join('');
+    ...state.tasks.map((t) => `<option value="${esc(t.id)}"${t.id === vac ? ' selected' : ''}>${esc(t.name)}</option>`)].join('');
   renderFavorites();
 }
 
@@ -131,10 +141,10 @@ function renderFavorites() {
     div.className = 'cell';
     div.style.marginBottom = '8px';
     const taskOpts = ['<option value="">— tâche —</option>',
-      ...state.tasks.map((t) => `<option value="${t.id}"${t.id === fav.taskId ? ' selected' : ''}>${t.name}</option>`)].join('');
+      ...state.tasks.map((t) => `<option value="${esc(t.id)}"${t.id === fav.taskId ? ' selected' : ''}>${esc(t.name)}</option>`)].join('');
     div.innerHTML =
       `<select class="input fav-task" data-i="${i}">${taskOpts}</select>` +
-      `<input class="input fav-label" data-i="${i}" maxlength="20" placeholder="libellé" value="${fav.customLabel || ''}" style="flex:0 0 160px" />` +
+      `<input class="input fav-label" data-i="${i}" maxlength="20" placeholder="libellé" value="${esc(fav.customLabel || '')}" style="flex:0 0 160px" />` +
       `<button type="button" class="btn btn-ghost fav-del" data-i="${i}">❌</button>`;
     list.appendChild(div);
   });
@@ -206,6 +216,7 @@ async function init() {
   $('btn-load-db').addEventListener('click', onLoadDb);
   $('time-db').addEventListener('change', loadSchemas);
   $('tasks-db').addEventListener('change', loadSchemas);
+  $('t-title').addEventListener('change', () => loadTasksList($('tasks-db').value, state.config?.tasksDb?.fields || {}));
   $('btn-save').addEventListener('click', onSave);
   wireFavorites();
 }
