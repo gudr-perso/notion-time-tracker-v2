@@ -8,3 +8,6 @@ docs/brief-commercial-CAP3.md
 
 # Maquettes brainstorming (companion visuel)
 .superpowers/
+
+# Config locale du harness Claude Code
+.claude/
