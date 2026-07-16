@@ -26,7 +26,9 @@ async function request(token, path, { method = 'GET', body } = {}, attempt = 0) 
   }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.message || `Notion ${res.status}`);
+    const err = new Error(data.message || `Notion ${res.status}`);
+    err.status = res.status;
+    throw err;
   }
   return data;
 }
@@ -95,4 +97,16 @@ export async function createPage(token, dbId, properties) {
 
 export async function updatePage(token, pageId, properties) {
   await request(token, `/pages/${normId(pageId)}`, { method: 'PATCH', body: { properties } });
+}
+
+// Ajoute des propriétés à une base existante (jamais destructif côté appelant).
+export async function addDatabaseProperties(token, dbId, properties) {
+  try {
+    return await request(token, `/databases/${normId(dbId)}`, { method: 'PATCH', body: { properties } });
+  } catch (e) {
+    if (e.status === 403) {
+      throw new Error("L'intégration n'a pas les droits d'édition sur cette base — partage-la en écriture avec l'intégration Notion.");
+    }
+    throw e;
+  }
 }
