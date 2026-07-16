@@ -49,7 +49,7 @@ export function planInjection(specs, currentSchema, targets = {}) {
     }
     if (spec.targetKey) {
       const targetId = targets[spec.targetKey];
-      if (!targetId) { skippedNoTarget.push({ key: spec.key, name: spec.name }); continue; }
+      if (!targetId) { skippedNoTarget.push({ key: spec.key, name: spec.name, targetKey: spec.targetKey }); continue; }
       properties[spec.name] = relationProp(targetId);
     } else {
       properties[spec.name] = spec.build();

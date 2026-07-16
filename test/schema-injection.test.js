@@ -48,9 +48,16 @@ describe('planInjection — base Temps', () => {
 
   it('saute la relation Projets si aucune base Projets', () => {
     const plan = planInjection(FIELD_SPECS_TIME, [], { tasksDbId: 'TASKS_DB', projetsDbId: null });
-    expect(plan.skippedNoTarget).toContainEqual({ key: 'projects', name: '🎯 Projets' });
+    expect(plan.skippedNoTarget).toContainEqual({ key: 'projects', name: '🎯 Projets', targetKey: 'projetsDbId' });
     expect(plan.properties['🎯 Projets']).toBeUndefined();
     expect(plan.properties['Tâches']).toBeDefined();
+  });
+
+  it('saute la relation Tâches si aucune base Tâches', () => {
+    const plan = planInjection(FIELD_SPECS_TIME, [], { tasksDbId: null, projetsDbId: 'PROJ_DB' });
+    expect(plan.skippedNoTarget).toContainEqual({ key: 'tasksRelation', name: 'Tâches', targetKey: 'tasksDbId' });
+    expect(plan.properties['Tâches']).toBeUndefined();
+    expect(plan.properties['🎯 Projets']).toBeDefined();
   });
 
   it('idempotence : re-planifier sur le schéma post-injection donne toCreate vide', () => {

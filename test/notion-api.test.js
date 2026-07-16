@@ -1,6 +1,6 @@
 // test/notion-api.test.js
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { queryAll, searchDatabases, createPage } from '../src/core/notion-api.js';
+import { queryAll, searchDatabases, createPage, addDatabaseProperties } from '../src/core/notion-api.js';
 
 function jsonResponse(body, ok = true, status = 200, headers = {}) {
   return { ok, status, headers: { get: (k) => headers[k.toLowerCase()] }, json: async () => body };
@@ -42,5 +42,14 @@ describe('searchDatabases', () => {
     const dbs = await searchDatabases('tok');
     expect(dbs[0].id).toBe('d1');
     expect(dbs[0].name).toBe('Time');
+  });
+});
+
+describe('addDatabaseProperties', () => {
+  it('mappe un 403 vers un message français explicite', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce(
+      jsonResponse({ message: 'whatever' }, false, 403)
+    );
+    await expect(addDatabaseProperties('tok', 'db1', {})).rejects.toThrow(/droits d'édition/);
   });
 });

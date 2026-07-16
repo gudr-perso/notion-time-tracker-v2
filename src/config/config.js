@@ -191,6 +191,8 @@ function renderInjectPreview(previewEl, plan, onConfirm) {
   if (plan.toCreate.length) {
     parts.push('<strong>À créer :</strong><ul>' +
       plan.toCreate.map((c) => `<li>${esc(c.name)} <span class="type">${esc(c.type)}</span></li>`).join('') + '</ul>');
+  } else if (plan.skippedNoTarget.length) {
+    parts.push('<em>Aucune propriété créable en l\'état — voir les relations sautées ci-dessous.</em>');
   } else {
     parts.push('<em>Aucune propriété à créer — tout est déjà en place.</em>');
   }
@@ -199,8 +201,9 @@ function renderInjectPreview(previewEl, plan, onConfirm) {
       plan.conflicts.map((c) => `<li>${esc(c.name)} — attendu ${esc(c.expectedType)}, présent ${esc(c.actualType)}</li>`).join('') + '</ul>');
   }
   if (plan.skippedNoTarget.length) {
-    parts.push('<strong>Relations Projets sautées (aucune base Projets sélectionnée) :</strong><ul>' +
-      plan.skippedNoTarget.map((c) => `<li>${esc(c.name)}</li>`).join('') + '</ul>');
+    const labelFor = (tk) => (tk === 'tasksDbId' ? 'base Tâches' : 'base Projets');
+    parts.push('<strong>Relations sautées (base cible non sélectionnée) :</strong><ul>' +
+      plan.skippedNoTarget.map((c) => `<li>${esc(c.name)} — sélectionne d'abord la ${esc(labelFor(c.targetKey))}</li>`).join('') + '</ul>');
   }
   const canApply = plan.toCreate.length > 0;
   parts.push('<div class="cell">' +
