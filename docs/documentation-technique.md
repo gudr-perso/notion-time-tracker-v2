@@ -61,13 +61,14 @@ des objets métier `Task` / `Session`. `core/*` n'importe aucune API Chrome (sau
 
 | Clé | Forme | Rôle |
 |---|---|---|
-| `config` | `{ notionToken, timeDb{id,name,fields}, tasksDb{id,name,fields}, prefs{…}, theme }` | Toute la configuration (token, mapping des 2 bases, préférences, thème). |
+| `config` | `{ notionToken, timeDb{id,name,fields}, tasksDb{id,name,fields}, projetsDb{id,name}?, prefs{…}, theme }` | Toute la configuration (token, mapping des 2 bases, base Projets optionnelle, préférences, thème). |
 | `currentSession` | `{ pageId, taskId, taskName, startTime, isPaused, pauseStartTime, totalPauseDuration }` | Le chronomètre actif (ou en pause), persisté pour survivre à la fermeture du popup. |
 | `taskHistory` | `[taskId]` (max 20, LRU) | Tâches récemment utilisées, pour trier la liste. |
 | `notifFlags` | `{ lastLongTimerNotif, endOfDayNotified, dailyGoalNotified, dayStamp }` | Flags anti-répétition des notifications, persistés car le SW MV3 est recyclé. |
 
 `config.timeDb.fields` (base d'écriture) et `config.tasksDb.fields` (base de lecture) sont les **mappings** entre
-champs logiques de l'app et propriétés réelles Notion. Aucun ID ni nom de propriété n'est en dur.
+champs logiques de l'app et propriétés réelles Notion. Aucun ID ni nom de propriété n'est en dur. `config.projetsDb`
+(optionnel) mémorise la base cible des relations « Projets » pour l'injection des champs (voir `schema-injection.js`).
 
 ## 4. Modules et grandes fonctions
 
@@ -93,7 +94,10 @@ champs logiques de l'app et propriétés réelles Notion. Aucun ID ni nom de pro
   sessions récentes et les totaux journaliers.
 - `queryPage(dbId, {pageSize=20})` : **une seule page** (chargement léger initial de la liste des tâches).
 - `getPage` / `createPage` / `updatePage` : lecture d'une page, création (retourne l'`id`), mise à jour de propriétés.
-- `normId` : retire les `-` des IDs là où l'endpoint l'exige.
+- **`addDatabaseProperties(token, dbId, properties)`** : `PATCH /databases/{id}` — **ajoute des propriétés** à une
+  base existante (injection des champs). Traduit un **403** (intégration sans droit d'écriture) en message clair.
+- `normId` : retire les `-` des IDs là où l'endpoint l'exige. `request` attache aussi `err.status` (code HTTP) aux
+  erreurs, ce qui permet le traitement ciblé du 403 ci-dessus.
 
 ### `core/mapping.js` — Notion ⇄ objets métier (pur)
 
@@ -106,6 +110,21 @@ champs logiques de l'app et propriétés réelles Notion. Aucun ID ni nom de pro
 - `sessionFromPage(page, f)` : page → **Session** (`pageId, name, startTime, endTime, pauseMin`) pour l'affichage
   des récents et les totaux.
 - `extractProject` / `titleWithProject` : gestion de la convention `Nom [Projet]`.
+
+### `core/schema-injection.js` — planification de l'injection des champs (pur)
+
+Module **pur et testé** (Vitest, TDD) qui décide **quelles propriétés Notion créer** dans chaque base, sans jamais
+toucher à l'existant.
+
+- `FIELD_SPECS_TIME` / `FIELD_SPECS_TASKS` : catalogue des champs injectables `{ key, name, type, build|targetKey }`
+  — nom canonique, type Notion et fabrique du *payload* de propriété. Le **titre natif** n'y figure pas. `statusFilter`
+  (type `status` non créable via l'API) et la propriété de tri en sont **volontairement absents**. Les relations
+  déclarent un `targetKey` (`tasksDbId` ou `projetsDbId`) et sont créées en **`dual_property`** (deux sens).
+- **`planInjection(specs, currentSchema, targets)`** : compare le catalogue au schéma réel (`getDatabaseSchema`) et
+  renvoie `{ toCreate, conflicts, skippedNoTarget, properties }` — respectivement les champs manquants à créer, les
+  **conflits de type** (même nom, type différent → **laissés intacts**), les relations **sautées** faute de base
+  cible, et l'objet `properties` prêt pour `addDatabaseProperties`. **Additif et idempotent** : jamais de rename,
+  retype ni suppression.
 
 ### `core/storage.js` — accès typé `chrome.storage.local`
 
@@ -177,14 +196,21 @@ et ferme le popup. Sinon applique le thème, câble le bouton thème + config, g
 
 ### `config/config.js` — page de configuration (onglet plein écran)
 
-- `onTest` : valide le token (`testToken`). `onLoadDb` : liste les bases (`searchDatabases`) puis `loadSchemas`.
-- `loadSchemas` : charge les schémas des 2 bases et remplit les `<select>` de mapping, filtrés par **types
-  compatibles** (`TIME_TYPES` / `TASKS_TYPES`) et **auto-mappés** par nom connu (`AUTO_TIME` / `AUTO_TASKS`).
+- `onTest` : valide le token (`testToken`). `onLoadDb` : liste les bases (`searchDatabases`), peuple les 3 sélecteurs
+  (Temps, Tâches, **Projets** optionnel) puis `loadSchemas`.
+- `loadSchemas` : charge les schémas des 2 bases puis délègue le remplissage des `<select>` à `remapTime` /
+  `remapTasks` — menus filtrés par **types compatibles** (`TIME_TYPES` / `TASKS_TYPES`) et **auto-mappés** par nom
+  connu (`AUTO_TIME` / `AUTO_TASKS`). `remapTime`/`remapTasks` sont réutilisés après une injection.
+- **Injection des champs** : `onInject(kind)` relit le **schéma frais** de la base (jamais l'état en cache, pour ne
+  pas re-typer par erreur), calcule le plan via `planInjection`, l'affiche avec `renderInjectPreview` (aperçu +
+  conflits + relations sautées) et n'écrit qu'**après confirmation** (`addDatabaseProperties`), avant de recharger le
+  schéma et de re-mapper. Le bouton est désactivé pendant les appels (anti-double-clic). `injectTargets` fournit les
+  cibles de relation (`tasksDbId`, `projetsDbId`).
 - `loadTasksList` : peuple les sélecteurs de tâche congés et de favoris.
 - Favoris : `renderFavorites`/`wireFavorites` (ajout/suppression, **max 8**).
 - **`onSave`** : valide les champs obligatoires (Nom/Début/Fin, heures/semaine > 0), assemble l'objet `config`
-  complet (token, 2 bases mappées, `prefs`, thème) via `collectTimeFields`/`collectTasksFields`, `saveConfig`, puis
-  referme l'onglet.
+  complet (token, 2 bases mappées, **base Projets** si choisie, `prefs`, thème) via `collectTimeFields`/
+  `collectTasksFields`, `saveConfig`, puis referme l'onglet.
 - Au chargement : applique le thème, repeuple depuis la config existante, et **charge automatiquement les bases** si
   un token est déjà présent (plus de clic manuel).
 
