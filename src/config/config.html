@@ -46,6 +46,10 @@
         <label>Base Tâches <span class="type">lecture</span></label>
         <div class="cell"><select id="tasks-db" class="input"></select></div>
       </div>
+      <div class="row">
+        <label>Base Projets <span class="type">optionnel · cible des relations</span></label>
+        <div class="cell"><select id="projets-db" class="input"></select></div>
+      </div>
     </section>
 
     <!-- ③ Mapping Temps -->
@@ -60,6 +64,14 @@
       <div class="row"><label>💬 Commentaire <span class="type">rich_text</span></label><div class="cell"><select id="m-comment" class="input" data-mapping></select></div></div>
       <div class="row"><label>🔗 URL application <span class="type">url</span></label><div class="cell"><select id="m-externalUrl" class="input" data-mapping></select></div></div>
       <div class="row"><label>🔗 Relation Tâches <span class="type">relation</span></label><div class="cell"><select id="m-tasksRelation" class="input" data-mapping></select></div></div>
+      <div class="row">
+        <label></label>
+        <div class="cell">
+          <button type="button" id="btn-inject-time" class="btn btn-ghost">⚙️ Créer les champs manquants — base Temps</button>
+          <span id="inject-time-status" class="status"></span>
+        </div>
+      </div>
+      <div id="inject-time-preview" class="inject-preview" hidden></div>
     </section>
 
     <!-- ④ Mapping Tâches -->
@@ -77,6 +89,15 @@
         </div>
       </div>
       <div class="row"><label>↕️ Tri <span class="type">propriété</span></label><div class="cell"><select id="t-sortProperty" class="input" data-mapping-tasks></select></div></div>
+      <div class="row">
+        <label></label>
+        <div class="cell">
+          <button type="button" id="btn-inject-tasks" class="btn btn-ghost">⚙️ Créer les champs manquants — base Tâches</button>
+          <span id="inject-tasks-status" class="status"></span>
+        </div>
+      </div>
+      <div id="inject-tasks-preview" class="inject-preview" hidden></div>
+      <p class="help-note">ℹ️ <strong>Filtre de statut — à créer manuellement.</strong> L'API Notion ne peut pas créer de propriété de type <em>Status</em>. Dans ta base Tâches, crée (ou réutilise) une propriété <strong>Statut</strong> (type <em>Status</em> ou <em>Select</em>) avec tes états de workflow, puis mappe-la dans « Filtre d'état » et indique la valeur à exclure (ex. <code>Terminé</code>). Le <strong>Tri</strong> se mappe aussi sur une propriété existante — rien à injecter.</p>
     </section>
 
     <!-- ⑤ Préférences -->
