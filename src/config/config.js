@@ -215,6 +215,7 @@ function renderInjectPreview(previewEl, plan, onConfirm) {
 async function onInject(kind) {
   const isTime = kind === 'time';
   const dbId = isTime ? $('time-db').value : $('tasks-db').value;
+  const btn = $(isTime ? 'btn-inject-time' : 'btn-inject-tasks');
   const statusEl = $(isTime ? 'inject-time-status' : 'inject-tasks-status');
   const previewEl = $(isTime ? 'inject-time-preview' : 'inject-tasks-preview');
   if (!state.token || !dbId) {
@@ -223,11 +224,24 @@ async function onInject(kind) {
     return;
   }
   const specs = isTime ? FIELD_SPECS_TIME : FIELD_SPECS_TASKS;
-  const schema = isTime ? state.schemaTime : state.schemaTasks;
+  // Toujours repartir du schéma réel de la base : un plan basé sur un état
+  // obsolète/vide risquerait de re-typer des propriétés existantes via le PATCH.
+  btn.disabled = true;
+  statusEl.textContent = 'Analyse…'; statusEl.className = 'status';
+  let schema;
+  try {
+    schema = await getDatabaseSchema(state.token, dbId);
+    if (isTime) state.schemaTime = schema; else state.schemaTasks = schema;
+  } catch (e) {
+    statusEl.textContent = `Erreur : ${e.message}`; statusEl.className = 'status err';
+    btn.disabled = false; return;
+  }
   const plan = planInjection(specs, schema, injectTargets());
   statusEl.textContent = ''; statusEl.className = 'status';
+  btn.disabled = false;
   renderInjectPreview(previewEl, plan, async () => {
     previewEl.hidden = true;
+    btn.disabled = true;
     statusEl.textContent = 'Création…'; statusEl.className = 'status';
     try {
       await addDatabaseProperties(state.token, dbId, plan.properties);
@@ -236,6 +250,7 @@ async function onInject(kind) {
       statusEl.textContent = `✓ ${plan.toCreate.length} propriété(s) créée(s). Vérifie le mapping puis Enregistre.`;
       statusEl.className = 'status ok';
     } catch (e) { statusEl.textContent = `Erreur : ${e.message}`; statusEl.className = 'status err'; }
+    finally { btn.disabled = false; }
   });
 }
 
