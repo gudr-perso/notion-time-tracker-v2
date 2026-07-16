@@ -1,338 +1,210 @@
 # Documentation technique — Notion Time Tracker
 
-Version : `4.9.4`. Extension navigateur **Manifest V3**, JavaScript vanilla, sans build ni dépendance.
+Version : `5.0.1` (source de vérité : `manifest.json`). Le **D-technique** du principe D² : décrit *comment
+c'est fait*. Pour *ce que fait* l'app côté utilisateur, voir [`documentation-fonctionnelle.md`](documentation-fonctionnelle.md).
 
 ---
 
-## 1. Architecture générale
+## 1. Stack technique
+
+| Élément | Choix |
+|---|---|
+| Type | Extension navigateur **Manifest V3** (Chrome / Edge), client pur, aucun backend. |
+| Langage | **JavaScript vanilla**, **modules ES natifs** (`import`/`export`), **aucun build**, **aucune dépendance runtime**. |
+| Persistance | `chrome.storage.local` (config, session en cours, historique, flags de notification). |
+| Réseau | `fetch` direct vers l'**API REST Notion** (`v2022-06-28`), autorisé par `host_permissions`. |
+| Arrière-plan | **Service worker** MV3 (`type: module`) piloté par `chrome.alarms` (pas de `setInterval` côté SW). |
+| Permissions | `storage`, `notifications`, `alarms` + host `https://api.notion.com/*`. |
+| Tests | **Vitest** (devDependency), TDD sur les modules `core/` (logique pure, sans API Chrome). |
+| Langue | FR uniquement (pas d'`_locales`). |
+
+**Aucun content script** : l'extension ne s'injecte dans aucune page. Toute la logique vit dans le popup, la page
+de config et le service worker. Les fichiers sont chargés tels quels (zéro transpilation).
+
+## 2. Architecture générale
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                     Navigateur (Chrome/Edge)                   │
+│                     Navigateur (Chrome/Edge, MV3)              │
 │                                                                │
-│  ┌─────────────────────────┐      ┌───────────────────────┐   │
-│  │  POPUP (action)          │      │ SERVICE WORKER         │   │
-│  │  popup.html              │◄────►│ background.js          │   │
-│  │   ├─ popup-init.js       │ msg  │  - badge               │   │
-│  │   ├─ popup.js  (UI+logic)│      │  - notifications       │   │
-│  │   └─ popup.css           │      │  - polling 60 s        │   │
-│  │                          │      └───────────┬───────────┘   │
-│  │  config.html             │                  │               │
-│  │   ├─ config.js           │                  │               │
-│  │   └─ config.css          │                  │               │
-│  └───────────┬──────────────┘                  │               │
-│              │                                  │               │
-│   ┌──────────▼──────────────────────────────────▼─────────┐   │
-│   │            chrome.storage.local (persistance)          │   │
-│   └────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────┐  msg  ┌───────────────────────┐  │
+│  │  POPUP (action)          │◄─────►│ SERVICE WORKER         │  │
+│  │  popup.html/.css/.js     │       │ service-worker.js      │  │
+│  │   ├─ timer.js            │       │  - badge 🟢/⏸️/vide     │  │
+│  │   ├─ timer-actions.js    │       │  - notifications        │  │
+│  │   ├─ timer-manual.js     │       │  - chrome.alarms (1 min)│  │
+│  │   └─ timer-recent.js     │       └────────────┬──────────┘  │
+│  │  config.html/.css/.js    │                    │             │
+│  │  theme.js                │                    │             │
+│  └───────────┬──────────────┘                    │             │
+│   ┌──────────▼────────────────────────────────────▼────────┐  │
+│   │              chrome.storage.local                       │  │
+│   │   config · currentSession · taskHistory · notifFlags    │  │
+│   └─────────────────────────────────────────────────────────┘ │
 └───────────────────────────────┬──────────────────────────────┘
                                  │ HTTPS (fetch)
                                  ▼
-                   ┌──────────────────────────────┐
-                   │  API REST Notion (v2022-06-28) │
-                   │  api.notion.com/v1/*           │
-                   └──────────────────────────────┘
+        ┌────────────────────────────────────────────────────┐
+        │  core/ (logique pure, testée, sans API Chrome)      │
+        │   notion-api.js · mapping.js · time.js · storage.js │
+        └───────────────────────────┬────────────────────────┘
+                                     │
+                                     ▼
+                     API REST Notion (v2022-06-28)
 ```
 
-**Il n'y a pas de content script** : l'extension ne s'injecte dans aucune page web. Toute la logique
-vit dans le popup et le service worker. Il n'y a **pas d'étape de build** : les fichiers sont chargés tels quels.
-
----
-
-## 2. Inventaire des fichiers
-
-| Fichier | Rôle | Taille approx. |
-|---------|------|------|
-| `manifest.json` | Déclaration de l'extension (MV3) | — |
-| `background.js` | Service worker : badge, notifications, polling | ~235 lignes |
-| `popup.html` | Structure du popup (onglets Timer/Stats) | ~290 lignes |
-| `popup.css` | Styles du popup | ~1000 lignes |
-| `popup-init.js` | Contrôle de config au chargement + bouton reconfig | ~65 lignes |
-| `popup.js` | **Cœur applicatif** : timer, sessions, API, stats, favoris | ~2060 lignes |
-| `config.html` | Assistant de configuration (2 étapes) | ~250 lignes |
-| `config.css` | Styles de l'assistant | — |
-| `config.js` | Logique de l'assistant (token, bases, mapping, favoris) | ~760 lignes |
-| `icons/icon{16,48,128}.png` | Icônes | — |
-| `generate_icons.py` | Script utilitaire de génération d'icônes | — |
-
-### 2.1 `manifest.json`
-
-```json
-{
-  "manifest_version": 3,
-  "name": "Notion Time Tracker",
-  "version": "4.9.4",
-  "permissions": ["storage", "notifications"],
-  "host_permissions": ["https://api.notion.com/*"],
-  "action": { "default_popup": "popup.html", "default_icon": {…} },
-  "background": { "service_worker": "background.js" },
-  "icons": {…}
-}
-```
-
-- **Permissions** : `storage` (persistance), `notifications` (rappels).
-- **host_permissions** : uniquement `api.notion.com` (les appels `fetch` cross-origin y sont autorisés).
-- Pas de permission `tabs` déclarée bien que `chrome.tabs.create` soit utilisé — cet appel ne
-  nécessite pas de permission spéciale (ouverture d'onglet simple).
-
----
+**Principe d'isolation** : seuls `notion-api.js` et `mapping.js` connaissent le format Notion ; le reste manipule
+des objets métier `Task` / `Session`. `core/*` n'importe aucune API Chrome (sauf `storage.js`, qui encapsule
+`chrome.storage.local` et n'est utilisé que côté UI/SW).
 
 ## 3. Modèle de données local (`chrome.storage.local`)
 
-Toutes les données locales sont stockées sous forme de paires clé/valeur.
+| Clé | Forme | Rôle |
+|---|---|---|
+| `config` | `{ notionToken, timeDb{id,name,fields}, tasksDb{id,name,fields}, prefs{…}, theme }` | Toute la configuration (token, mapping des 2 bases, préférences, thème). |
+| `currentSession` | `{ pageId, taskId, taskName, startTime, isPaused, pauseStartTime, totalPauseDuration }` | Le chronomètre actif (ou en pause), persisté pour survivre à la fermeture du popup. |
+| `taskHistory` | `[taskId]` (max 20, LRU) | Tâches récemment utilisées, pour trier la liste. |
+| `notifFlags` | `{ lastLongTimerNotif, endOfDayNotified, dailyGoalNotified, dayStamp }` | Flags anti-répétition des notifications, persistés car le SW MV3 est recyclé. |
 
-| Clé | Type | Description |
-|-----|------|-------------|
-| `notionToken` | `string` | Token d'intégration interne Notion (`secret_…`). |
-| `notionMapping` | `object` | Configuration des bases et du mapping des champs (voir 3.1). |
-| `currentSession` | `object \| absent` | Session chronométrée en cours (voir 3.2). |
-| `taskHistory` | `string[]` | IDs des 20 dernières tâches utilisées (ordre du + récent au + ancien). |
-| `favorites` | `object[]` | Favoris `{ taskId, customLabel? }`, max 6. |
-| `requireComment` | `boolean` | Commentaire obligatoire à l'arrêt. |
-| `customButtonLabel` | `string` | Libellé du bouton « application interne » (défaut `CLICKUP`). |
-| `weeklyHours` | `number` | Objectif hebdomadaire en heures (défaut 39). |
-| `vacationTaskId` | `string` | ID de la tâche « congés ». |
+`config.timeDb.fields` (base d'écriture) et `config.tasksDb.fields` (base de lecture) sont les **mappings** entre
+champs logiques de l'app et propriétés réelles Notion. Aucun ID ni nom de propriété n'est en dur.
 
-### 3.1 Structure de `notionMapping`
+## 4. Modules et grandes fonctions
 
-```js
-{
-  databaseId:      "…",          // Base « Temps saisis » (écriture)
-  databaseName:    "Time",
-  gdrDatabaseId:   "…",          // Base « Tâches » (lecture)
-  gdrDatabaseName: "GDR Work",
-  fields: {
-    taskName:    "Nom",                 // title      (obligatoire)
-    startDate:   "Début session",       // date       (obligatoire)
-    endDate:     "Fin session",         // date       (obligatoire)
-    pause:       "Pause (min)" | null,  // number     (optionnel)
-    comment:     "Commentaire…" | null, // rich_text  (optionnel)
-    clickupUrl:  "TaskURL" | null,      // url        (optionnel)
-    taskId:      "#TaskID" | null,      // rich_text  (optionnel)
-    projects:    "🎯 Projets" | null,    // relation   (optionnel)
-    gdrRelation: "Tâches" | null        // relation   (optionnel)
-  }
-}
-```
+### `core/time.js` — temps, durées, dates (pur)
 
-### 3.2 Structure de `currentSession`
+- `formatDuration(ms, {withSeconds})` : `ms` → `HH:MM:SS` (ou `HH:MM`). Base de tous les affichages de durée.
+- `roundToNearestFiveMinutes(date)` : arrondit au multiple de 5 min le plus proche (préremplissage saisie manuelle).
+- **`toNotionDate(date)`** : sérialise en **ISO 8601 avec offset local** (`…+02:00`), **jamais `Z`**. Correction
+  centrale de la dette v1 (UTC → décalage d'affichage). Toutes les dates envoyées à Notion passent par ici.
+- `workedMs(start, end, totalPause)` : durée travaillée = `end − start − pauses`, bornée à 0.
+- `startOfDay(date)` : minuit local (bornes des filtres « aujourd'hui / hier »).
+- `formatClock` / `formatStartedLabel` / `formatDateTimeLocalValue` : libellés FR pour l'UI (via `Intl`) et valeur
+  pour les `<input type="datetime-local">`.
 
-```js
-{
-  pageId:            "…",          // ID de la page Notion créée au démarrage
-  taskId:            "…",          // ID de la tâche pointée
-  taskName:          "Ma tâche [Projet]",
-  startTime:         "2026-07-06T09:15:00.000Z",  // ISO
-  isPaused:          false,        // présent si mis en pause au moins une fois
-  pauseStartTime:    null,         // ISO du début de la pause en cours
-  totalPauseDuration: 0            // ms de pause cumulés
-}
-```
+### `core/notion-api.js` — accès HTTP Notion (pur)
 
-> **Remarque architecture** : la page session est créée dans Notion **au démarrage** du timer
-> (pas à l'arrêt). L'arrêt fait un `PATCH` pour renseigner la date de fin. Conséquence : une session
-> jamais arrêtée reste une page « ouverte » (sans date de fin) dans Notion.
+- `request(token, path, opts, attempt)` : cœur `fetch` privé. Ajoute les en-têtes (`Authorization`, `Notion-Version`),
+  **retry sur 429** avec backoff (`retry-after` ou `2^attempt`, 3 essais), et lève une `Error` lisible si `!res.ok`.
+- `testToken` : `GET /users/me` (validation du token en config).
+- `searchDatabases` : `POST /search` filtré `database`, **pagine** via `has_more`/`next_cursor` → `[{id,name}]`.
+- `getDatabaseSchema(dbId)` : propriétés d'une base → `[{name,type}]` (alimente les listes de mapping).
+- **`queryAll(dbId, {filter,sorts})`** : requête **paginée complète** (tous les résultats). Utilisée pour les
+  sessions récentes et les totaux journaliers.
+- `queryPage(dbId, {pageSize=20})` : **une seule page** (chargement léger initial de la liste des tâches).
+- `getPage` / `createPage` / `updatePage` : lecture d'une page, création (retourne l'`id`), mise à jour de propriétés.
+- `normId` : retire les `-` des IDs là où l'endpoint l'exige.
 
----
+### `core/mapping.js` — Notion ⇄ objets métier (pur)
 
-## 4. Intégration API Notion
+- `taskFromPage(page, f)` : page Notion → objet **Task** (`id, name, project, externalId, externalUrl, projectsRel,
+  notionUrl`) selon le mapping `f` de la base tâches.
+- **`sessionPropertiesForCreate(task, startTime, f)`** : construit les propriétés Notion pour créer la ligne de
+  session (titre = nom + `[projet]`, date de début, relations/ID externe/projets si mappés).
+- `sessionPropertiesForUpdate({endTime, comment, pauseMin}, f)` : propriétés de clôture (date de fin, commentaire,
+  minutes de pause si > 0).
+- `sessionFromPage(page, f)` : page → **Session** (`pageId, name, startTime, endTime, pauseMin`) pour l'affichage
+  des récents et les totaux.
+- `extractProject` / `titleWithProject` : gestion de la convention `Nom [Projet]`.
 
-Base URL : `https://api.notion.com/v1`. En-têtes communs :
+### `core/storage.js` — accès typé `chrome.storage.local`
 
-```
-Authorization: Bearer <notionToken>
-Notion-Version: 2022-06-28
-Content-Type: application/json   (pour POST/PATCH)
-```
+Encapsule la persistance : `getConfig`/`saveConfig`, `getCurrentSession`/`setCurrentSession`/`clearCurrentSession`,
+`getTaskHistory`/`pushTaskHistory` (**LRU** : dédoublonne, préfixe, tronque à 20). Seul module qui touche
+directement `chrome.storage.local` côté UI.
 
-### 4.1 Endpoints utilisés
+### `background/service-worker.js` — badge + notifications
 
-| # | Méthode & endpoint | Utilisé par | Rôle |
-|---|--------------------|-------------|------|
-| 1 | `GET /users/me` | `config.js`, `popup.js` | Tester la validité du token |
-| 2 | `POST /search` (`filter.value="database"`) | `config.js` | Lister les bases partagées |
-| 3 | `GET /databases/{id}` | `config.js` | Récupérer le schéma (propriétés) de la base temps |
-| 4 | `POST /databases/{id}/query` | `popup.js`, `config.js` | Charger tâches, sessions récentes, stats |
-| 5 | `GET /pages/{id}` | `popup.js` | Charger une tâche favorite manquante |
-| 6 | `POST /pages` | `popup.js` | **Créer** une session (au démarrage / saisie manuelle) |
-| 7 | `PATCH /pages/{id}` | `popup.js` | **Mettre à jour** une session (fin, commentaire, pause) |
+- **Badge** : `setBadge(state)` affiche 🟢 (running) / ⏸️ (paused) / vide (idle). Mis à jour sur messages du popup
+  (`onMessage`) **et** au tick (source de vérité = `currentSession`).
+- **`chrome.alarms`** : une alarme `tick` toutes les 1 min (créée à l'install). `onAlarm` recalcule le badge et
+  déclenche les notifications. Jamais de `setInterval` dans le SW (non fiable en MV3).
+- **Notifications** (avec flags anti-répétition persistés) : timer long (≥ 3 h), fin de journée (17 h 45 si timer
+  actif, avec boutons), objectif quotidien atteint (≥ 8 h cumulées via `getTodayTotalMs`, qui somme les sessions du
+  jour avec `queryAll` + `workedMs`).
+- `loadFlags`/`saveFlags` + `resetDailyFlagsIfNeeded` : les flags vivent dans `chrome.storage.local` car le SW MV3
+  est recyclé (la mémoire ne survit pas). Reset des flags quotidiens au changement de `dayStamp`.
+- Clic notification → `chrome.action.openPopup()`.
 
-> Les IDs de base sont normalisés via `.replace(/-/g, '')` (retrait des tirets) avant certains appels.
+### `popup/popup.js` — bootstrap du popup
 
-### 4.2 Chargement des tâches (base « Tâches »)
+`main()` : si la config est incomplète (token / bases manquants) → ouvre la config **en onglet** (`chrome.tabs.create`)
+et ferme le popup. Sinon applique le thème, câble le bouton thème + config, gère la **navigation par onglets**
+(Timer / Stats), puis `initTimer(config)`.
 
-Requête `POST /databases/{gdrDatabaseId}/query` :
+### `popup/timer.js` — état partagé + chargement des tâches
 
-```js
-{
-  filter: { property: 'EtatL', status: { does_not_equal: 'clos' } },
-  sorts:  [{ property: 'Dernière modification', direction: 'descending' }],
-  page_size: 20   // ou 100 si recherche (avec pagination via start_cursor)
-}
-```
+- Objet **`T`** : état partagé de l'onglet Timer (config, tokens, mappings, `tasks`, `history`, `selectedTaskId`,
+  `session`).
+- `buildTasksFilter` : filtre Notion d'exclusion de statuts, **multi-valeurs** séparées par `;` (→ `and` de
+  `does_not_equal`). `buildTasksSorts` : tri par la propriété configurée.
+- `sortTasks` : place les tâches récentes (ordre `taskHistory`) en tête, le reste trié alphabétiquement (FR), dédoublonné.
+- `loadLightTasks` (20 tâches au démarrage) vs `loadAllTasks` (pagination complète, déclenchée à la 1ʳᵉ recherche).
+- `ensurePinnedTasks` : charge à l'unité (`getPage`) les tâches épinglées (favoris + congés) absentes de la liste.
+- `initTimer(config)` : remplit l'état, câble la liste/recherche/boutons d'ouverture, puis délègue à
+  `wireActions` / `wireManual` / `wireRecent` via un objet `helpers` partagé.
 
-**Mapping d'une tâche** (propriétés attendues dans la base « Tâches ») :
+### `popup/timer-actions.js` — cycle de vie d'une session
 
-| Propriété Notion | Type | Champ interne |
-|------------------|------|---------------|
-| `Nom` | title | `name` |
-| `Projet_texte` | rich_text | `project` |
-| `#TaskID` | rich_text | `taskId` |
-| `TaskURL` | url | `taskUrl` |
-| `🎯 Projets` | relation | `projects[]` |
-| (id de page) | — | `notionUrl = notion.so/{id}` |
+- `onStart` : crée la page Notion (`createPage` + `sessionPropertiesForCreate`), persiste `currentSession`, pousse
+  l'historique, notifie le SW. **Garde anti double-clic** (bouton désactivé pendant l'appel).
+- `renderTick` + `startTick`/`stopTick` : rafraîchit l'affichage chaque seconde (durée travaillée en tenant compte
+  de la pause en cours). C'est un `setInterval` **côté popup** (autorisé, ≠ service worker).
+- `onTogglePause` : bascule pause/reprise, cumule `totalPauseDuration`, **plafond 1 h** de pause.
+- **`finishSession(endTime)`** : valide le commentaire si obligatoire, calcule les minutes de pause, `updatePage`
+  (date de fin + commentaire + pause). En cas d'échec réseau, **conserve** la session pour réessayer. Puis nettoie
+  l'état, notifie le SW, recharge les récents.
+- Modale « Arrêter à… » : `openStopAt`/`stopAtChosenDate`/`refreshStopDuration` — choix d'une heure de fin avec
+  aperçu de durée en direct (et blocage si fin < début). Confirme via `finishSession`.
+- À l'ouverture, restaure une éventuelle `currentSession` en cours (`enterRunning`).
 
-> ⚠️ Ces noms de propriétés de la base « Tâches » sont **codés en dur** (contrairement à la base
-> « Temps saisis » qui est mappée). Voir dette technique.
+### `popup/timer-manual.js` — saisie manuelle, congés, favoris
 
-### 4.3 Création d'une session (`POST /pages`)
+- `toggleManual(on)` : bascule le formulaire de saisie a posteriori (préremplit début/fin via
+  `roundToNearestFiveMinutes`), transforme le bouton principal en « ENREGISTRER », montre la boîte de favoris.
+- **`saveManualFor(taskId, sourceBtn)`** : crée **puis** clôture la ligne en un coup (`createPage` +
+  `updatePage`). **Garde anti double-enregistrement** (`saving`) + gel des boutons (`setSaving`, avec « ⏳ … » sur le
+  bouton source). Toast de confirmation via `showToast`.
+- `onManualSave` : variante depuis la tâche sélectionnée (bouton bleu). Les favoris appellent directement `saveManualFor`.
+- `onVacationToggle` : coche « congés » → sélectionne la tâche congés configurée et force le commentaire « En congés ».
+- `renderFavoriteButtons` : jusqu'à 8 boutons d'enregistrement rapide (libellé personnalisé, tronqué à 20 car.).
+- `manualByDefault` : ouvre directement en mode saisie manuelle si l'option est activée en config.
 
-`createTimePage(taskData, startTime)` construit dynamiquement l'objet `properties` selon le mapping :
+### `popup/timer-recent.js` — sessions récentes
 
-- **Toujours** : `taskName` (title, avec `[Projet]` accolé), `startDate` (date).
-- **Si mappé** : `gdrRelation` (relation vers la tâche), `taskId` (rich_text), `projects` (relation
-  multiple), `clickupUrl` (url).
-- `parent: { type: 'database_id', database_id: databaseId }`.
-- Retourne l'`id` de la page créée.
+`reloadRecent` : `queryAll` filtré depuis hier minuit, regroupe **Aujourd'hui / Hier**, affiche par session
+(nom, plage horaire, durée) avec total par jour et lien vers Notion. `wireRecent` délègue le lien au clic.
 
-### 4.4 Mise à jour d'une session (`PATCH /pages/{id}`)
+### `config/config.js` — page de configuration (onglet plein écran)
 
-`updateTimePage(pageId, endTime, comment, pauseMinutes)` :
+- `onTest` : valide le token (`testToken`). `onLoadDb` : liste les bases (`searchDatabases`) puis `loadSchemas`.
+- `loadSchemas` : charge les schémas des 2 bases et remplit les `<select>` de mapping, filtrés par **types
+  compatibles** (`TIME_TYPES` / `TASKS_TYPES`) et **auto-mappés** par nom connu (`AUTO_TIME` / `AUTO_TASKS`).
+- `loadTasksList` : peuple les sélecteurs de tâche congés et de favoris.
+- Favoris : `renderFavorites`/`wireFavorites` (ajout/suppression, **max 8**).
+- **`onSave`** : valide les champs obligatoires (Nom/Début/Fin, heures/semaine > 0), assemble l'objet `config`
+  complet (token, 2 bases mappées, `prefs`, thème) via `collectTimeFields`/`collectTasksFields`, `saveConfig`, puis
+  referme l'onglet.
+- Au chargement : applique le thème, repeuple depuis la config existante, et **charge automatiquement les bases** si
+  un token est déjà présent (plus de clic manuel).
 
-- **Toujours** : `endDate` (date).
-- **Si mappé + valeur** : `comment` (rich_text), `pause` (number, minutes).
+### `theme.js` — thème clair / sombre
 
-### 4.5 Récupération des sessions (récentes & stats)
+`applyStoredTheme` lit `config.theme` (défaut `dark`) et pose `data-theme` sur `<html>`. `toggleTheme` bascule et
+persiste. Partagé par le popup et la config.
 
-- **Sessions récentes** : filtre `startDate >= début d'hier`, tri descendant.
-- **Stats** : filtre `startDate` dans `[début, fin]` de la période, tri ascendant.
+## 5. Flux clés
 
----
+1. **Démarrer un chrono** : sélection tâche → `onStart` → `createPage` (début) → `currentSession` persistée → badge 🟢
+   → tick 1 s côté popup + notifications côté SW.
+2. **Arrêter** : `onStop` / modale « Arrêter à… » → `finishSession` → `updatePage` (fin + commentaire + pause) →
+   session nettoyée → badge vide → récents rechargés.
+3. **Saisie manuelle / favori** : `saveManualFor` → `createPage` + `updatePage` en une passe → toast.
+4. **Arrière-plan** : `tick` (1 min) → badge + notifications (timer long, fin de journée, objectif quotidien).
 
-## 5. Le service worker (`background.js`)
+## 6. Dette v1 corrigée (rappels)
 
-### 5.1 Responsabilités
-
-1. **Badge** de l'icône selon l'état (🟢 / ⏸️ / vide), piloté par messages du popup.
-2. **Notifications** planifiées via un `setInterval` de 60 s.
-3. Restauration de l'état au démarrage (`onStartup`) et gestion `onInstalled`.
-
-### 5.2 Communication popup → worker
-
-`chrome.runtime.sendMessage({ action })` avec `action ∈ { sessionStarted, sessionStopped, sessionPaused, sessionResumed }`.
-Le worker met à jour `activeSession` (en mémoire) et le badge.
-
-### 5.3 Polling (toutes les 60 s)
-
-Lit `currentSession` depuis le storage et évalue trois règles (ignorées si en pause) :
-
-| Constante | Valeur | Règle |
-|-----------|--------|-------|
-| `longTimerHours` | 3 | Notif si session ≥ 3 h (répétée toutes les 3 h via `lastLongTimerNotif`). |
-| `endOfDayHour/Minute` | 17:45 | Notif à l'heure exacte, avec boutons d'action. |
-| `dailyGoalHours` | 8 | Notif si total du jour ≥ 8 h (flag `dailyGoalNotified`, remis à 0 à minuit). |
-
-### 5.4 ⚠️ Dette technique majeure — ID codé en dur
-
-`getTodayTotalWorkTime()` interroge une base Notion via un **ID en dur** :
-
-```js
-fetch('https://api.notion.com/v1/databases/1fad0619270980b6b5e3f028e2002d00/query', …)
-```
-
-Cette base n'est **pas** celle configurée par l'utilisateur, et les noms de propriétés
-(`Début session`, `Fin session`) sont également en dur. Le calcul d'objectif quotidien ne fonctionne
-donc que pour l'instance d'origine. **À corriger impérativement en v2** (utiliser `notionMapping`).
-
----
-
-## 6. Le popup (`popup.js`) — organisation logique
-
-Fichier monolithique (~2060 lignes), organisé en sections :
-
-1. **Constantes & état global** : `notionToken`, `notionMapping`, `currentSession`, `tasks`,
-   `weeklyHours`, `vacationTaskId`, intervals de timer.
-2. **Références DOM** : ~60 `getElementById` en tête de fichier.
-3. **Initialisation** (`DOMContentLoaded`) : `loadConfig` → `loadTasks` → `loadFavorites` →
-   `loadCurrentSession` → `loadRecentSessions`.
-4. **Configuration** : `loadConfig`, `saveConfig` (dans le popup léger), `testNotionConnection`.
-5. **Tâches** : `loadTasks` (pagination + historique + favoris manquants), `populateTaskSelect`,
-   `filterTasks`, `getPageTitle`, `getProjectsRelation`.
-6. **Sessions** : `startSession`, `stopSession`, `stopSessionAt`, `togglePause`, `loadCurrentSession`.
-7. **Modale « Arrêter à »** : `openStopAtModal`, `updateRealDuration`, `closeStopAtModal`.
-8. **API Notion** : `createTimePage`, `updateTimePage`, `loadRecentSessions`, `fetchSessionsForPeriod`.
-9. **Timer** : `startTimer`/`stopTimer`/`updateTimerDisplay`, `startPauseTimer`/`updatePauseDisplay`
-   (via `setInterval` à 1 s).
-10. **Ouverture de tâches** : `openSelectedTask`, `openCurrentTask`, `openSessionTask`.
-11. **Onglets** : `switchTab`.
-12. **Statistiques** : `loadStats`, `getPeriodDates`, `fetchSessionsForPeriod`, `calculateStats`, `displayStats`.
-13. **Favoris** : `loadFavorites`, `saveFavoriteSession`, `selectFavoriteTask`, `updateFavoritesVisibility`.
-14. **Utilitaires** : `formatDuration`, `formatDateTimeLocal`, `roundToNearestFiveMinutes`,
-    `formatDate`, `showMessage`, gestion des sections/états.
-
-### 6.1 Gestion du temps & des pauses
-
-- Temps travaillé affiché = `(now − startTime) − totalPauseDuration`.
-- `formatDuration(ms)` → `HH:MM:SS` dans `popup.js` ; `HH:MM` dans `background.js` (deux versions !).
-- Rafraîchissement du chronomètre : `setInterval(updateTimerDisplay, 1000)`.
-
-### 6.2 Historique & tri des tâches
-
-`addToTaskHistory(taskId)` : place la tâche en tête, dédoublonne, limite à 20, persiste. Au chargement,
-`loadTasks` réordonne : tâches de l'historique d'abord (dans l'ordre), puis reste trié alphabétiquement.
-
-### 6.3 Cache des stats
-
-`statsCache` + `statsCacheTime`, validité **5 min** (`CACHE_DURATION`). Le bouton 🔄 invalide le cache.
-
-### 6.4 Calcul « hors période » (off-hours)
-
-Dans `calculateStats`, chaque session est parcourue **par tranches de 5 min** ; une tranche est
-« hors période » si week-end, ou en semaine avant 9 h / à partir de 18 h. Le cumul alimente
-l'affichage « (dont X h hors période) » et une seconde barre de progression.
-
----
-
-## 7. L'assistant (`config.js`) — organisation logique
-
-1. **`init`** : recharge la config existante, pré-remplit, charge les tâches GDR et les favoris.
-2. **`testConnection`** : `GET /users/me`, sauvegarde le token.
-3. **`loadDatabases`** : `POST /search`, affiche la liste **en double** (temps / tâches).
-4. **`selectDatabase(id, el, type)`** : gère les deux sélections (`time` / `gdr`).
-5. **`goToStep2`** : charge le schéma de la base temps + les tâches GDR, peuple les selects.
-6. **`populateFieldSelects`** : répartit chaque propriété dans le(s) select(s) compatible(s) selon son type.
-7. **`autoSelectFields`** : pré-sélection par nom connu.
-8. **`saveConfiguration`** : valide et persiste `notionMapping` + préférences, puis redirige vers `popup.html`.
-9. **Favoris** : `loadGdrTasks` (pagination complète), `renderFavorites`, `addFavorite` (max 6),
-   `populateVacationTaskSelect`.
-
----
-
-## 8. Flux de navigation entre écrans
-
-```
-Clic sur l'icône
-   └─ popup.html chargé
-        └─ popup-init.js : storage a notionToken ET notionMapping ?
-             ├─ NON → window.location = config.html  (assistant)
-             └─ OUI → affiche le tracker + bouton ⚙️ (reconfig → config.html)
-
-config.html (Enregistrer) → window.location = popup.html
-```
-
----
-
-## 9. Points de vigilance / limitations connues
-
-1. **ID de base codé en dur** dans `background.js` (cf. §5.4).
-2. **Noms de propriétés de la base « Tâches » codés en dur** (`EtatL`, `Dernière modification`,
-   `Nom`, `Projet_texte`, `#TaskID`, `TaskURL`, `🎯 Projets`) : non mappables.
-3. **`popup.js` monolithique** (~2060 lignes) : forte densité, pas de modules.
-4. **Deux implémentations de `formatDuration`** (formats différents popup/worker).
-5. **Pas de gestion de rafraîchissement du token** ni de pagination sur les stats (`query` sans
-   boucle `has_more` pour les sessions de période → risque de troncature au-delà de 100 sessions).
-6. **`chrome.action.openPopup()`** utilisé depuis le worker (support navigateur variable).
-7. **Aucun test automatisé**, aucune internationalisation (FR en dur).
-8. **Objectif mensuel** approximé (`jours × 5/7`), sans calendrier de jours ouvrés réel.
-
-Voir [`specification-v2.md`](specification-v2.md) pour les corrections proposées.
+- Dates Notion en **offset local** (`toNotionDate`), jamais `Z`.
+- **Zéro ID/nom en dur** : tout via `config.timeDb` / `config.tasksDb`.
+- Un seul `formatDuration` (paramétrable). **`chrome.alarms`** dans le SW (jamais `setInterval`).
+- **Backoff/retry sur 429** et normalisation des IDs selon les endpoints.

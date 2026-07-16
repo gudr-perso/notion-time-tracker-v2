@@ -1,6 +1,7 @@
-# Journal technique — Notion Time Tracker
+# Événements techniques — Notion Time Tracker
 
-> Mémoire des pièges rencontrés et **résolus**, pour ne pas re-déboguer deux fois la même chose.
+> Le **É** de la méthode AVEC. Mémoire des événements techniques marquants (pièges rencontrés et **résolus**,
+> décisions de contournement), pour ne pas re-déboguer deux fois la même chose.
 >
 > **Règle de rédaction** : une entrée ne mérite d'exister que si, en la relisant, mon futur moi
 > gagne du temps au lieu de re-déboguer. Message d'erreur **brut** obligatoire dans le champ Erreur
