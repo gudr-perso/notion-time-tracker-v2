@@ -53,6 +53,8 @@ bouton ⚙️ du popup.
 3. **Charger les bases** : liste les bases partagées avec l'intégration. Si un token est déjà enregistré, les bases
    sont **chargées automatiquement** à l'ouverture (plus besoin de cliquer).
 4. **Double sélection** : choisir la **base des temps saisis** (écriture) et la **base des tâches** (lecture).
+5. **Base Projets** (optionnelle) : sert de **cible aux relations « Projets »** lors de l'injection des champs
+   (voir §2.3). Peut rester vide.
 
 ### 2.2 Mapping des champs
 
@@ -72,9 +74,40 @@ compatible**, avec **auto-mapping** par nom connu (ex. « Nom », « Début sess
 (`number`), Commentaire (`rich_text`), URL application interne (`url`), Relation Tâches (`relation`).
 
 **Base des tâches :** Titre (`title`), Projet (`rich_text`), TaskID externe (`rich_text`), URL externe (`url`),
-Relation Projets (`relation`), propriété de tri, et **filtre de statuts** (voir §2.4).
+Relation Projets (`relation`), propriété de tri, et **filtre de statuts** (voir §2.5).
 
-### 2.3 Préférences
+### 2.3 Injection automatique des champs
+
+Plutôt que de créer à la main, côté Notion, toutes les propriétés attendues, deux boutons créent
+automatiquement les champs manquants dans chaque base :
+
+- **⚙️ Créer les champs manquants — base Temps**
+- **⚙️ Créer les champs manquants — base Tâches**
+
+**Marche à suivre :** créer côté Notion **deux bases vides** (Temps, Tâches), les partager **en écriture** avec
+l'intégration, les sélectionner ici, puis cliquer sur le bouton de chaque base.
+
+**Aperçu avant écriture.** Un clic n'écrit rien : il affiche d'abord la liste des propriétés qui **seront créées**
+(nom + type), signale les éventuels **conflits** (une propriété du même nom existe déjà mais avec un autre type —
+elle est alors **laissée intacte**) et les **relations sautées** faute de base cible. L'écriture n'a lieu qu'après
+**Confirmer**.
+
+**Après création**, le schéma est rechargé et le mapping **s'auto-remplit** sur les champs fraîchement créés ; il
+reste à cliquer **Enregistrer**.
+
+**Sûr et répétable.** L'injection est **additive** : elle ne crée que ce qui manque et ne **renomme, retype ni
+supprime jamais** une propriété existante. Re-cliquer quand tout est déjà en place n'a aucun effet.
+
+**Base Projets (optionnelle).** Les champs « 🎯 Projets » sont des **relations** : elles ont besoin d'une base
+cible. Sélectionner une **base Projets** existante (§2.1) pour que ces relations soient créées **dans les deux
+sens** ; sans base Projets, elles sont simplement sautées (le reste est créé normalement). Le lien « Tâches » de la
+base Temps pointe, lui, vers la base Tâches sélectionnée.
+
+**Filtre de statut : à créer à la main.** L'API Notion ne permet pas de créer une propriété de type *Status*. Créer
+(ou réutiliser) manuellement une propriété **Statut** dans la base Tâches, puis la mapper dans le filtre de statut
+(voir §2.5). De même, la **propriété de tri** se mappe sur une propriété existante — rien à injecter.
+
+### 2.4 Préférences
 
 - **Commentaire obligatoire à l'arrêt** : empêche d'arrêter (ou d'enregistrer) une session sans commentaire.
 - **Saisie manuelle par défaut** : le popup s'ouvre directement en mode saisie manuelle (oubli de timer).
@@ -86,7 +119,7 @@ Relation Projets (`relation`), propriété de tri, et **filtre de statuts** (voi
 Le bouton **Enregistrer** valide les champs obligatoires (Nom / Début / Fin) et l'objectif hebdo > 0, puis referme
 l'onglet de configuration.
 
-### 2.4 Filtre de statuts (base des tâches)
+### 2.5 Filtre de statuts (base des tâches)
 
 On peut exclure de la liste des tâches un ou plusieurs statuts (ex. tâches terminées). Plusieurs valeurs se
 séparent par `;` (ex. `termine;clos`) ; le type de propriété (`status` ou `select`) est détecté automatiquement.
