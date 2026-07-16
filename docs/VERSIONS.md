@@ -1,10 +1,36 @@
-# Changelog
+# Versions — historique des changements
 
-Toutes les évolutions notables de Notion Time Tracker.
+Toutes les évolutions notables de Notion Time Tracker (le **V** de la méthode AVEC).
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version = `manifest.json`.
 
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
+
+## [5.1.0] — 2026-07-16
+
+Liaison facilitée aux bases Notion : injection automatique des champs nécessaires.
+
+### Ajouté
+- **Config — boutons « Créer les champs manquants »** pour les bases Temps et Tâches : injection
+  automatique des propriétés Notion attendues (dates, texte, nombre, url, relations), avec les bons
+  types, en un clic après avoir créé les bases à vide côté Notion.
+- **Aperçu + confirmation** avant toute écriture : le bouton liste d'abord ce qui sera créé (et
+  signale les conflits de type / relations sautées), l'écriture n'a lieu qu'après validation.
+- **Sélecteur « Base Projets » (optionnel)** servant de cible aux relations Projets, persisté dans
+  `config.projetsDb`. Les relations sont créées **dans les deux sens** (`dual_property`).
+- Après injection, rechargement du schéma et **auto-mapping** des champs fraîchement créés.
+
+### Notes
+- Injection **additive et idempotente** : jamais de renommage, retype ou suppression d'une propriété
+  existante (un champ de même nom mais de type différent est signalé, pas modifié). Le schéma réel de
+  la base est relu à chaque injection pour garantir cette non-régression.
+- Le **filtre de statut** reste à créer manuellement (le type *Status* n'est pas créable via l'API
+  Notion) — un encart d'aide le rappelle dans la config.
+
+### Technique
+- Nouveau module pur testé `src/core/schema-injection.js` (`planInjection` + specs de champs).
+- Nouvelle fonction `addDatabaseProperties` dans `src/core/notion-api.js` (`PATCH /databases/{id}`,
+  message clair sur 403).
 
 ## [5.0.1] — 2026-07-15
 
@@ -48,7 +74,7 @@ Refonte de l'expérience Config + saisie manuelle, corrections de layout, thème
 
 ### Technique
 - Version passée de `2.0.0` à `5.0.0` (`manifest.json` + `package.json` + `package-lock.json`).
-- Mise en place du suivi documentaire : `docs/ETAT_PROJET.md`, `docs/JOURNAL.md`, ce `CHANGELOG.md`.
+- Mise en place du suivi documentaire (méthode AVEC) : `docs/AVANCEMENT.md`, `docs/EVENEMENTS.md`, ce `VERSIONS.md`.
 
 ## [4.9.4] et antérieur — socle initial
 

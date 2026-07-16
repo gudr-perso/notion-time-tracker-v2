@@ -1,9 +1,9 @@
 # Notion Time Tracker — État du projet & comment continuer
 
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
-> Dernière mise à jour : 2026-07-15.
+> Dernière mise à jour : 2026-07-16.
 
-**Version courante : `5.0.1`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/CHANGELOG.md`).
+**Version courante : `5.1.0`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -28,12 +28,19 @@ L'onglet **Stats** est **reporté**.
 
 ## Features / demandes — suivi
 
+### ✅ Faites (v5.1.0)
+- **Injection automatique des champs Notion** : deux boutons dans la config créent les propriétés
+  manquantes des bases Temps et Tâches (bons types, relations `dual_property`), avec aperçu +
+  confirmation, sélecteur « Base Projets » optionnel, et auto-mapping après coup. Additif/idempotent.
+  Nouveau module pur testé `core/schema-injection.js` + `addDatabaseProperties`. Détail : `docs/VERSIONS.md`.
+  Spec : `docs/superpowers/specs/2026-07-16-injection-champs-notion-design.md`.
+
 ### ✅ Faites (v5.0.1)
 - **Enregistrement rapide** : gel des boutons pendant la sauvegarde + « ⏳ … » sur le bouton déclencheur
   (favori cliqué **ou** bouton bleu « Enregistrer »), et **toast « ✅ Ligne créée dans Notion »** (favori et saisie manuelle).
 
 ### ✅ Faites (v5.0.0)
-Voir le détail dans `docs/CHANGELOG.md`. En résumé : config en onglet plein écran, popup 700 px,
+Voir le détail dans `docs/VERSIONS.md`. En résumé : config en onglet plein écran, popup 700 px,
 favoris 8 (4×2), filtre statuts multi-valeurs, saisie manuelle au fond clair + champs début/fin côte à côte,
 libellé commentaire adaptatif + validation, chargement auto des bases, param « Saisie manuelle par défaut »,
 corrections de layout (débordements, modale, largeur) et thème clair lisible.
@@ -43,7 +50,7 @@ corrections de layout (débordements, modale, largeur) et thème clair lisible.
   s'applique aussi à l'enregistrement rapide par favori (sauf congés, auto-commentés). À trancher si on veut lever
   cette contrainte pour les favoris.
 - **Hook de rappel des routines projet** : gardé **en réserve** (cf. « Automatisation » dans `CLAUDE.md`).
-  À activer seulement si je constate des oublis de mise à jour JOURNAL/CHANGELOG/ETAT_PROJET.
+  À activer seulement si je constate des oublis de mise à jour EVENEMENTS/VERSIONS/AVANCEMENT.
 - **Largeur popup ajustable** : 700 px choisi, ajustable si besoin (max 800 px pour un popup Chrome).
 
 ### ⬜ Tâches créées et non faites
@@ -79,6 +86,6 @@ Le cadrage complet est dans **`CLAUDE.md`**. Rappels clés :
 ## Git / remote
 
 - Remote : `https://github.com/gudr-perso/notion-time-tracker-v2.git`, branche `main`.
-- **Identité git locale** = `gudr-perso` (email noreply GitHub) — à reconfigurer sur nouveau clone (cf. `docs/JOURNAL.md`).
-- **Release** : bumper `manifest.json` + `package.json` + `package-lock.json`, mettre à jour `CHANGELOG.md` et la
+- **Identité git locale** = `gudr-perso` (email noreply GitHub) — à reconfigurer sur nouveau clone (cf. `docs/EVENEMENTS.md`).
+- **Release** : bumper `manifest.json` + `package.json` + `package-lock.json`, mettre à jour `VERSIONS.md` et la
   version reflétée ci-dessus, commit `release: vX.Y.Z`.

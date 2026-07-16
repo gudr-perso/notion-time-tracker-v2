@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Notion Time Tracker",
-  "version": "5.0.1",
+  "version": "5.1.0",
   "description": "Chronomètre de temps de travail synchronisé avec Notion.",
   "permissions": ["storage", "notifications", "alarms"],
   "host_permissions": ["https://api.notion.com/*"],
