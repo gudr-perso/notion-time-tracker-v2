@@ -10,6 +10,69 @@
 
 ---
 
+## 2026-07-17 — `[hidden]` sans effet : une déclaration `display:` d'auteur bat le navigateur
+
+- **Contexte** : v5.3.0, panneaux de choix couleur/picto dans la config. Ouverture/fermeture pilotées par
+  `pop.hidden = true/false`, et `.fav-pop { display:grid }` pour la grille de pastilles.
+- **Erreur** : pas de message — symptôme visuel. Les **16 panneaux** (8 favoris × 2) se seraient affichés
+  **ouverts en permanence**. « Un seul panneau à la fois », la fermeture au clic extérieur et Échap :
+  tous inopérants, tout le code de fermeture s'exécutait sans rien changer à l'écran.
+- **Hypothèse** : `hidden` s'implémente par une règle de la **feuille du navigateur**
+  (`[hidden] { display:none }`). Dans la cascade, l'origine prime sur la spécificité : toute déclaration
+  `display:` **d'auteur** l'emporte, même à spécificité (0,1,0). `pop.hidden = true` ne fait donc rien.
+- **Action** : `.fav-pop[hidden] { display:none; }`.
+- **Résultat** : les panneaux se ferment.
+- **Leçon** : **dès qu'une règle pose `display:` sur un élément piloté par `hidden`, ajouter la garde
+  `[hidden] { display:none }`**. C'était la **troisième** occurrence dans ce projet — `.modal-overlay[hidden]`
+  et `.toast[hidden]` (popup.css) portaient déjà la parade **et le commentaire qui l'explique**, relus le jour
+  même sans que le rapprochement se fasse. Le piège ne se voit pas à la relecture du JS : il est
+  entièrement dans le CSS. Suspecter aussi `.stats-custom` (v5.2.0), même forme.
+
+## 2026-07-17 — Favoris affichant tous « Favori » : rendu avant le chargement des tâches
+
+- **Contexte** : v5.3.0. Constaté en relisant `renderFavoriteButtons()`, pas signalé par un utilisateur —
+  le bug était **livré depuis la v5.0.0**.
+- **Erreur** : pas de message — chaque favori sans libellé personnalisé affichait « Favori » à vie, jamais
+  le nom de sa tâche Notion.
+- **Hypothèse** : dans `initTimer()`, `wireManual()` appelle `renderFavoriteButtons()` **avant**
+  `await loadLightTasks()`. `T.tasks` vaut donc `[]`, `T.tasks.find(...)` rend `undefined`, et le repli
+  `fav.customLabel || task?.name || 'Favori'` tombe sur la constante. La fonction n'étant jamais rappelée,
+  l'affichage restait faux définitivement.
+- **Action** : exposer le rendu via `helpers.renderFavorites` (comme `reloadRecent` le fait déjà) et le
+  rappeler après `await loadLightTasks()`. Rendu initial conservé pour que la boîte ne surgisse pas tard.
+- **Résultat** : les noms de tâches s'affichent.
+- **Leçon** : ce symptôme **masquait sa propre cause** — la même absence de tâches faisait aussi échouer le
+  clic sur un favori avec « Tâche du favori introuvable ». Dans ce popup, **tout ce qui lit `T.tasks` doit
+  être rappelé après `loadLightTasks()`, pas seulement câblé avant**. Famille de bugs à surveiller : cf. la
+  course `loadAllTasks` / `loadLightTasks` qui écrase `T.tasks` en laissant `allLoaded` à `true`.
+
+## 2026-07-17 — Deux pièges de palette : couleur en double, et un correctif qui aggrave
+
+- **Contexte** : v5.3.0, palette fermée de 10 couleurs, `nextFreeColor()` attribuant la première couleur
+  libre à un nouveau favori.
+- **Erreur** : pas de message. Deux symptômes distincts, tous deux trouvés en relecture.
+  ```
+  3 favoris d'avant la v5.3.0 affichent -> ['orange','orange','orange']
+  4e favori créé                        -> cyan
+  5e favori créé                        -> orange   <-- sosie des trois premiers
+  ```
+- **Hypothèse** : (1) `nextFreeColor` lisait la couleur **brute** (`f?.color`), alors qu'un favori d'avant
+  la v5.3.0 n'a pas de champ `color` mais **s'affiche** en orange via `normalizeFavorite`. Il réservait donc
+  `undefined` et orange restait « libre ». (2) Séparément, l'ambre clair `#d97706` tombait à **2,97:1** sur
+  le fond de carte (sous le 3:1 de WCAG 1.4.11) et dérivait de 11° de teinte **vers l'orange**, réduisant
+  l'écart orange/ambre à ΔE00 9,9 — la paire la plus proche de la palette.
+- **Action** : (1) `nextFreeColor` mappe désormais par `normalizeFavorite(f).color`. (2) Ambre clair passé à
+  `#a16207` — **et non `#b45309`**, le « cran suivant de la rampe » pourtant intuitif : mesuré, il tombait à
+  1,9° de l'orange (contre 8° avant) et *dégradait* ΔE00 à 9,59.
+- **Résultat** : plus de doublon ; ambre à 4,59:1 et ΔE00 15,84 de l'orange.
+- **Leçon** : deux leçons pour le prix d'une. **« Utilisé » doit vouloir dire « affiché »** : dès qu'une
+  normalisation existe, tout ce qui raisonne sur les valeurs doit passer par elle, jamais sur le brut.
+  Et **mesurer avant d'affirmer** : la palette était réputée « validée lisible » sans qu'aucun contraste
+  n'ait été calculé, et le correctif intuitif empirait le défaut qu'il prétendait réparer. Un test de
+  non-régression écrit dans la foulée passait d'ailleurs **au vert sur le code bugué** (`.not.toBe('orange')`
+  était satisfait par cyan, première couleur de la palette) : vérifier qu'un test échoue **avant** de
+  corriger n'est pas une formalité.
+
 ## 2026-07-15 — `npm test` échoue : vitest absent
 
 - **Contexte** : premier lancement des tests après synchronisation du repo (dossier local relié au remote).

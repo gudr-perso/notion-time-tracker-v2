@@ -155,9 +155,12 @@ Puis ajouter à la fin du fichier :
 
 ```js
 describe('FAV_COLORS', () => {
-  it('compte 10 couleurs, toutes distinctes', () => {
-    expect(FAV_COLORS).toHaveLength(10);
-    expect(new Set(FAV_COLORS).size).toBe(10);
+  it('compte 10 couleurs dont l’ordre et les clés font contrat', () => {
+    // Clé persistée dans chrome.storage et liée au CSS --fav-<clé> : la renommer ferait perdre
+    // sa couleur à chaque favori concerné. L'ordre pilote la grille de config et nextFreeColor.
+    expect(FAV_COLORS).toEqual([
+      'cyan', 'orange', 'green', 'amber', 'red', 'purple', 'pink', 'teal', 'lime', 'slate',
+    ]);
   });
 
   it('contient la couleur par défaut des favoris historiques', () => {
@@ -190,6 +193,10 @@ describe('normalizeFavorite', () => {
     expect(normalizeFavorite({ icon: 'toString' }).icon).toBe('none');
   });
 
+  it('rejette un picto qui n’est pas une chaîne', () => {
+    expect(normalizeFavorite({ icon: ['code'] }).icon).toBe('none');
+  });
+
   it('tolère undefined et rend un favori complet', () => {
     expect(normalizeFavorite(undefined)).toEqual({
       taskId: '', customLabel: '', color: 'orange', icon: 'none',
@@ -214,8 +221,27 @@ describe('nextFreeColor', () => {
   it('tolère undefined', () => {
     expect(nextFreeColor(undefined)).toBe(FAV_COLORS[0]);
   });
+
+  it('réserve la couleur affichée : un favori d’avant la v5.3.0 occupe orange', () => {
+    // Sans champ `color`, ce favori s'affiche pourtant en orange (cf. normalizeFavorite). Cyan
+    // étant déjà pris, orange serait le prochain candidat de la palette : il doit être sauté,
+    // sinon le nouveau favori serait le sosie de l'ancien.
+    const favs = [{ taskId: 'a' }, { taskId: 'b', color: 'cyan' }];
+    expect(nextFreeColor(favs)).toBe('green');
+  });
+
+  it('réserve la couleur affichée : une couleur invalide occupe le défaut', () => {
+    // Même raisonnement : 'chartreuse' n'existe pas dans la palette, ce favori s'affiche en orange.
+    const favs = [{ taskId: 'a', color: 'chartreuse' }, { taskId: 'b', color: 'cyan' }];
+    expect(nextFreeColor(favs)).toBe('green');
+  });
 });
 ```
+
+> ⚠️ Les deux derniers tests **doivent occuper cyan** pour mordre. Une première rédaction se contentait
+> de `expect(nextFreeColor([{ taskId: 'a' }])).not.toBe('orange')` : comme cyan est `FAV_COLORS[0]`, la
+> fonction **buguée** renvoyait déjà cyan et le test passait au vert sans rien prouver. En prenant cyan,
+> orange devient le candidat suivant et le saut est réellement vérifié.
 
 - [ ] **Step 2: Run test to verify it fails**
 
@@ -250,16 +276,25 @@ export function normalizeFavorite(fav) {
     taskId: f.taskId || '',
     customLabel: f.customLabel || '',
     color: FAV_COLORS.includes(f.color) ? f.color : DEFAULT_FAV_COLOR,
-    // hasOwn et pas `in` : sinon 'toString' passerait pour un picto valide.
-    icon: Object.hasOwn(FAV_ICONS, f.icon) ? f.icon : NO_ICON,
+    // hasOwn et pas `in` : sinon 'toString' passerait pour un picto valide. Le typeof évite
+    // qu'une valeur non-string (storage bricolé à la main) ressorte telle quelle par coercition.
+    icon: typeof f.icon === 'string' && Object.hasOwn(FAV_ICONS, f.icon) ? f.icon : NO_ICON,
   };
 }
 
 export function nextFreeColor(favorites) {
-  const used = new Set((favorites || []).map((f) => f?.color));
+  // La couleur *affichée* et non la couleur brute : un favori d'avant la v5.3.0 n'a pas de champ
+  // `color` mais s'affiche en orange — sans ça, orange ne serait jamais réservé et le prochain
+  // favori créé serait un sosie des anciens.
+  const used = new Set((favorites || []).map((f) => normalizeFavorite(f).color));
   return FAV_COLORS.find((c) => !used.has(c)) || FAV_COLORS[0];
 }
 ```
+
+> ⚠️ Ce `nextFreeColor` a d'abord été écrit en lisant `f?.color` directement. C'était un bug : chez un
+> utilisateur ayant déjà 3 favoris (sans champ `color`, donc affichés en orange), le 4ᵉ favori prenait
+> cyan et le **5ᵉ reprenait orange** — un sosie des trois premiers, exactement ce que la fonction doit
+> empêcher. Passer par `normalizeFavorite` fait coïncider « couleur utilisée » et « couleur affichée ».
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -371,12 +406,30 @@ Dans `src/popup/popup.css`, remplacer le bloc `:root[data-theme="light"]` par :
   --bg-deep:#f4f7ff; --bg-elev:#ffffff; --border:#d6ddf2; --border-soft:#b9c4e6;
   --text:#0b1533; --text-muted:#5a6a99; --cyan:#138fdb; --cyan-deep:#0d6fb0;
   --orange:#e05a00; --green:#059669; --red:#dc2626;
-  /* Mêmes clés, teintes assombries : c'est tout l'intérêt de stocker la clé et pas l'hexa. */
-  --fav-cyan:#138fdb; --fav-orange:#e05a00; --fav-green:#059669; --fav-amber:#d97706;
+  /* Mêmes clés, teintes assombries : c'est tout l'intérêt de stocker la clé et pas l'hexa.
+     --fav-amber n'est volontairement PAS amber-600 (#d97706) : mesuré à 2,97:1 sur le fond de
+     carte (sous le 3:1 requis) et à ΔE00 9,9 de l'orange, donc confondu avec lui. #a16207 tient
+     4,59:1 et ΔE00 15,8. Ne pas le « corriger » vers la rampe amber : c'est le bug. */
+  --fav-cyan:#138fdb; --fav-orange:#e05a00; --fav-green:#059669; --fav-amber:#a16207;
   --fav-red:#dc2626; --fav-purple:#7c3aed; --fav-pink:#db2777; --fav-teal:#0d9488;
-  --fav-lime:#65a30d; --fav-slate:#64748b;
+  --fav-lime:#4d7c0f; --fav-slate:#64748b;
 }
 ```
+
+> ⚠️ **Les valeurs claires d'ambre et de citron vert ont été corrigées après mesure.** La spec affirmait
+> « toutes validées lisibles » sans l'avoir vérifié. Contrôle fait : 20 rapports sur 20 passent le 3:1 contre
+> le fond des boutons, mais `#d97706` (ambre) et `#65a30d` (citron vert) tombaient à **2,97** et **2,88**
+> contre le fond de carte `#f6f7f9` visible entre les boutons. `#d97706` dérivait en outre de 11° de teinte
+> *vers l'orange*, écrasant l'écart orange/ambre à ΔE00 9,9 — la paire la plus proche de la palette claire.
+>
+> Premier correctif proposé : `#b45309` (cran suivant de la rampe amber). **Mesuré, il empirait le
+> problème** : 1,9° de teinte de l'orange au lieu de 8°, ΔE00 9,86 → 9,59. Retenu à la place `#a16207`
+> (yellow-700) : 4,59:1, ΔE00 15,84 de l'orange, et 7,8° de dérive depuis l'ambre sombre contre 17,3° pour
+> `#b45309`. L'argument « rester sur la même rampe Tailwind » ne tenait pas : `--fav-cyan` et `--fav-orange`
+> sont les couleurs maison du projet, la palette mélange déjà les sources.
+>
+> Citron vert : `#4d7c0f`, non contesté (4,66:1, aucun voisin proche). Le sombre était le plus confortable
+> de la palette (9,13 et 10,11) : **ne pas y toucher**.
 
 - [ ] **Step 3: Apply the same two blocks to config.css**
 

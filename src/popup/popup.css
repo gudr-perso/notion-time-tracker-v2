@@ -2,11 +2,22 @@
   --bg-deep:#030826; --bg-elev:#0a1870; --border:#1c2470; --border-soft:#3a4ba0;
   --text:#DDE3F0; --text-muted:#7D8AAD; --cyan:#2aa6e8; --cyan-deep:#138fdb;
   --orange:#f36100; --green:#34d399; --red:#f87171;
+  /* Palette des favoris — clé stockée côté données, teinte résolue ici (cf. core/fav-presets.js). */
+  --fav-cyan:#2aa6e8; --fav-orange:#f36100; --fav-green:#34d399; --fav-amber:#fbbf24;
+  --fav-red:#f87171; --fav-purple:#a78bfa; --fav-pink:#f472b6; --fav-teal:#2dd4bf;
+  --fav-lime:#a3e635; --fav-slate:#94a3b8;
 }
 :root[data-theme="light"] {
   --bg-deep:#f4f7ff; --bg-elev:#ffffff; --border:#d6ddf2; --border-soft:#b9c4e6;
   --text:#0b1533; --text-muted:#5a6a99; --cyan:#138fdb; --cyan-deep:#0d6fb0;
   --orange:#e05a00; --green:#059669; --red:#dc2626;
+  /* Mêmes clés, teintes assombries : c'est tout l'intérêt de stocker la clé et pas l'hexa.
+     --fav-amber n'est volontairement PAS amber-600 (#d97706) : mesuré à 2,97:1 sur le fond de
+     carte (sous le 3:1 requis) et à ΔE00 9,9 de l'orange, donc confondu avec lui. #a16207 tient
+     4,59:1 et ΔE00 15,8. Ne pas le « corriger » vers la rampe amber : c'est le bug. */
+  --fav-cyan:#138fdb; --fav-orange:#e05a00; --fav-green:#059669; --fav-amber:#a16207;
+  --fav-red:#dc2626; --fav-purple:#7c3aed; --fav-pink:#db2777; --fav-teal:#0d9488;
+  --fav-lime:#4d7c0f; --fav-slate:#64748b;
 }
 * { box-sizing:border-box; }
 /* Réserve en permanence la gouttière de scroll sur l'élément racine (le conteneur de
@@ -49,7 +60,14 @@ textarea.input { resize:vertical; min-height:56px; }
 .fav-title { color:var(--orange); font-weight:800; font-size:12px; margin-bottom:8px; }
 .manual-toggle.card-lite { margin-bottom:10px; }
 .fav-buttons { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
-.fav-buttons .btn { background:linear-gradient(180deg,var(--orange),#c94f00); color:#fff; }
+/* Liseret par ombre interne et non border-left : sur un bouton arrondi, la bordure
+   donne des extrémités biseautées, l'ombre interne épouse l'arrondi. */
+.fav-buttons .btn { display:flex; align-items:center; gap:7px; min-width:0; text-align:left;
+  padding:12px 12px 12px 14px; background:var(--bg-elev); color:var(--text);
+  border:1px solid var(--border); font-size:12px; font-weight:400;
+  box-shadow:inset 4px 0 0 var(--fav-color, var(--fav-orange)); }
+.fav-buttons .fav-ico { flex:0 0 auto; width:16px; height:16px; }
+.fav-buttons .fav-btn-label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .hint { color:var(--text-muted); font-size:12px; margin:8px 0 0; }
 .check-row { display:flex; align-items:center; gap:8px; font-size:13px; }
 /* Zone « saisie manuelle » (oubli de timer) : fond clair distinctif, comme la v1. */

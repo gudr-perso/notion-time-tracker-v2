@@ -2,11 +2,22 @@
   --bg-deep:#030826; --bg-elev:#0a1870; --border:#1c2470; --border-soft:#3a4ba0;
   --text:#DDE3F0; --text-muted:#7D8AAD; --cyan:#2aa6e8; --cyan-deep:#138fdb;
   --orange:#f36100; --green:#34d399; --red:#f87171;
+  /* Palette des favoris — clé stockée côté données, teinte résolue ici (cf. core/fav-presets.js). */
+  --fav-cyan:#2aa6e8; --fav-orange:#f36100; --fav-green:#34d399; --fav-amber:#fbbf24;
+  --fav-red:#f87171; --fav-purple:#a78bfa; --fav-pink:#f472b6; --fav-teal:#2dd4bf;
+  --fav-lime:#a3e635; --fav-slate:#94a3b8;
 }
 :root[data-theme="light"] {
   --bg-deep:#f4f7ff; --bg-elev:#ffffff; --border:#d6ddf2; --border-soft:#b9c4e6;
   --text:#0b1533; --text-muted:#5a6a99; --cyan:#138fdb; --cyan-deep:#0d6fb0;
   --orange:#e05a00; --green:#059669; --red:#dc2626;
+  /* Mêmes clés, teintes assombries : c'est tout l'intérêt de stocker la clé et pas l'hexa.
+     --fav-amber n'est volontairement PAS amber-600 (#d97706) : mesuré à 2,97:1 sur le fond de
+     carte (sous le 3:1 requis) et à ΔE00 9,9 de l'orange, donc confondu avec lui. #a16207 tient
+     4,59:1 et ΔE00 15,8. Ne pas le « corriger » vers la rampe amber : c'est le bug. */
+  --fav-cyan:#138fdb; --fav-orange:#e05a00; --fav-green:#059669; --fav-amber:#a16207;
+  --fav-red:#dc2626; --fav-purple:#7c3aed; --fav-pink:#db2777; --fav-teal:#0d9488;
+  --fav-lime:#4d7c0f; --fav-slate:#64748b;
 }
 * { box-sizing:border-box; }
 body { margin:0; font-family:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;
@@ -38,10 +49,44 @@ header { display:flex; align-items:center; gap:16px; margin-bottom:24px; }
 .status.ok { color:var(--green); } .status.err { color:var(--red); }
 .save-row { display:flex; align-items:center; gap:12px; justify-content:flex-end; padding:8px 0; }
 /* Rangée favori : grid strict pour ne jamais déborder de la carte
-   (select extensible → libellé fixe → bouton). */
-#fav-list .cell { display:grid; grid-template-columns:minmax(0, 1fr) 160px auto;
-  gap:10px; align-items:center; }
+   (select extensible → libellé fixe → couleur → picto → suppression). */
+#fav-list .cell { display:grid; grid-template-columns:minmax(0, 1fr) 160px auto auto auto;
+  gap:10px; align-items:center; margin-bottom:8px; }
 #fav-list .cell .input { flex:none; width:100%; }
+.fav-pick { position:relative; }
+.fav-trigger { display:flex; align-items:center; gap:6px; background:var(--bg-deep); color:var(--text);
+  border:1px solid var(--border-soft); border-radius:10px; padding:9px 10px; cursor:pointer; }
+.fav-trigger:focus-visible { outline:none; border-color:var(--cyan); box-shadow:0 0 0 3px rgba(42,166,232,.18); }
+.fav-dot { display:block; width:16px; height:16px; border-radius:4px; }
+.fav-trigger .fav-ico { width:18px; height:18px; }
+.fav-none { width:18px; text-align:center; color:var(--text-muted); }
+.fav-caret { color:var(--text-muted); font-size:11px; }
+/* Panneau vers le HAUT, et non vers le bas : la carte porte overflow:hidden (pour que le fond
+   de .card-head épouse les coins arrondis), et la ligne Favoris est la dernière de sa carte —
+   un panneau descendant serait découpé. Retirer l'overflow ne suffirait pas : il recouvrirait
+   alors le bouton Enregistrer. Vers le haut il reste dans la carte, où l'entête et les cinq
+   lignes de préférences laissent ~340px, de quoi loger les 126px du panneau des pictos (3
+   rangées de 30px + gouttières + padding). Le nombre de favoris ne change rien : ils
+   s'ajoutent vers le bas, la première ligne reste à hauteur constante. */
+.fav-pop { position:absolute; bottom:calc(100% + 6px); right:0; z-index:20; display:grid; gap:7px;
+  padding:10px; border:1px solid var(--border-soft); border-radius:12px; background:var(--bg-deep);
+  box-shadow:0 10px 30px rgba(0,0,0,.45); }
+/* Sans ça, le display:grid ci-dessus (déclaration d'auteur) l'emporte sur le [hidden] du
+   navigateur et TOUS les panneaux restent ouverts en permanence. Même piège que
+   .modal-overlay[hidden] et .toast[hidden] dans popup.css — troisième fois dans ce projet. */
+.fav-pop[hidden] { display:none; }
+.fav-pop-color { grid-template-columns:repeat(5, 26px); }
+.fav-pop-icon { grid-template-columns:repeat(8, 30px); }
+.fav-choice { padding:0; border:1px solid transparent; border-radius:7px; cursor:pointer; }
+.fav-swatch { width:26px; height:26px; }
+.fav-swatch.is-current { outline:2px solid var(--text); outline-offset:2px; }
+/* Après .is-current, à spécificité égale : sinon l'outline du choix courant écraserait
+   l'anneau de focus du navigateur et le clavier n'aurait aucun repère sur cette case. */
+.fav-choice:focus-visible { outline:2px solid var(--cyan); outline-offset:3px; }
+.fav-icon-cell { display:flex; align-items:center; justify-content:center; width:30px; height:30px;
+  background:var(--bg-elev); color:var(--text); border-color:var(--border); }
+.fav-icon-cell .fav-ico { width:17px; height:17px; }
+.fav-icon-cell.is-current { border-color:var(--cyan); }
 
 /* Thème clair : fonds de cartes/entêtes codés en dur repassés en clair pour la lisibilité
    (texte gris/bleu illisible sur l'ancien fond bleu foncé translucide). */

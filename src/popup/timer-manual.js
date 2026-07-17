@@ -2,6 +2,8 @@
 import { createPage, updatePage } from '../core/notion-api.js';
 import { sessionPropertiesForCreate, sessionPropertiesForUpdate } from '../core/mapping.js';
 import { roundToNearestFiveMinutes, formatDateTimeLocalValue } from '../core/time.js';
+import { normalizeFavorite } from '../core/fav-presets.js';
+import { favIconSvg } from '../fav-icon.js';
 
 const $ = (id) => document.getElementById(id);
 let T = null, helpers = null;
@@ -26,12 +28,14 @@ function showToast(msg) {
 function setSaving(on, sourceBtn) {
   $('btn-primary').disabled = on;
   document.querySelectorAll('#fav-buttons .btn').forEach((b) => { b.disabled = on; });
-  if (sourceBtn) {
-    if (on) { sourceBtn.dataset.label = sourceBtn.textContent; sourceBtn.textContent = '⏳ …'; }
-    else if (sourceBtn.dataset.label !== undefined) {
-      sourceBtn.textContent = sourceBtn.dataset.label;
-      delete sourceBtn.dataset.label;
-    }
+  if (!sourceBtn) return;
+  // Ne viser que le libellé : écraser le contenu du bouton effacerait le picto SVG.
+  // Repli sur le bouton lui-même pour « Enregistrer », qui n'a pas de libellé séparé.
+  const target = sourceBtn.querySelector('.fav-btn-label') || sourceBtn;
+  if (on) { target.dataset.label = target.textContent; target.textContent = '⏳ …'; }
+  else if (target.dataset.label !== undefined) {
+    target.textContent = target.dataset.label;
+    delete target.dataset.label;
   }
 }
 
@@ -64,14 +68,25 @@ function onVacationToggle(e) {
 }
 
 function renderFavoriteButtons() {
-  const favs = T.config.prefs?.favorites || [];
+  const favs = (T.config.prefs?.favorites || []).map(normalizeFavorite);
   $('fav-buttons').innerHTML = '';
   favs.forEach((fav) => {
     const task = T.tasks.find((t) => t.id === fav.taskId);
-    const label = (fav.customLabel || task?.name || 'Favori').slice(0, 20);
+    const label = fav.customLabel || task?.name || 'Favori';
     const btn = document.createElement('button');
     btn.className = 'btn';
-    btn.textContent = label;
+    // Un re-rendu pendant un enregistrement recréerait des boutons actifs : le clic serait
+    // avalé par la garde `saving` sans rien faire. On rejoue l'état plutôt que d'y renoncer.
+    btn.disabled = saving;
+    // La clé est garantie par normalizeFavorite : pas d'injection possible dans le var().
+    btn.style.setProperty('--fav-color', `var(--fav-${fav.color})`);
+    btn.title = label; // le libellé se tronque en CSS : l'infobulle rend la version entière
+    const ico = favIconSvg(fav.icon);
+    if (ico) btn.appendChild(ico);
+    const span = document.createElement('span');
+    span.className = 'fav-btn-label';
+    span.textContent = label;
+    btn.appendChild(span);
     btn.addEventListener('click', () => saveManualFor(fav.taskId, btn));
     $('fav-buttons').appendChild(btn);
   });
@@ -121,6 +136,9 @@ function resetManual() {
 export function wireManual(sharedT, sharedHelpers) {
   T = sharedT; helpers = sharedHelpers;
   helpers.onManualSave = onManualSave;
+  // Exposé pour un second rendu une fois T.tasks chargé : au premier passage la liste est
+  // encore vide, les libellés issus des noms de tâches sortiraient tous en « Favori ».
+  helpers.renderFavorites = renderFavoriteButtons;
   $('manual-comment-label').textContent = T.config.prefs?.requireComment
     ? 'COMMENTAIRE (OBLIGATOIRE)' : 'COMMENTAIRE (OPTIONNEL)';
   $('manual-mode').addEventListener('change', (e) => toggleManual(e.target.checked));

@@ -3,7 +3,7 @@
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
 > Dernière mise à jour : 2026-07-17.
 
-**Version courante : `5.2.0`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
+**Version courante : `5.3.0`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -21,12 +21,22 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Onglet Timer** (start/pause/stop, stop-at, saisie manuelle, congés, favoris, récents) | ✅ |
 | **Service worker** (badge + notifications via `chrome.alarms`) | ✅ |
 | **Thème clair / sombre** (bascule persistée) | ✅ |
-| **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`, `stats`) | ✅ **66 tests verts** |
+| **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`, `stats`, `fav-presets`, `fav-icons`) | ✅ **87 tests verts** |
 | **Onglet Stats** | ✅ v5.2.0 |
+| **Favoris : couleur + picto** | ✅ v5.3.0 |
 
-**Tests** : `npm test` → `66 passed (6 files)`.
+**Tests** : `npm test` → `87 passed (7 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.3.0)
+- **Couleur et picto par favori** : liseret de 4 px + picto blanc sur fond bleu, palette **fermée de 10 couleurs**
+  (mesurées : toutes ≥ 3:1 dans les deux thèmes) et **23 pictos** + « aucun », choisis dans la config. Aucune
+  migration — `normalizeFavorite` applique les défauts à la lecture. Modules purs `core/fav-icons.js`,
+  `core/fav-presets.js`, module partagé `src/fav-icon.js`. Détail : `docs/VERSIONS.md`.
+  Spec : `docs/superpowers/specs/2026-07-17-favoris-couleur-picto-design.md`.
+- **Corrigé en route** : les favoris affichaient « Favori » au lieu du nom de leur tâche (bug **livré depuis la
+  v5.0.0** — rendu avant le chargement des tâches). Cf. `docs/EVENEMENTS.md`.
 
 ### ✅ Faites (v5.2.0)
 - **Onglet Stats** : objectif hebdomadaire (anneau de progression travaillé/objectif), rythme quotidien
@@ -60,11 +70,19 @@ corrections de layout (débordements, modale, largeur) et thème clair lisible.
 - **Largeur popup ajustable** : 700 px choisi, ajustable si besoin (max 800 px pour un popup Chrome).
 
 ### ⬜ Tâches créées et non faites
-- (aucune pour l'instant)
+Deux **bugs pré-existants**, repérés en relisant le code pendant la v5.3.0, lancés en sessions séparées
+(2026-07-17). Aucun n'est corrigé par la v5.3.0 :
+- **Course `loadAllTasks` / `loadLightTasks`** (`popup/timer.js`) : si une recherche résout avant le chargement
+  initial, `loadLightTasks` écrase `T.tasks` avec les 20 tâches légères **alors que `allLoaded` reste à `true`** — la
+  liste complète est perdue et jamais rechargée. Même famille que le bug des libellés corrigé en v5.3.0.
+- **`.stats-custom` probablement visible en permanence** (`popup.css`) : `display:flex` sans garde `[hidden]`, le
+  piège consigné dans `EVENEMENTS.md` le 2026-07-17. **À reproduire avant de corriger.** La tâche demande aussi de
+  balayer tout le CSS à la recherche d'autres occurrences.
 
 ## Prochaine action
 
 1. Décider du point « favoris 1 clic vs commentaire obligatoire » ci-dessus.
+2. Suivre les deux bugs pré-existants ci-dessus.
 
 ## Carte du code
 
@@ -87,7 +105,7 @@ Le cadrage complet est dans **`CLAUDE.md`**. Rappels clés :
    (2026-07-17). Vérifier **dans les deux sens** si le local est en retard **ou en avance** sur le remote.
 2. Node.js requis (non fourni par la synchro). `npm install` (deps = Vitest en devDependency ; `node_modules/`
    git-ignored — il peut arriver par pCloud, mais reste inutilisable sans Node).
-3. `npm test` → doit afficher `66 passed`.
+3. `npm test` → doit afficher `87 passed`.
 4. **Charger l'extension** : `chrome://extensions` → mode développeur → « Charger l'extension non empaquetée »
    → sélectionner le **dossier racine** (celui du `manifest.json`). Recharger avec ↻ après chaque modif ;
    console du service worker via son lien dédié.

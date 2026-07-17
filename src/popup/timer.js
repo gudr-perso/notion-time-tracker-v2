@@ -118,12 +118,16 @@ export async function initTimer(config) {
 
   const helpers = {
     renderTaskOptions, currentTask, buildTasksFilter, buildTasksSorts,
-    reloadRecent: async () => {}, onManualSave: async () => {},
+    reloadRecent: async () => {}, onManualSave: async () => {}, renderFavorites: () => {},
   };
   wireActions(T, helpers);
   wireManual(T, helpers);
   wireRecent(T, helpers);
 
   await loadLightTasks();
+  // Re-rendu des favoris maintenant que T.tasks est peuplé (ensurePinnedTasks compris) : le
+  // rendu fait par wireManual tombait sur une liste vide. Avant reloadRecent, qui est un
+  // aller-retour réseau : inutile de laisser les libellés faux le temps d'une requête de plus.
+  helpers.renderFavorites();
   await helpers.reloadRecent();
 }
