@@ -223,7 +223,8 @@ l'onglet (pas au démarrage du popup), pour ne pas ralentir l'ouverture sur l'on
 ### 4.1 Choix de la période
 
 Quatre modes, en haut de l'onglet : **Jour**, **Semaine** (par défaut, Lundi → Dimanche), **Mois** (calendaire) et
-**Perso** (plage libre avec deux sélecteurs de date « du … au … » + bouton **OK**). Le libellé de la plage
+**Perso** (plage libre avec deux sélecteurs de date « du … au … » + bouton **OK**, qui **n'apparaissent qu'en mode
+Perso**). Le libellé de la plage
 affichée (ex. « 14 juil. – 20 juil. » ou « juillet 2026 ») s'affiche au centre, encadré de deux flèches
 **‹ précédent** / **suivant ›** qui décalent la période d'un jour, d'une semaine ou d'un mois (désactivées en
 mode Perso, qui se navigue via les sélecteurs de date).

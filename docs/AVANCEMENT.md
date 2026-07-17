@@ -3,7 +3,7 @@
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
 > Dernière mise à jour : 2026-07-17.
 
-**Version courante : `5.3.0`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
+**Version courante : `5.3.1`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -28,6 +28,13 @@ L'onglet **Stats** est **livré en v5.2.0**.
 **Tests** : `npm test` → `87 passed (7 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.3.1)
+- **Sélecteur de dates « Perso » affiché en permanence (onglet Stats)** — bug **livré depuis la v5.2.0**, corrigé :
+  `.stats-custom` posait `display:flex` sans garde `[hidden]`. **4ᵉ** occurrence du piège, celle que l'entrée
+  `EVENEMENTS.md` du 2026-07-17 invitait à « suspecter ». **Reproduit avant correction** (mesuré : 668 × 44 px
+  rendus alors que `hidden` était posé), puis **tout le CSS audité** empiriquement → **aucune autre occurrence
+  réelle**. Détail : `docs/VERSIONS.md`, méthode et pièges dormants : `docs/EVENEMENTS.md`.
 
 ### ✅ Faites (v5.3.0)
 - **Couleur et picto par favori** : liseret de 4 px + picto blanc sur fond bleu, palette **fermée de 10 couleurs**
@@ -68,21 +75,28 @@ corrections de layout (débordements, modale, largeur) et thème clair lisible.
 - **Hook de rappel des routines projet** : gardé **en réserve** (cf. « Automatisation » dans `CLAUDE.md`).
   À activer seulement si je constate des oublis de mise à jour EVENEMENTS/VERSIONS/AVANCEMENT.
 - **Largeur popup ajustable** : 700 px choisi, ajustable si besoin (max 800 px pour un popup Chrome).
+- **Garde-fou contre le piège `[hidden]`** : le piège a frappé **4 fois** (`.modal-overlay`, `.toast`, `.fav-pop`
+  en v5.3.0, `.stats-custom` en v5.3.1), dont deux fois **livré** jusqu'à l'utilisateur. L'audit de la v5.3.1 a
+  relevé **~26 éléments « dormants »** portant un `display` d'auteur (`.field`, `.btn-row`, `.seg`, `.row`,
+  `.cell`…) qui casseraient `hidden` le jour où on les masquerait. Idée : un test Vitest de **contrôle statique**
+  (zéro dépendance, simple lecture des `.css` / `.js`) échouant si une classe pilotée par `hidden` pose un
+  `display` sans garde. **Non tranché** : le socle testé est aujourd'hui `core/` (logique pure) uniquement —
+  étendre les tests à la CSS est un choix de cadrage à valider.
 
 ### ⬜ Tâches créées et non faites
-Deux **bugs pré-existants**, repérés en relisant le code pendant la v5.3.0, lancés en sessions séparées
-(2026-07-17). Aucun n'est corrigé par la v5.3.0 :
+**Bug pré-existant** repéré en relisant le code pendant la v5.3.0, lancé en session séparée (2026-07-17), non
+corrigé à ce jour :
 - **Course `loadAllTasks` / `loadLightTasks`** (`popup/timer.js`) : si une recherche résout avant le chargement
   initial, `loadLightTasks` écrase `T.tasks` avec les 20 tâches légères **alors que `allLoaded` reste à `true`** — la
   liste complète est perdue et jamais rechargée. Même famille que le bug des libellés corrigé en v5.3.0.
-- **`.stats-custom` probablement visible en permanence** (`popup.css`) : `display:flex` sans garde `[hidden]`, le
-  piège consigné dans `EVENEMENTS.md` le 2026-07-17. **À reproduire avant de corriger.** La tâche demande aussi de
-  balayer tout le CSS à la recherche d'autres occurrences.
+
+*(L'autre bug pré-existant, `.stats-custom`, est **corrigé en v5.3.1** — cf. plus haut.)*
 
 ## Prochaine action
 
 1. Décider du point « favoris 1 clic vs commentaire obligatoire » ci-dessus.
-2. Suivre les deux bugs pré-existants ci-dessus.
+2. Suivre le bug pré-existant restant (course `loadAllTasks` / `loadLightTasks`).
+3. Décider du garde-fou `[hidden]` (test de contrôle statique) — cf. « Idées non tranchées ».
 
 ## Carte du code
 
@@ -112,7 +126,9 @@ Le cadrage complet est dans **`CLAUDE.md`**. Rappels clés :
 
 ## Git / remote
 
-- Remote : `https://github.com/gudr-perso/notion-time-tracker-v2.git`, branche `main`. **v5.2.0 poussée** (2026-07-17).
+- Remote : `https://github.com/gudr-perso/notion-time-tracker-v2.git`, branche `main`. **v5.3.0 poussée** (2026-07-17).
+  ⚠️ **v5.3.1 committée sur la branche `claude/elastic-mccarthy-992eff`** : reste à **fusionner dans `main` puis à
+  pousser** — tant que ce n'est pas fait, le correctif ne vit que sur cette machine (cf. la règle ci-dessous).
 - **Identité git locale** = `gudr-perso` (email noreply GitHub) — à reconfigurer sur nouveau clone (cf. `docs/EVENEMENTS.md`).
 - **Pousser à chaque release** : pCloud sauvegarde les fichiers, **pas l'historique** — seul GitHub fait office de
   sauvegarde. Une version « livrée » mais non poussée meurt avec la machine (cf. `docs/EVENEMENTS.md` 2026-07-17).

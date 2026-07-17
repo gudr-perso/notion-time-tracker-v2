@@ -10,6 +10,44 @@
 
 ---
 
+## 2026-07-17 — `.stats-custom` : le soupçon confirmé, et tout le CSS audité pour solde de tout compte
+
+- **Contexte** : suite **directe** de l'entrée « `[hidden]` sans effet » ci-dessous (v5.3.0), qui se terminait par
+  « *Suspecter aussi `.stats-custom` (v5.2.0), même forme* ». Tâche ouverte en session séparée pour vérifier, avec
+  deux consignes : **reproduire avant de corriger**, puis **balayer tout le CSS** à la recherche d'autres cas.
+- **Erreur** : soupçon **fondé**. Mesuré dans le DOM, onglet Stats ouvert sur « Semaine » :
+  ```
+  #stats-custom : hidden=true → getComputedStyle(el).display === "flex"   (attendu : "none")
+                                getBoundingClientRect()   → 668 × 44 px    (donc bel et bien rendu)
+  ```
+  Les deux champs de date et le bouton OK s'affichaient donc en Jour/Semaine/Mois, où ils ne servent à rien.
+  Bug **livré depuis la v5.2.0**.
+- **Hypothèse** : identique à l'entrée ci-dessous, inutile de la redérouler — `.stats-custom { display:flex }`
+  (auteur) bat `[hidden] { display:none }` (navigateur), l'origine primant sur la spécificité.
+- **Action** :
+  1. **Reproduire sans recharger l'extension** : `popup.html` ouverte en `file://` dans le Browser pane, puis
+     simulation exacte du basculement d'onglet de `popup.js` (`$('tab-stats').hidden = false`).
+     ⚠️ **Ceci périme la leçon du 2026-07-15** (« pas de preview `file://` ») : le Browser pane **rend désormais
+     les `file://`**. `chrome.*` reste absent — le JS de l'extension ne tourne toujours pas — mais **la CSS, elle,
+     se teste très bien** en pilotant le DOM à la main. La cascade ne dépend pas du contexte : `file://` et
+     `chrome-extension://` rendent à l'identique.
+  2. Correctif `.stats-custom[hidden] { display:none; }` (v5.3.1), puis re-vérification **sur la base v5.3.0**
+     (la v5.3.0 avait modifié `popup.css` entre-temps).
+  3. **Audit empirique de tout le CSS**, et non à l'œil : un script force `hidden` sur **chaque** élément de
+     `popup.html` et `config.html` et relève ceux dont le `display` calculé ne retombe pas sur `none` ; croisé
+     avec `grep '\.hidden ='` dans `src/` pour ne garder que les éléments réellement pilotés.
+- **Résultat** : « Semaine » → `display:none`, non rendu ; « Perso » → `display:flex`, 668 × 44 px (pas de
+  régression). 87 tests verts (non-régression seulement : la CSS n'est pas dans le socle testé `core/`).
+  **Aucune autre occurrence réelle** — les 15 autres éléments pilotés par `hidden` retombent bien sur `none`.
+  En revanche **~26 éléments *non* pilotés** portent un `display` d'auteur (`.field`, `.btn-row`, `.seg`, `.days`,
+  `.row`, `.cell`…) : autant de **pièges dormants** le jour où l'un d'eux passerait sous `hidden`.
+- **Leçon** : deux choses. (1) Le soupçon laissé en fin d'entrée précédente valait un **vrai bug livré** —
+  l'écrire dans `EVENEMENTS.md` était utile, mais c'est **d'avoir ouvert la tâche dans la foulée** qui l'a fait
+  corriger ; un soupçon non transformé en tâche serait mort là. (2) Pour trancher ce piège, **ne pas relire le
+  CSS : le mesurer**. Poser `hidden` puis lire `getComputedStyle(el).display` tranche en deux secondes et sans
+  faux négatif — c'est cette bascule (relecture → mesure) qui autorise à écrire « aucune autre occurrence »
+  plutôt que « je n'en ai pas vu d'autre ».
+
 ## 2026-07-17 — `[hidden]` sans effet : une déclaration `display:` d'auteur bat le navigateur
 
 - **Contexte** : v5.3.0, panneaux de choix couleur/picto dans la config. Ouverture/fermeture pilotées par
@@ -27,6 +65,8 @@
   et `.toast[hidden]` (popup.css) portaient déjà la parade **et le commentaire qui l'explique**, relus le jour
   même sans que le rapprochement se fasse. Le piège ne se voit pas à la relecture du JS : il est
   entièrement dans le CSS. Suspecter aussi `.stats-custom` (v5.2.0), même forme.
+  > ✅ **Suivi (v5.3.1)** : soupçon **confirmé** — `.stats-custom` était bien une **4ᵉ** occurrence, livrée depuis
+  > la v5.2.0. Corrigée, et tout le CSS audité dans la foulée (aucune autre). Cf. l'entrée en tête de fichier.
 
 ## 2026-07-17 — Favoris affichant tous « Favori » : rendu avant le chargement des tâches
 
@@ -109,6 +149,10 @@
 - **Contexte** : à l'ouverture du popup, la modale stop-at s'affichait par-dessus l'état idle, alors que son HTML porte l'attribut `hidden`.
 - **Erreur** : symptôme visuel (modale visible d'emblée, boutons Démarrer masqués).
 - **Hypothèse** : `.modal-overlay { display:flex }` (spécificité de classe) **l'emporte** sur la règle navigateur `[hidden] { display:none }` (spécificité plus faible). L'attribut `hidden` était donc ignoré.
+  > ⚠️ **Rectifié le 2026-07-17** : l'explication par la **spécificité est fausse** — c'est l'**origine** dans la
+  > cascade (auteur > navigateur) qui tranche, la spécificité n'étant alors même pas consultée. Le correctif reste
+  > le bon, mais le raisonnement induit en erreur : il laisse croire qu'un sélecteur peu spécifique serait sans
+  > danger, alors que `div { display:flex }` casserait `hidden` tout autant. Cf. les entrées du 2026-07-17.
 - **Action** : ajouter `.modal-overlay[hidden] { display:none; }` (spécificité classe+attribut, qui regagne la main).
 - **Résultat** : modale masquée par défaut, visible seulement au clic « ARRÊTER À… ».
 - **Leçon** : tout `display` posé sur une **classe** casse l'attribut `hidden` sur les éléments concernés → toujours prévoir `.classe[hidden] { display:none }`.
@@ -134,6 +178,10 @@
 - **Action** : abandon de la preview par ce biais ; validation par **analyse CSS** puis rechargement de l'extension par l'utilisateur.
 - **Résultat** : corrections validées au rechargement.
 - **Leçon** : pas de preview `file://` dans le Browser pane, et une UI d'extension ne se teste pas hors contexte extension (`chrome.*` absent) → **recharger l'extension** dans `chrome://extensions`.
+  > ⚠️ **Périmé le 2026-07-17** : le Browser pane **rend maintenant les `file://`**. `chrome.*` reste absent, donc le
+  > JS de l'extension ne tourne pas — mais **la CSS se teste très bien** en pilotant le DOM à la main
+  > (`getComputedStyle`), ce qui a permis de reproduire le bug `.stats-custom` sans recharger l'extension.
+  > À retenir : « le JS ne tourne pas hors extension » **n'implique pas** « rien n'est testable hors extension ».
 
 ## 2026-07-15 — Commit refusé : identité git inconnue
 

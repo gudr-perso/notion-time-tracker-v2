@@ -280,6 +280,10 @@ et ferme le popup. Sinon applique le thème, câble le bouton thème + config, g
   contente de `refresh()`.
 - `currentRange()` : délègue à `periodRange` de `core/stats.js` pour Jour/Semaine/Mois ; construit la plage
   directement depuis les champs date en mode Perso.
+- **Sélecteur de plage perso** (`#stats-custom`) : affiché/masqué par `$('stats-custom').hidden = S.kind !== 'custom'`.
+  ⚠️ Comme `.fav-pop` en config, il porte une garde `.stats-custom[hidden]` — sans elle, son `display:flex` bat le
+  `[hidden]` du navigateur et le bloc reste visible en permanence (bug de la v5.2.0, corrigé en v5.3.1).
+  Cf. `EVENEMENTS.md` (2026-07-17).
 - **`fetchAggregate(range)`** : sert le cache si la plage a déjà été chargée, sinon interroge Notion avec
   `queryAll` filtré sur la propriété **date de début** mappée (`on_or_after`/`on_or_before` la plage, via
   `toNotionDate`), convertit chaque page en `Session` (`sessionFromPage`), puis appelle `aggregate` de

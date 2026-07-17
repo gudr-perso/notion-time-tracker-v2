@@ -6,6 +6,27 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.3.1] — 2026-07-17
+
+Correctif : le sélecteur de dates « Perso » de l'onglet Stats était affiché en permanence.
+
+### Corrigé
+- **Onglet Stats — le sélecteur de plage personnalisée restait visible** quelle que soit la période choisie
+  (bug présent depuis la **v5.2.0**) : `.stats-custom` posait `display:flex` **sans garde `[hidden]`**, or une
+  déclaration d'auteur bat la règle `[hidden] { display:none }` du navigateur. Les deux champs de date et le
+  bouton **OK** s'affichaient donc aussi en mode Jour / Semaine / Mois, où ils sont sans effet.
+  Correctif : `.stats-custom[hidden] { display:none; }`. Cf. `EVENEMENTS.md`.
+
+### Notes
+- **4ᵉ occurrence du même piège** (après `.modal-overlay`, `.toast` et `.fav-pop`), et celle que l'entrée
+  `EVENEMENTS.md` du 2026-07-17 invitait justement à « suspecter ». **Tout le CSS a été audité** à cette
+  occasion, empiriquement (chaque élément forcé en `hidden`, `display` calculé relevé) : **aucune autre
+  occurrence réelle**. Environ 26 éléments *non pilotés par `hidden`* portent un `display` d'auteur et
+  formeraient le même piège s'ils venaient à être masqués un jour — piste d'un garde-fou automatisé
+  consignée dans `AVANCEMENT.md`.
+- Aucun changement de comportement volontaire, aucune migration : la v5.3.1 ne fait que rétablir le
+  comportement déjà décrit dans la documentation fonctionnelle.
+
 ## [5.3.0] — 2026-07-17
 
 Favoris : une couleur et un picto par favori.

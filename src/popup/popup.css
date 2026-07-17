@@ -144,6 +144,8 @@ textarea.input { resize:vertical; min-height:56px; }
 .sm-arrow { background:var(--bg-elev); border:1px solid var(--border); color:var(--text); width:28px; height:28px; border-radius:6px; cursor:pointer; }
 .sm-arrow:disabled { opacity:.4; cursor:default; }
 .stats-custom { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+/* L'attribut [hidden] doit l'emporter sur le display:flex ci-dessus. */
+.stats-custom[hidden] { display:none; }
 .stats-custom .arrow { color:var(--text-muted); }
 .stats-state { padding:24px; text-align:center; color:var(--text-muted); }
 .stats-h { margin:0 0 10px; font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); }
