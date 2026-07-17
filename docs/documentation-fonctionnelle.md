@@ -113,7 +113,17 @@ base Temps pointe, lui, vers la base Tâches sélectionnée.
 - **Nom du bouton « application interne »** : libellé du bouton gris (défaut `CLICKUP`, max 20 car., majuscules).
 - **Heures hebdomadaires** : objectif de temps par semaine (défaut 39, décimales acceptées ; **doit être > 0**).
 - **Tâche congés** (optionnelle) : tâche utilisée pour marquer les congés.
-- **Favoris (jusqu'à 8)** : tâches à accès rapide, chacune avec un libellé de bouton personnalisable (max 20 car.).
+- **Favoris (jusqu'à 8)** : tâches à accès rapide. Chaque ligne réunit la **tâche** Notion, un **libellé** de bouton
+  personnalisable (max 20 car., facultatif — à défaut le nom de la tâche s'affiche), une **couleur** et un **picto**.
+  - **Couleur** : un clic sur la pastille ouvre une palette de **10 couleurs**. Elle est volontairement fermée :
+    chaque teinte est vérifiée lisible sur le fond des deux thèmes, aucun favori ne peut devenir invisible.
+  - **Picto** : un clic ouvre une grille de **23 pictos**, précédés de **« aucun »** (le défaut). Le picto s'affiche
+    toujours en blanc.
+  - Un **nouveau favori** naît avec la première couleur libre de la palette et sans picto : le créer vite n'impose
+    aucun choix. Les favoris **créés avant la v5.3.0** apparaissent en orange sans picto, soit exactement leur
+    apparence d'avant.
+  - Un seul panneau s'ouvre à la fois ; un clic à l'extérieur ou la touche **Échap** le referme. Comme partout
+    ailleurs dans cette page, rien n'est enregistré tant que le bouton **Enregistrer** n'est pas cliqué.
 
 Le bouton **Enregistrer** valide les champs obligatoires (Nom / Début / Fin) et l'objectif hebdo > 0, puis referme
 l'onglet de configuration.
@@ -187,9 +197,15 @@ se décoche), sélectionne cette tâche et préremplit le commentaire « En cong
 ### 3.9 Favoris (enregistrement rapide)
 
 Section **« ⭐ Enregistrement rapide »** (visible en mode saisie manuelle s'il existe des favoris) : jusqu'à **8**
-boutons (affichés en 4×2), chacun avec son libellé. Un clic **enregistre directement** une session sur la tâche du
-favori, avec la période saisie (début/fin/commentaire). Pendant l'appel Notion, tous les boutons se **gèlent** et le
-bouton cliqué affiche **« ⏳ … »** ; un **toast « ✅ Ligne créée dans Notion »** confirme la création.
+boutons (affichés en 4×2). Un clic **enregistre directement** une session sur la tâche du favori, avec la période
+saisie (début/fin/commentaire). Pendant l'appel Notion, tous les boutons se **gèlent** et le bouton cliqué affiche
+**« ⏳ … »** (son picto reste visible) ; un **toast « ✅ Ligne créée dans Notion »** confirme la création.
+
+Chaque bouton porte l'identité choisie en configuration (§2.4) : un **liseret de 4 px** à gauche dans la couleur du
+favori, son **picto** en blanc, puis son libellé. Le libellé est celui saisi en configuration ou, à défaut, le **nom
+de la tâche Notion** ; s'il est trop long, il se termine par `…` et le texte entier apparaît en **infobulle**. Les
+couleurs s'adaptent au thème : chaque teinte a une version claire et une version sombre, et le liseret suit la
+bascule ☀️/🌙 sans rechargement.
 
 ### 3.10 Sessions récentes
 

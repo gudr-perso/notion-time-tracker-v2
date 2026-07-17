@@ -72,6 +72,15 @@ des objets métier `Task` / `Session`. `core/*` n'importe aucune API Chrome (sau
 champs logiques de l'app et propriétés réelles Notion. Aucun ID ni nom de propriété n'est en dur. `config.projetsDb`
 (optionnel) mémorise la base cible des relations « Projets » pour l'injection des champs (voir `schema-injection.js`).
 
+`config.prefs.favorites` : `[{ taskId, customLabel, color, icon }]`, max 8. `color` et `icon` sont des **clés**
+(`'cyan'`, `'code'`, `'none'`), jamais des valeurs. Deux raisons : la teinte réelle vit en CSS (`--fav-<clé>`, un jeu
+par thème), ce qui laisse le thème clair assombrir toute la palette **sans toucher aux données** ; et une clé traverse
+`normalizeFavorite()` qui la valide contre une liste blanche, ce qui rend `var(--fav-${fav.color})` non détournable.
+**Aucune migration** n'accompagne l'arrivée de `color`/`icon` en v5.3.0 : `normalizeFavorite()` applique les défauts
+(`orange`, `none`) **à la lecture**, donc un favori d'avant la v5.3.0 s'affiche exactement comme avant.
+⚠️ Ces clés sont un **contrat de persistance** : en renommer une ferait perdre sa couleur ou son picto à chaque favori
+concerné, **sans erreur**. Deux tests les verrouillent nommément (`test/fav-presets.test.js`).
+
 ## 4. Modules et grandes fonctions
 
 ### `core/time.js` — temps, durées, dates (pur)
@@ -128,6 +137,35 @@ toucher à l'existant.
   **conflits de type** (même nom, type différent → **laissés intacts**), les relations **sautées** faute de base
   cible, et l'objet `properties` prêt pour `addDatabaseProperties`. **Additif et idempotent** : jamais de rename,
   retype ni suppression.
+
+### `core/fav-icons.js` — table des pictos des favoris (données pures)
+
+`FAV_ICONS` : table `clé → { label, paths }` des **23 pictos**. `paths` est un **tableau** d'attributs `d` SVG (de 1 à
+9 par picto : `beach` en a 5, `bug` 9), en `viewBox 0 0 24 24`, tracés en `stroke` sans remplissage. Données
+**régénérables** : tracés extraits des sources `outline` de [Tabler Icons](https://tabler.io/icons) (licence **MIT**,
+notice de permission reproduite intégralement en en-tête — un lien ne vaut pas notice). L'en-tête porte aussi la
+procédure de régénération et la correspondance des 3 clés qui divergent des noms Tabler (`file` → `file-text`,
+`chart` → `chart-bar`, `laptop` → `device-laptop`). **L'ordre des clés pilote la grille de la config.**
+
+### `core/fav-presets.js` — couleur et picto d'un favori (pur)
+
+- `FAV_COLORS` : les **10 clés** de couleur, **dans l'ordre** — il pilote la grille de config **et** l'attribution
+  automatique.
+- `FAV_COLOR_LABELS` : libellés FR (infobulles, lecteurs d'écran) — la clé stockée n'est pas du français.
+- `normalizeFavorite(fav)` → `{ taskId, customLabel, color, icon }` : applique les défauts, remplace toute clé
+  inconnue par le défaut. C'est **le** point qui dispense de migrer `chrome.storage`. Le garde du picto est
+  `typeof === 'string' && Object.hasOwn(...)` : `hasOwn` et non `in`, sinon `'toString'` passerait pour un picto.
+- `nextFreeColor(favorites)` : première couleur non utilisée, repli sur `FAV_COLORS[0]` si les 10 sont prises.
+  ⚠️ Compare la couleur **affichée** (`normalizeFavorite(f).color`) et non la couleur brute — un favori d'avant la
+  v5.3.0 n'a pas de champ `color` mais s'affiche en orange. Cf. `EVENEMENTS.md` (2026-07-17).
+
+### `fav-icon.js` — construction du picto SVG (partagé popup + config)
+
+`favIconSvg(key, className)` → un `<svg>` prêt à insérer, ou `null` si la clé ne désigne aucun picto (dont `'none'`,
+qui est une **absence** et n'est volontairement pas une clé de `FAV_ICONS`). Construit avec `createElementNS`, jamais
+`innerHTML`. Le picto hérite de la couleur du texte (`stroke="currentColor"`), ce qui évite au CSS de connaître le
+picto affiché. **Vit à la racine de `src/` et non dans `core/`** : il touche au DOM, que `core/` s'interdit — même
+place que `theme.js`, pour la même raison (partagé entre les deux pages).
 
 ### `core/storage.js` — accès typé `chrome.storage.local`
 
@@ -210,6 +248,16 @@ et ferme le popup. Sinon applique le thème, câble le bouton thème + config, g
   `updatePage`). **Garde anti double-enregistrement** (`saving`) + gel des boutons (`setSaving`, avec « ⏳ … » sur le
   bouton source). Toast de confirmation via `showToast`.
 - `onManualSave` : variante depuis la tâche sélectionnée (bouton bleu). Les favoris appellent directement `saveManualFor`.
+- **`renderFavoriteButtons()`** : construit les boutons depuis `config.prefs.favorites`, chacun normalisé par
+  `normalizeFavorite`. Pose la couleur via `btn.style.setProperty('--fav-color', 'var(--fav-<clé>)')` — une propriété
+  personnalisée dont la valeur est elle-même un `var()`, ce qui fait que le **basculement de thème repeint le liseret
+  sans une ligne de JS**. Le picto vient de `favIconSvg`, le libellé va dans un `<span class="fav-btn-label">` tronqué
+  par CSS, le texte entier dans `title`.
+  ⚠️ Exposée via **`helpers.renderFavorites`** et **rappelée après `loadLightTasks()`** : câblée seule dans
+  `wireManual`, elle s'exécute avant que `T.tasks` n'existe et tout favori sans libellé affiche « Favori ». Cf.
+  `EVENEMENTS.md` (2026-07-17).
+- `setSaving(on, sourceBtn)` : ne remplace que le **`.fav-btn-label`** (repli sur le bouton pour « Enregistrer », qui
+  n'a pas de libellé séparé) — écraser le `textContent` du bouton effacerait le picto SVG.
 - `onVacationToggle` : coche « congés » → sélectionne la tâche congés configurée et force le commentaire « En congés ».
 - `renderFavoriteButtons` : jusqu'à 8 boutons d'enregistrement rapide (libellé personnalisé, tronqué à 20 car.).
 - `manualByDefault` : ouvre directement en mode saisie manuelle si l'option est activée en config.
@@ -259,7 +307,17 @@ et ferme le popup. Sinon applique le thème, câble le bouton thème + config, g
   schéma et de re-mapper. Le bouton est désactivé pendant les appels (anti-double-clic). `injectTargets` fournit les
   cibles de relation (`tasksDbId`, `projetsDbId`).
 - `loadTasksList` : peuple les sélecteurs de tâche congés et de favoris.
-- Favoris : `renderFavorites`/`wireFavorites` (ajout/suppression, **max 8**).
+- **Favoris** : `renderFavorites` reconstruit la liste depuis `state.favorites` (ajout/suppression, **max 8**), chaque
+  ligne portant tâche, libellé, et deux cellules `pickCell(i, fav, kind)` — un bouton déclencheur (aperçu de l'état)
+  plus son panneau, `colorPop` (10 pastilles) ou `iconPop` (« aucun » + 23 pictos).
+  `wireFavorites` délègue **un seul** écouteur de clic sur `#fav-list` (via `closest()`, car le clic atterrit souvent
+  sur le `<svg>` ou la pastille interne), plus deux écouteurs `document` pour la fermeture au clic extérieur et à
+  Échap. `togglePopover`/`closePopovers` garantissent **un seul panneau ouvert**. Choisir écrit dans
+  `state.favorites[i]` puis **re-rend toute la liste** : l'état circule dans un seul sens (state → DOM), et le
+  re-rendu rafraîchit l'aperçu et referme le panneau d'un même geste. Un nouveau favori prend `nextFreeColor`.
+  ⚠️ Deux pièges de rendu documentés dans le CSS : les panneaux s'ouvrent **vers le haut** (`.card` porte
+  `overflow:hidden`, la ligne Favoris est la dernière de sa carte) et portent une garde `.fav-pop[hidden]`
+  (sans elle, `display:grid` bat le `[hidden]` du navigateur). Cf. `EVENEMENTS.md` (2026-07-17).
 - **`onSave`** : valide les champs obligatoires (Nom/Début/Fin, heures/semaine > 0), assemble l'objet `config`
   complet (token, 2 bases mappées, **base Projets** si choisie, `prefs`, thème) via `collectTimeFields`/
   `collectTasksFields`, `saveConfig`, puis referme l'onglet.

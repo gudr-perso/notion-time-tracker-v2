@@ -6,6 +6,38 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.3.0] — 2026-07-17
+
+Favoris : une couleur et un picto par favori.
+
+### Ajouté
+- **Couleur et picto par favori**, choisis dans la page de configuration : une palette **fermée de 10
+  couleurs** et **23 pictos** (ou aucun). Deux boutons compacts par ligne de favori ouvrent leur panneau.
+- **Libellés FR des couleurs** (`FAV_COLOR_LABELS`) pour les infobulles et les lecteurs d'écran.
+- Modules purs testés `core/fav-icons.js` (table des 23 pictos) et `core/fav-presets.js` (palette,
+  normalisation, attribution automatique de la première couleur libre).
+- Module partagé `src/fav-icon.js` : construction du picto SVG, pour le popup et la config.
+
+### Modifié
+- **Boutons favoris** : l'aplat orange laisse place au fond bleu élevé, avec un **liseret de 4 px** dans la
+  couleur du favori et le picto en blanc. Libellé en 12 px sans gras, tronqué en `…` avec le texte entier
+  en infobulle — au lieu d'être coupé à 20 caractères en JS.
+
+### Corrigé
+- **Les favoris affichaient « Favori » au lieu du nom de leur tâche** (bug présent depuis la v5.0.0) :
+  `renderFavoriteButtons()` s'exécutait avant que la liste des tâches ne soit chargée. Cf. `EVENEMENTS.md`.
+- L'affichage de « ⏳ … » pendant un enregistrement n'efface plus le picto du bouton.
+- Le picto ne disparaît plus si un re-rendu survient pendant un enregistrement (état désactivé rejoué).
+
+### Notes
+- **Aucune migration** : les favoris existants prennent `orange` et aucun picto **à la lecture**
+  (`normalizeFavorite`), et retrouvent donc exactement leur apparence d'avant.
+- Tracés des pictos repris de [Tabler Icons](https://tabler.io/icons) (licence MIT, notice reproduite dans
+  `core/fav-icons.js`).
+- Palette **mesurée** et non supposée : les 10 teintes passent le 3:1 (WCAG 1.4.11) dans les deux thèmes.
+- Trois pièges de conception consignés dans `EVENEMENTS.md` (couleur en double, ambre confondu avec
+  l'orange, `[hidden]` battu par `display:grid`).
+
 ## [5.2.0] — 2026-07-16
 
 Onglet Stats : tableau de bord du temps travaillé.

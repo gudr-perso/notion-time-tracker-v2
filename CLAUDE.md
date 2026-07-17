@@ -124,11 +124,14 @@ src/
     timer-manual.js              saisie manuelle, congés, favoris (enregistrement rapide)
     timer-recent.js              sessions récentes
   config/  config.html/.css/.js  page de config (onglet plein écran)
-  core/                          logique pure, testée (sans API Chrome)
+  core/                          logique pure, testée (sans API Chrome ni DOM)
     notion-api.js                fetch, pagination has_more, retry 429, normId
     mapping.js                   Page Notion ⇄ Task / Session
     time.js                      durées, arrondis, toNotionDate (offset local)
     storage.js                   accès typé chrome.storage.local
+    fav-icons.js                 table des 23 pictos (données, tracés Tabler/MIT)
+    fav-presets.js               palette 10 couleurs, normalizeFavorite, nextFreeColor
+  fav-icon.js                    favIconSvg() — picto SVG, partagé popup + config (DOM ⇒ hors core/)
   theme.js
 test/      *.test.js (Vitest)
 docs/      AVANCEMENT.md · VERSIONS.md · EVENEMENTS.md (méthode AVEC) · MEMO-suivi-projet.md
