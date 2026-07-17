@@ -80,6 +80,9 @@ header { display:flex; align-items:center; gap:16px; margin-bottom:24px; }
 .fav-choice { padding:0; border:1px solid transparent; border-radius:7px; cursor:pointer; }
 .fav-swatch { width:26px; height:26px; }
 .fav-swatch.is-current { outline:2px solid var(--text); outline-offset:2px; }
+/* Après .is-current, à spécificité égale : sinon l'outline du choix courant écraserait
+   l'anneau de focus du navigateur et le clavier n'aurait aucun repère sur cette case. */
+.fav-choice:focus-visible { outline:2px solid var(--cyan); outline-offset:3px; }
 .fav-icon-cell { display:flex; align-items:center; justify-content:center; width:30px; height:30px;
   background:var(--bg-elev); color:var(--text); border-color:var(--border); }
 .fav-icon-cell .fav-ico { width:17px; height:17px; }

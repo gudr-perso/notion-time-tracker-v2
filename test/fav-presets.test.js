@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { FAV_ICONS } from '../src/core/fav-icons.js';
 import {
-  FAV_COLORS, DEFAULT_FAV_COLOR, NO_ICON, normalizeFavorite, nextFreeColor,
+  FAV_COLORS, FAV_COLOR_LABELS, DEFAULT_FAV_COLOR, NO_ICON, normalizeFavorite, nextFreeColor,
 } from '../src/core/fav-presets.js';
 
 describe('FAV_ICONS', () => {
@@ -53,6 +53,13 @@ describe('FAV_COLORS', () => {
 
   it('contient la couleur par défaut des favoris historiques', () => {
     expect(FAV_COLORS).toContain(DEFAULT_FAV_COLOR);
+  });
+
+  it('a un libellé FR pour chaque couleur, sans doublon', () => {
+    // Une clé sans libellé ferait annoncer « slate » par le lecteur d'écran d'une page en français.
+    for (const c of FAV_COLORS) expect(FAV_COLOR_LABELS[c], c).toBeTruthy();
+    expect(Object.keys(FAV_COLOR_LABELS)).toHaveLength(FAV_COLORS.length);
+    expect(new Set(Object.values(FAV_COLOR_LABELS)).size).toBe(FAV_COLORS.length);
   });
 });
 

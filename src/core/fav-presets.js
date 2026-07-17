@@ -7,6 +7,13 @@ export const FAV_COLORS = [
   'cyan', 'orange', 'green', 'amber', 'red', 'purple', 'pink', 'teal', 'lime', 'slate',
 ];
 
+// Libellés FR, pour les lecteurs d'écran et les infobulles : la clé stockée ('slate', 'teal'…)
+// n'est pas du français et n'a pas à être lue à l'utilisateur.
+export const FAV_COLOR_LABELS = {
+  cyan: 'Cyan', orange: 'Orange', green: 'Vert', amber: 'Ambre', red: 'Rouge',
+  purple: 'Violet', pink: 'Rose', teal: 'Turquoise', lime: 'Citron vert', slate: 'Ardoise',
+};
+
 // Défaut des favoris créés avant la v5.3.0 : reproduit leur apparence orange d'origine.
 export const DEFAULT_FAV_COLOR = 'orange';
 export const NO_ICON = 'none';

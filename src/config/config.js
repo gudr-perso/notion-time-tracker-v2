@@ -4,7 +4,7 @@ import { getConfig, saveConfig } from '../core/storage.js';
 import { planInjection, FIELD_SPECS_TIME, FIELD_SPECS_TASKS } from '../core/schema-injection.js';
 import { taskFromPage } from '../core/mapping.js';
 import { applyStoredTheme, toggleTheme } from '../theme.js';
-import { FAV_COLORS, NO_ICON, normalizeFavorite, nextFreeColor } from '../core/fav-presets.js';
+import { FAV_COLORS, FAV_COLOR_LABELS, NO_ICON, normalizeFavorite, nextFreeColor } from '../core/fav-presets.js';
 import { FAV_ICONS } from '../core/fav-icons.js';
 import { favIconSvg } from '../fav-icon.js';
 
@@ -159,7 +159,8 @@ function colorPop(i, current) {
     b.dataset.value = c;
     b.dataset.i = String(i);
     b.style.background = `var(--fav-${c})`;
-    b.setAttribute('aria-label', c);
+    b.title = FAV_COLOR_LABELS[c];
+    b.setAttribute('aria-label', FAV_COLOR_LABELS[c]);
     pop.appendChild(b);
   }
   return pop;
