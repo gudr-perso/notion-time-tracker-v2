@@ -61,7 +61,12 @@ header { display:flex; align-items:center; gap:16px; margin-bottom:24px; }
 .fav-trigger .fav-ico { width:18px; height:18px; }
 .fav-none { width:18px; text-align:center; color:var(--text-muted); }
 .fav-caret { color:var(--text-muted); font-size:11px; }
-.fav-pop { position:absolute; top:calc(100% + 6px); right:0; z-index:20; display:grid; gap:7px;
+/* Panneau vers le HAUT, et non vers le bas : la carte porte overflow:hidden (pour que le fond
+   de .card-head épouse les coins arrondis), et la ligne Favoris est la dernière de sa carte —
+   un panneau descendant serait purement et simplement découpé. Vers le haut il reste dans la
+   carte, où les lignes de préférences laissent ~250px, largement de quoi loger les 126px du
+   panneau des pictos. Ne pas repasser en `top:` sans retirer l'overflow de .card. */
+.fav-pop { position:absolute; bottom:calc(100% + 6px); right:0; z-index:20; display:grid; gap:7px;
   padding:10px; border:1px solid var(--border-soft); border-radius:12px; background:var(--bg-deep);
   box-shadow:0 10px 30px rgba(0,0,0,.45); }
 .fav-pop-color { grid-template-columns:repeat(5, 26px); }
