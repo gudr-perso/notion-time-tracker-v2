@@ -6,6 +6,22 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.5.1] — 2026-07-17
+
+La zone « saisie manuelle » adopte le fond des cartes (comme les widgets Stats), souligné d'un liseré cyan.
+
+### Modifié
+- **Zone « saisie manuelle » harmonisée** : la coche *Saisie manuelle (oubli de timer)* et le bloc
+  début/fin/commentaire quittent leur **fond bleu clair** hérité de la v1 pour le **fond marine des cartes**
+  (identique aux widgets de l'onglet Stats), souligné d'un **liseré cyan** pour rester un repère distinctif.
+  Les champs, les labels et la coche « congés » suivent désormais le **thème** (clair/sombre) au lieu d'être
+  forcés en clair.
+- **Sélecteur de date natif** : `color-scheme` des champs `datetime-local` aligné sur le thème, pour que l'icône
+  du sélecteur reste lisible sur le nouveau fond sombre (invisible sinon).
+
+### Notes
+- Changement **CSS seul** (`src/popup/popup.css`) : aucun module `core/` touché, aucun test impacté (121 verts).
+
 ## [5.5.0] — 2026-07-17
 
 Filtre d'état : choix des statuts par cases à cocher, et les erreurs Notion s'affichent enfin dans le popup.

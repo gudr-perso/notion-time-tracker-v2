@@ -75,19 +75,22 @@ textarea.input { resize:vertical; min-height:56px; }
 .fav-buttons .fav-btn-label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .hint { color:var(--text-muted); font-size:12px; margin:8px 0 0; }
 .check-row { display:flex; align-items:center; gap:8px; font-size:13px; }
-/* Zone « saisie manuelle » (oubli de timer) : fond clair distinctif, comme la v1. */
-.manual-toggle.card-lite { background:linear-gradient(180deg,#eaf4ff,#dbeafe);
-  border-color:#bcd8f5; color:#0b1533; }
-#manual-fields { background:linear-gradient(180deg,#f4f9ff,#e5f0ff); border-color:#bcd8f5; padding:12px; }
+/* Zone « saisie manuelle » (oubli de timer) : fond des cartes (identique aux widgets
+   stats), souligné par un liseré cyan pour rester un repère distinctif. */
+.manual-toggle.card-lite { background:linear-gradient(180deg,rgba(10,24,112,.35),rgba(5,12,63,.35));
+  border:1.5px solid var(--cyan); color:var(--text); }
+#manual-fields { border:1.5px solid var(--cyan); padding:12px; }
+/* En thème clair, les cartes sont blanches : la coche suit (le liseré cyan reste le repère). */
+:root[data-theme="light"] .manual-toggle.card-lite { background:#ffffff; }
 /* Compactage du mode manuel : faire tenir les 6 favoris dans les 600px max du popup. */
 #manual-fields .field { margin-bottom:8px; }
 #manual-fields textarea.input { min-height:38px; }
-#manual-fields .field > label { color:var(--cyan-deep); }
-#manual-fields .input { background:#fff; color:#0b1533; border-color:#c3dcf6; color-scheme:light; }
-#manual-fields .input::placeholder { color:#8493b3; }
-#manual-fields .check-row { color:#0b1533; background:#fff; border:1px solid #c3dcf6;
-  border-radius:10px; padding:10px 12px; }
-#manual-fields .hint { color:#5a6a99; }
+/* Champs natifs (dates) : color-scheme aligné au thème pour garder le sélecteur lisible. */
+#manual-fields .input { color-scheme:dark; }
+:root[data-theme="light"] #manual-fields .input { color-scheme:light; }
+#manual-fields .input::placeholder { color:var(--text-muted); }
+#manual-fields .check-row { color:var(--text); background:var(--bg-deep);
+  border:1px solid var(--border); border-radius:10px; padding:10px 12px; }
 .timer-card { background:linear-gradient(180deg,#eaf4ff,#dbeafe); color:#0b1533; border-radius:16px; padding:20px; text-align:center; margin-bottom:14px; }
 .timer-label { font-size:12px; letter-spacing:.1em; color:var(--cyan-deep); font-weight:800; }
 .timer-display { font-size:46px; font-weight:800; letter-spacing:2px; }

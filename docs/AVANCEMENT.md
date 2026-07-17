@@ -3,7 +3,7 @@
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
 > Dernière mise à jour : 2026-07-17.
 
-**Version courante : `5.5.0`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
+**Version courante : `5.5.1`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -26,10 +26,18 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Favoris : couleur + picto** | ✅ v5.3.0 |
 | **Export / import de la config** | ✅ v5.4.0 |
 | **Filtre d'état : cases à cocher + erreurs Notion visibles** | ✅ v5.5.0 |
+| **Saisie manuelle sur fond marine + liseré cyan** | ✅ v5.5.1 |
 
 **Tests** : `npm test` → `121 passed (9 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.5.1)
+- **Zone « saisie manuelle » sur fond marine + liseré cyan** : la coche *Saisie manuelle (oubli de timer)* et le
+  bloc début/fin/commentaire abandonnent le fond bleu clair hérité de la v1 pour le **fond des cartes** (comme les
+  widgets Stats), avec un **liseré cyan** comme repère. Champs, labels et coche « congés » suivent désormais le
+  thème (clair/sombre) ; `color-scheme` des `datetime-local` aligné sur le thème pour garder le sélecteur natif
+  lisible sur fond sombre. **CSS seul** (`src/popup/popup.css`), aucun test impacté. Détail : `docs/VERSIONS.md`.
 
 ### ✅ Faites (v5.5.0)
 - **Filtre d'état par cases à cocher** : les statuts à exclure de la liste des tâches se cochent parmi les
