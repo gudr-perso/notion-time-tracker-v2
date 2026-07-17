@@ -85,7 +85,46 @@
       </section>
 
       <section id="tab-stats" class="tab-panel" hidden>
-        <div class="placeholder">📊 Statistiques — <em>Bientôt</em></div>
+        <div class="stats-bar">
+          <div class="seg" id="stats-seg">
+            <button type="button" data-kind="day">Jour</button>
+            <button type="button" data-kind="week" class="on">Semaine</button>
+            <button type="button" data-kind="month">Mois</button>
+            <button type="button" data-kind="custom">Perso</button>
+          </div>
+          <div class="stats-nav">
+            <button type="button" id="stats-prev" class="sm-arrow" title="Précédent">‹</button>
+            <span id="stats-range" class="stats-range"></span>
+            <button type="button" id="stats-next" class="sm-arrow" title="Suivant">›</button>
+          </div>
+        </div>
+        <div id="stats-custom" class="stats-custom" hidden>
+          <input type="date" id="stats-from" class="input" />
+          <span class="arrow">→</span>
+          <input type="date" id="stats-to" class="input" />
+          <button type="button" id="stats-apply" class="btn btn-grey">OK</button>
+        </div>
+
+        <div id="stats-loading" class="stats-state" hidden>Chargement…</div>
+        <div id="stats-error" class="stats-state" hidden></div>
+        <div id="stats-empty" class="stats-state" hidden>Aucune session sur cette période.</div>
+
+        <div id="stats-content" hidden>
+          <div class="card stats-obj">
+            <div class="ring" id="stats-ring">
+              <b><span id="stats-ring-worked" class="ring-big">—</span><span id="stats-ring-obj" class="ring-sub"></span></b>
+            </div>
+            <div class="obj-side" id="stats-obj-side"></div>
+          </div>
+          <div class="card">
+            <h4 class="stats-h">Rythme quotidien</h4>
+            <div class="days" id="stats-days"></div>
+          </div>
+          <div class="card">
+            <h4 class="stats-h">Par projet</h4>
+            <div id="stats-projects"></div>
+          </div>
+        </div>
       </section>
     </main>
 

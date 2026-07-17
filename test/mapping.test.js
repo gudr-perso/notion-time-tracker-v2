@@ -109,4 +109,24 @@ describe('sessionFromPage', () => {
     expect(s.pauseMin).toBe(30);
     expect(s.pageId).toBe('sess-1');
   });
+
+  it('expose les IDs de relation Tâches quand le champ est mappé', () => {
+    const page = {
+      id: 'p1',
+      properties: {
+        Nom: { title: [{ plain_text: 'Congés' }] },
+        Début: { date: { start: '2026-07-15T09:00:00+02:00' } },
+        Tâches: { relation: [{ id: 'aaa-bbb' }, { id: 'ccc' }] },
+      },
+    };
+    const f = { taskName: 'Nom', startDate: 'Début', tasksRelation: 'Tâches' };
+    const s = sessionFromPage(page, f);
+    expect(s.tasksRelIds).toEqual(['aaa-bbb', 'ccc']);
+  });
+
+  it('renvoie tasksRelIds = [] si le champ relation est absent/non mappé', () => {
+    const page = { id: 'p2', properties: { Nom: { title: [{ plain_text: 'X' }] } } };
+    const s = sessionFromPage(page, { taskName: 'Nom' });
+    expect(s.tasksRelIds).toEqual([]);
+  });
 });

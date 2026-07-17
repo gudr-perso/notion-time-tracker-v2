@@ -1,6 +1,6 @@
 # Documentation technique — Notion Time Tracker
 
-Version : `5.0.1` (source de vérité : `manifest.json`). Le **D-technique** du principe D² : décrit *comment
+Version : `5.2.0` (source de vérité : `manifest.json`). Le **D-technique** du principe D² : décrit *comment
 c'est fait*. Pour *ce que fait* l'app côté utilisateur, voir [`documentation-fonctionnelle.md`](documentation-fonctionnelle.md).
 
 ---
@@ -33,7 +33,8 @@ de config et le service worker. Les fichiers sont chargés tels quels (zéro tra
 │  │   ├─ timer.js            │       │  - badge 🟢/⏸️/vide     │  │
 │  │   ├─ timer-actions.js    │       │  - notifications        │  │
 │  │   ├─ timer-manual.js     │       │  - chrome.alarms (1 min)│  │
-│  │   └─ timer-recent.js     │       └────────────┬──────────┘  │
+│  │   ├─ timer-recent.js     │       └────────────┬──────────┘  │
+│  │   └─ stats.js (onglet 📊)│                    │             │
 │  │  config.html/.css/.js    │                    │             │
 │  │  theme.js                │                    │             │
 │  └───────────┬──────────────┘                    │             │
@@ -47,6 +48,7 @@ de config et le service worker. Les fichiers sont chargés tels quels (zéro tra
         ┌────────────────────────────────────────────────────┐
         │  core/ (logique pure, testée, sans API Chrome)      │
         │   notion-api.js · mapping.js · time.js · storage.js │
+        │   · stats.js                                        │
         └───────────────────────────┬────────────────────────┘
                                      │
                                      ▼
@@ -107,8 +109,9 @@ champs logiques de l'app et propriétés réelles Notion. Aucun ID ni nom de pro
   session (titre = nom + `[projet]`, date de début, relations/ID externe/projets si mappés).
 - `sessionPropertiesForUpdate({endTime, comment, pauseMin}, f)` : propriétés de clôture (date de fin, commentaire,
   minutes de pause si > 0).
-- `sessionFromPage(page, f)` : page → **Session** (`pageId, name, startTime, endTime, pauseMin`) pour l'affichage
-  des récents et les totaux.
+- `sessionFromPage(page, f)` : page → **Session** (`pageId, name, startTime, endTime, pauseMin, tasksRelIds`) pour
+  l'affichage des récents, les totaux et l'onglet Stats (`tasksRelIds` = IDs de la relation Tâches, utilisés par
+  `isVacationSession` de `core/stats.js` pour détecter les congés).
 - `extractProject` / `titleWithProject` : gestion de la convention `Nom [Projet]`.
 
 ### `core/schema-injection.js` — planification de l'injection des champs (pur)
@@ -131,6 +134,28 @@ toucher à l'existant.
 Encapsule la persistance : `getConfig`/`saveConfig`, `getCurrentSession`/`setCurrentSession`/`clearCurrentSession`,
 `getTaskHistory`/`pushTaskHistory` (**LRU** : dédoublonne, préfixe, tronque à 20). Seul module qui touche
 directement `chrome.storage.local` côté UI.
+
+### `core/stats.js` — agrégations statistiques (pur)
+
+- **`periodRange(kind, refDate)`** : bornes `{start, end, label}` d'une période autour de `refDate` selon
+  `kind` (`'day' | 'week' | 'month'`) — jour calendaire, semaine **Lundi → Dimanche**, mois calendaire — avec un
+  libellé FR (ex. « 14 juil. – 20 juil. », « juillet 2026 »). Le mode `'custom'` (plage libre) est géré côté UI
+  (`popup/stats.js`), pas ici.
+- **`weekdaysBetween(start, end)`** : nombre de jours **ouvrés** (Lundi → Vendredi inclus) entre deux dates.
+- **`dailyTargetHours(weeklyHours)`** : `weeklyHours / 5` (objectif journalier théorique, semaine de 5 jours ouvrés).
+- **`objectiveHours(weekdays, congeDays, weeklyHours)`** : objectif ajusté aux congés —
+  `max(0, (weekdays − congeDays) × weeklyHours / 5)`.
+- **`isVacationSession(session, {vacationTaskId, vacationName})`** : détecte une session de congés — priorité à
+  la relation Tâches (`session.tasksRelIds` contient l'ID de la tâche congés, IDs normalisés sans tirets), repli
+  sur l'égalité du nom (`session.name === vacationName`) si la relation n'est pas mappée ou vide.
+- **`aggregate(sessions, {start, end, isVacation, weeklyHours})`** : agrégation centrale de l'onglet Stats.
+  Amorce une entrée par jour de la plage (y compris week-ends, marqués `isWeekend`), puis pour chaque session :
+  si `isVacation(s)` la marque en congé (jour + compteur) et l'**exclut** du temps travaillé et des projets ;
+  sinon cumule `workedMs` (via `workedMs` de `time.js`), le total du jour, et le total du projet
+  (`extractProject(s.name)` de `mapping.js`). Retourne
+  `{ workedMs, objectiveMs, remainingMs, progress, congeDays, perDay[], perProject[] }` — `objectiveMs` via
+  `objectiveHours`, `remainingMs = max(0, objectiveMs − workedMs)`, `progress = workedMs / objectiveMs` (ou
+  `null` si aucun objectif), `perProject` trié par durée décroissante avec `ratio` (part du temps total).
 
 ### `background/service-worker.js` — badge + notifications
 
@@ -193,6 +218,33 @@ et ferme le popup. Sinon applique le thème, câble le bouton thème + config, g
 
 `reloadRecent` : `queryAll` filtré depuis hier minuit, regroupe **Aujourd'hui / Hier**, affiche par session
 (nom, plage horaire, durée) avec total par jour et lien vers Notion. `wireRecent` délègue le lien au clic.
+
+### `popup/stats.js` — onglet Stats (UI)
+
+- État module `S` : `kind` (`'day'|'week'|'month'|'custom'`), `ref` (date de référence pour le décalage
+  précédent/suivant), `custom` (plage `{from,to}` en mode Perso), `vacation` (`vacationTaskId`/`vacationName`
+  résolus), et un **cache mémoire** (`Map`, clé = `kind` + bornes de la plage) pour éviter de requêter Notion deux
+  fois la même plage pendant la session du popup.
+- **`initStats(config)`** : appelée **paresseusement**, au premier affichage de l'onglet (câblé dans
+  `popup/popup.js`, `if (tab.dataset.tab === 'stats') initStats(config)`), pas au démarrage du popup. Câble les
+  écouteurs une seule fois (`wireOnce`), résout la tâche congés (`loadVacationTask`, via `getPage` + repli sur le
+  nom si la relation Tâches n'est pas mappée), puis `refresh()`. Un second appel (ré-affichage de l'onglet) se
+  contente de `refresh()`.
+- `currentRange()` : délègue à `periodRange` de `core/stats.js` pour Jour/Semaine/Mois ; construit la plage
+  directement depuis les champs date en mode Perso.
+- **`fetchAggregate(range)`** : sert le cache si la plage a déjà été chargée, sinon interroge Notion avec
+  `queryAll` filtré sur la propriété **date de début** mappée (`on_or_after`/`on_or_before` la plage, via
+  `toNotionDate`), convertit chaque page en `Session` (`sessionFromPage`), puis appelle `aggregate` de
+  `core/stats.js` avec `isVacationSession` et les heures hebdo de la config. Met le résultat en cache.
+  `invalidateStats()` vide ce cache ; exportée pour permettre à un appelant de forcer un recalcul après
+  l'enregistrement d'une session (non câblée à ce jour — le cache ne vit que le temps d'ouverture du popup, donc
+  l'écart ne survit pas à une réouverture).
+- `renderObjective` / `renderDays` / `renderProjects` : rendu HTML de la carte objectif (anneau CSS piloté par
+  une variable `--p`, détail travaillé/objectif/reste/congés), des barres du rythme quotidien (hauteur
+  proportionnelle au jour le plus chargé, congés en doré, jour vide en gris), et du bilan par projet (barre de
+  proportion + durée + %).
+- `refresh()` : orchestre le cycle affichage → état (`stats-loading` / `stats-error` / `stats-empty` /
+  `stats-content`) selon le résultat de `fetchAggregate` (vide si `workedMs === 0 && congeDays === 0`).
 
 ### `config/config.js` — page de configuration (onglet plein écran)
 

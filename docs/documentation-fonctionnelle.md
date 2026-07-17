@@ -1,6 +1,6 @@
 # Documentation fonctionnelle — Notion Time Tracker
 
-Version : `5.0.1`. Le **D-fonctionnel** du principe D² : décrit **ce que fait** l'application, du point de vue de
+Version : `5.2.0`. Le **D-fonctionnel** du principe D² : décrit **ce que fait** l'application, du point de vue de
 l'utilisateur, fonctionnalité par fonctionnalité. Aucun code ; pour l'implémentation, voir
 [`documentation-technique.md`](documentation-technique.md).
 
@@ -12,9 +12,8 @@ l'utilisateur, fonctionnalité par fonctionnalité. Aucun code ; pour l'impléme
 
 L'extension est un **pointeur de temps de travail**. On lance un chronomètre en commençant à travailler sur une
 tâche, on l'arrête en ayant fini, et la session (tâche, début, fin, commentaire, pauses) est **écrite
-automatiquement dans une base Notion**. On peut aussi **saisir a posteriori** une session oubliée.
-
-> Un onglet **Stats** est prévu mais **non encore livré** en v5.0.1 (voir §4).
+automatiquement dans une base Notion**. On peut aussi **saisir a posteriori** une session oubliée. Un onglet
+**Stats** (voir §4) donne une vue d'ensemble du temps travaillé par période.
 
 ### 1.2 Les deux bases Notion
 
@@ -199,12 +198,54 @@ jour**. Chaque ligne : nom de tâche (tronqué), plage horaire `10:00 → 11:00`
 
 ---
 
-## 4. Onglet Stats — **reporté** (non livré en v5.0.1)
+## 4. Onglet Stats
 
-L'onglet **📊 Stats** existe dans l'interface mais affiche seulement un **placeholder « Bientôt »**. Les
-statistiques (totaux par période, objectif et progression, répartition par projet et par jour, prise en compte des
-congés) sont **prévues** mais **non implémentées** à ce stade. Cette brique mérite un cadrage dédié (voir
-`AVANCEMENT.md`).
+Écran : **`popup.html`**, onglet **📊 Stats**. Donne une vue d'ensemble du temps travaillé sur une période
+choisie : objectif hebdomadaire, rythme quotidien, répartition par projet. Chargé **au premier affichage** de
+l'onglet (pas au démarrage du popup), pour ne pas ralentir l'ouverture sur l'onglet Timer.
+
+### 4.1 Choix de la période
+
+Quatre modes, en haut de l'onglet : **Jour**, **Semaine** (par défaut, Lundi → Dimanche), **Mois** (calendaire) et
+**Perso** (plage libre avec deux sélecteurs de date « du … au … » + bouton **OK**). Le libellé de la plage
+affichée (ex. « 14 juil. – 20 juil. » ou « juillet 2026 ») s'affiche au centre, encadré de deux flèches
+**‹ précédent** / **suivant ›** qui décalent la période d'un jour, d'une semaine ou d'un mois (désactivées en
+mode Perso, qui se navigue via les sélecteurs de date).
+
+### 4.2 Carte objectif
+
+Un **anneau de progression** affiche le temps travaillé sur la période au centre, avec l'objectif en sous-texte
+(ou « sans objectif » si aucun objectif ne s'applique). À côté, le détail : **Objectif**, **Travaillé**,
+**Reste** (temps restant pour atteindre l'objectif, 0 si dépassé), et un badge **🌴 N j** si des jours de congé
+ont été pris sur la période (rien si aucun).
+
+### 4.3 Rythme quotidien
+
+Une barre par jour de la période, hauteur proportionnelle au temps travaillé ce jour-là (le jour le plus chargé
+sert de référence à 100 %). Un jour de congé s'affiche en **doré** avec l'icône 🌴 ; un jour sans aucune session
+s'affiche en **gris**, vide. Chaque barre porte la durée du jour (ou l'icône congés) au-dessus, et l'initiale du
+jour de la semaine (ou le quantième en mode Mois) en dessous.
+
+### 4.4 Bilan par projet
+
+Liste des projets ayant une session sur la période, triée par temps décroissant : nom du projet, barre de
+proportion, durée et **pourcentage** du temps total travaillé sur la période. Les sessions de congés ne comptent
+pas dans ce bilan (ni dans le temps travaillé, ni dans un projet).
+
+### 4.5 Prise en compte des congés
+
+Un jour est compté « congé » si sa session est liée à la **tâche congés** configurée (relation, ou repli sur le
+nom de la tâche si la relation n'est pas mappée). L'objectif de la période est **ajusté** en conséquence :
+
+> Objectif = (jours ouvrés de la période − jours de congé) × (heures hebdomadaires / 5)
+
+Une **semaine ouvrée** compte 5 jours (Lundi → Vendredi) ; les jours de week-end (samedi, dimanche) ne comptent
+ni dans les jours ouvrés ni dans l'objectif.
+
+### 4.6 Période sans donnée
+
+Si aucune session ne tombe dans la période choisie (et aucun congé), l'onglet affiche simplement
+**« Aucune session sur cette période. »** à la place des cartes.
 
 ---
 

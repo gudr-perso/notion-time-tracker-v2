@@ -6,6 +6,20 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.2.0] — 2026-07-16
+
+Onglet Stats : tableau de bord du temps travaillé.
+
+### Ajouté
+- **Onglet 📊 Stats** : objectif hebdomadaire (anneau de progression), rythme quotidien (barres par jour),
+  bilan par projet, prise en compte des congés.
+- **Périodes** Jour / Semaine / Mois / Perso (plage libre) avec navigation précédent/suivant.
+- Objectif ajusté aux congés : `(jours ouvrés − jours de congé) × heures-hebdo / 5`.
+- Module pur testé `core/stats.js` (bornes de période, jours ouvrés, agrégation, détection congés, objectif).
+
+### Modifié
+- `sessionFromPage` expose désormais les IDs de la relation Tâches (`tasksRelIds`) pour la détection des congés.
+
 ## [5.1.0] — 2026-07-16
 
 Liaison facilitée aux bases Notion : injection automatique des champs nécessaires.

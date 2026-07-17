@@ -2,6 +2,7 @@
 import { getConfig } from '../core/storage.js';
 import { applyStoredTheme, toggleTheme } from '../theme.js';
 import { initTimer } from './timer.js';
+import { initStats, invalidateStats } from './stats.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -32,6 +33,7 @@ async function main() {
       document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t === tab));
       $('tab-timer').hidden = tab.dataset.tab !== 'timer';
       $('tab-stats').hidden = tab.dataset.tab !== 'stats';
+      if (tab.dataset.tab === 'stats') { invalidateStats(); initStats(config); }
     });
   });
 

@@ -62,5 +62,7 @@ export function sessionFromPage(page, f) {
   const start = p[f.startDate]?.date?.start || null;
   const end = f.endDate && p[f.endDate]?.date?.start ? p[f.endDate].date.start : null;
   const pauseMin = f.pause && p[f.pause] ? (p[f.pause].number || 0) : 0;
-  return { pageId: page.id, name, startTime: start, endTime: end, pauseMin };
+  const relProp = f.tasksRelation ? p[f.tasksRelation] : undefined;
+  const tasksRelIds = relProp && relProp.relation ? relProp.relation.map((r) => r.id) : [];
+  return { pageId: page.id, name, startTime: start, endTime: end, pauseMin, tasksRelIds };
 }

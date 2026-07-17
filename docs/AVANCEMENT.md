@@ -3,7 +3,7 @@
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
 > Dernière mise à jour : 2026-07-16.
 
-**Version courante : `5.1.0`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
+**Version courante : `5.2.0`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -13,7 +13,7 @@ Extension **Chrome/Edge (Manifest V3)** de suivi du temps de travail, écrivant 
 JS vanilla + modules ES natifs, **zéro build**, **zéro dépendance runtime**. Recodage propre de la v1.
 
 L'**itération 1** (Config + onglet Timer + service worker + thème + socle testé) est **livrée et poussée en v5.0.0**.
-L'onglet **Stats** est **reporté**.
+L'onglet **Stats** est **livré en v5.2.0**.
 
 | Brique | État |
 |---|---|
@@ -21,12 +21,18 @@ L'onglet **Stats** est **reporté**.
 | **Onglet Timer** (start/pause/stop, stop-at, saisie manuelle, congés, favoris, récents) | ✅ |
 | **Service worker** (badge + notifications via `chrome.alarms`) | ✅ |
 | **Thème clair / sombre** (bascule persistée) | ✅ |
-| **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`) | ✅ **27 tests verts** |
-| **Onglet Stats** | ⬜ **Reporté** (brainstorming dédié à faire) |
+| **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`, `stats`) | ✅ **66 tests verts** |
+| **Onglet Stats** | ✅ v5.2.0 |
 
-**Tests** : `npm test` → `27 passed (4 files)`.
+**Tests** : `npm test` → `66 passed (6 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.2.0)
+- **Onglet Stats** : objectif hebdomadaire (anneau de progression travaillé/objectif), rythme quotidien
+  (barres par jour, congés en doré), bilan par projet, périodes Jour/Semaine/Mois/Perso avec navigation
+  précédent/suivant, objectif ajusté aux congés. Nouveau module pur testé `core/stats.js`. Détail :
+  `docs/VERSIONS.md`.
 
 ### ✅ Faites (v5.1.0)
 - **Injection automatique des champs Notion** : deux boutons dans la config créent les propriétés
@@ -58,8 +64,7 @@ corrections de layout (débordements, modale, largeur) et thème clair lisible.
 
 ## Prochaine action
 
-1. **Onglet Stats** (la grande brique restante) — mérite un brainstorming dédié (périmètre, périodes, agrégations).
-2. Décider du point « favoris 1 clic vs commentaire obligatoire » ci-dessus.
+1. Décider du point « favoris 1 clic vs commentaire obligatoire » ci-dessus.
 
 ## Carte du code
 
@@ -78,7 +83,7 @@ Le cadrage complet est dans **`CLAUDE.md`**. Rappels clés :
 
 1. Ouvrir le dossier (déjà synchronisé) et lire ce fichier.
 2. `npm install` (deps = Vitest en devDependency ; `node_modules/` git-ignored).
-3. `npm test` → doit afficher `27 passed`.
+3. `npm test` → doit afficher `66 passed`.
 4. **Charger l'extension** : `chrome://extensions` → mode développeur → « Charger l'extension non empaquetée »
    → sélectionner le **dossier racine** (celui du `manifest.json`). Recharger avec ↻ après chaque modif ;
    console du service worker via son lien dédié.
