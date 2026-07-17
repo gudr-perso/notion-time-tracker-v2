@@ -7,8 +7,8 @@ export const FORMAT_VERSION = 1;
 
 const pad = (n) => String(n).padStart(2, '0');
 
-// Construit l’enveloppe exportée. Le token est RETIRÉ (clé absente, jamais null). Ne mute pas `config`.
-// `appVersion` et `now` sont fournis par l’appelant : core/ n’appelle ni chrome.runtime ni l’horloge.
+// Construit l'enveloppe exportée. Le token est RETIRÉ (clé absente, jamais null). Ne mute pas `config`.
+// `appVersion` et `now` sont fournis par l'appelant : core/ n'appelle ni chrome.runtime ni l'horloge.
 export function buildExport(config, appVersion, now = new Date()) {
   const { notionToken, ...rest } = config || {};
   return {
@@ -27,20 +27,20 @@ export function exportFileName(now = new Date()) {
 }
 
 // Valide un fichier importé et renvoie la config prête à écrire. Lève une Error au message clair
-// (affiché tel quel dans la zone .status err de la page). Le token n’est JAMAIS lu du fichier :
+// (affiché tel quel dans la zone .status err de la page). Le token n'est JAMAIS lu du fichier :
 // on garde celui du poste (currentConfig), ou '' sur un poste neuf.
 export function parseImport(text, currentConfig) {
   let data;
   try {
     data = JSON.parse(text);
   } catch {
-    throw new Error('Fichier illisible — ce n’est pas un JSON valide.');
+    throw new Error('Fichier illisible — ce n\'est pas un JSON valide.');
   }
   if (!data || data.format !== FORMAT) {
-    throw new Error('Ce fichier n’est pas un export Notion Time Tracker.');
+    throw new Error('Ce fichier n\'est pas un export Notion Time Tracker.');
   }
   if (Number(data.formatVersion) > FORMAT_VERSION) {
-    throw new Error('Ce fichier vient d’une version plus récente de l’extension. Mets l’extension à jour.');
+    throw new Error('Ce fichier vient d\'une version plus récente de l\'extension. Mets l\'extension à jour.');
   }
   const c = data.config || {};
   if (!c.timeDb?.id || !c.tasksDb?.id) {
