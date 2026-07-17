@@ -407,11 +407,19 @@ Dans `src/popup/popup.css`, remplacer le bloc `:root[data-theme="light"]` par :
   --text:#0b1533; --text-muted:#5a6a99; --cyan:#138fdb; --cyan-deep:#0d6fb0;
   --orange:#e05a00; --green:#059669; --red:#dc2626;
   /* Mêmes clés, teintes assombries : c'est tout l'intérêt de stocker la clé et pas l'hexa. */
-  --fav-cyan:#138fdb; --fav-orange:#e05a00; --fav-green:#059669; --fav-amber:#d97706;
+  --fav-cyan:#138fdb; --fav-orange:#e05a00; --fav-green:#059669; --fav-amber:#b45309;
   --fav-red:#dc2626; --fav-purple:#7c3aed; --fav-pink:#db2777; --fav-teal:#0d9488;
-  --fav-lime:#65a30d; --fav-slate:#64748b;
+  --fav-lime:#4d7c0f; --fav-slate:#64748b;
 }
 ```
+
+> ⚠️ **Les valeurs claires d'ambre et de citron vert ont été corrigées après mesure.** La spec affirmait
+> « toutes validées lisibles » sans l'avoir vérifié. Contrôle fait : 20 rapports sur 20 passent le 3:1 contre
+> le fond des boutons, mais `#d97706` (ambre) et `#65a30d` (citron vert) tombaient à **2,97** et **2,88**
+> contre le fond de carte `#f6f7f9` visible entre les boutons. `#d97706` dérivait en outre de 11° de teinte
+> *vers l'orange*, écrasant l'écart orange/ambre de ΔE00 30 → 9,9 en clair. Remplacés par `#b45309` et
+> `#4d7c0f` (cran suivant de la même rampe, ~4,6:1). Le sombre était le plus confortable de la palette
+> (9,13 et 10,11) : **ne pas y toucher**.
 
 - [ ] **Step 3: Apply the same two blocks to config.css**
 
