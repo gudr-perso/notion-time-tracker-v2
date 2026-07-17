@@ -2,6 +2,32 @@
 //
 // Tracés repris de Tabler Icons — https://tabler.io/icons — licence MIT.
 // Copyright (c) 2020-2024 Paweł Kuna. https://github.com/tabler/tabler-icons/blob/main/LICENSE
+//
+// Les 80 tracés ci-dessous sont une portion substantielle de l'œuvre : la licence MIT exige que
+// la notice de copyright ET la notice de permission voyagent avec eux. Un lien ne vaut pas
+// notice, d'où sa reproduction intégrale ici — dans le fichier lui-même, pour qu'elle suive le
+// code quel que soit l'empaquetage de l'extension. Texte repris tel quel de la LICENSE livrée
+// avec @tabler/icons@3.31.0, la version d'où proviennent les tracés (le `main` amont porte
+// aujourd'hui « 2020-2026 » : à toute régénération, réaligner l'année sur la version refetchée).
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+//
 // Extraits des sources `outline` (viewBox 24, stroke currentColor, sans remplissage), cadre
 // transparent d'origine (`M0 0h24v24H0z`) retiré. L'ordre des clés pilote la grille de la config.
 //

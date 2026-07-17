@@ -3,8 +3,18 @@ import { describe, it, expect } from 'vitest';
 import { FAV_ICONS } from '../src/core/fav-icons.js';
 
 describe('FAV_ICONS', () => {
-  it('expose les 23 pictos', () => {
-    expect(Object.keys(FAV_ICONS)).toHaveLength(23);
+  it('expose les 23 pictos, dans un ordre et sous des clés qui font contrat', () => {
+    // La clé est persistée dans chrome.storage : la renommer ferait perdre son picto
+    // à chaque favori concerné, sans erreur. L'ordre pilote la grille de la config.
+    expect(Object.keys(FAV_ICONS)).toEqual([
+      'code', 'users', 'headset', 'beach', 'bug', 'file', 'mail', 'phone', 'car', 'coffee',
+      'school', 'chart', 'checklist', 'tool', 'cloud', 'search', 'book', 'star', 'building',
+      'clock', 'palette', 'laptop', 'message',
+    ]);
+  });
+
+  it('a des libellés tous distincts — deux cases identiques seraient indiscernables', () => {
+    expect(new Set(Object.values(FAV_ICONS).map((i) => i.label)).size).toBe(23);
   });
 
   it('chaque picto a un label et au moins un tracé exploitable', () => {
