@@ -3,6 +3,7 @@ import { testToken, searchDatabases, getDatabaseSchema, queryAll, addDatabasePro
 import { getConfig, saveConfig } from '../core/storage.js';
 import { planInjection, FIELD_SPECS_TIME, FIELD_SPECS_TASKS } from '../core/schema-injection.js';
 import { taskFromPage } from '../core/mapping.js';
+import { buildExport, parseImport, exportFileName } from '../core/config-io.js';
 import { applyStoredTheme, toggleTheme } from '../theme.js';
 import { FAV_COLORS, FAV_COLOR_LABELS, NO_ICON, normalizeFavorite, nextFreeColor } from '../core/fav-presets.js';
 import { FAV_ICONS } from '../core/fav-icons.js';
@@ -402,6 +403,54 @@ async function onSave() {
   if (tab?.id) setTimeout(() => chrome.tabs.remove(tab.id), 900);
 }
 
+// ── Sauvegarde & transfert ──────────────────────────────
+async function onExport() {
+  const status = $('export-status');
+  const config = await getConfig();
+  if (!config) { status.textContent = 'Rien à exporter — configure d\'abord l\'extension.'; status.className = 'status err'; return; }
+  const appVersion = chrome.runtime.getManifest().version;
+  const json = JSON.stringify(buildExport(config, appVersion), null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = exportFileName();
+  a.click();
+  URL.revokeObjectURL(url);
+  status.textContent = 'Exporté ✓ (le token n\'est pas dans le fichier).'; status.className = 'status ok';
+}
+
+async function onImportFile(e) {
+  const status = $('import-status');
+  const file = e.target.files?.[0];
+  e.target.value = ''; // permet de réimporter le même fichier deux fois de suite
+  if (!file) return;
+  let text;
+  try {
+    text = await file.text();
+  } catch {
+    status.textContent = 'Erreur : fichier illisible.'; status.className = 'status err'; return;
+  }
+  let next;
+  try {
+    next = parseImport(text, await getConfig());
+  } catch (err) {
+    status.textContent = `Erreur : ${err.message}`; status.className = 'status err'; return;
+  }
+  // Relecture pour l'entête d'info affichée dans la confirmation ; le texte est déjà validé par parseImport.
+  let when = '?', from = '?';
+  try {
+    const raw = JSON.parse(text);
+    if (raw.exportedAt) when = new Date(raw.exportedAt).toLocaleDateString('fr-FR');
+    if (raw.appVersion) from = raw.appVersion;
+  } catch { /* ce bloc ne sert qu'à l'affichage ; une erreur ici est sans conséquence */ }
+  if (!confirm(`Config exportée le ${when} depuis la v${from}.\n\nRemplacer la configuration actuelle ? (le token du poste est conservé)`)) {
+    status.textContent = 'Import annulé.'; status.className = 'status'; return;
+  }
+  await saveConfig(next);
+  location.reload();
+}
+
 async function init() {
   await applyStoredTheme();
   $('theme-toggle').textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '🌙' : '☀️';
@@ -428,6 +477,9 @@ async function init() {
   $('btn-save').addEventListener('click', onSave);
   $('btn-inject-time').addEventListener('click', () => onInject('time'));
   $('btn-inject-tasks').addEventListener('click', () => onInject('tasks'));
+  $('btn-export').addEventListener('click', onExport);
+  $('btn-import').addEventListener('click', () => $('import-file').click());
+  $('import-file').addEventListener('change', onImportFile);
   wireFavorites();
   // Charge automatiquement les bases si un token est déjà configuré (évite le clic manuel).
   if (state.token) await onLoadDb();
