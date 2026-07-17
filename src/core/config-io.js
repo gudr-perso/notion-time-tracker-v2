@@ -47,10 +47,11 @@ export function parseImport(text, currentConfig) {
     throw new Error('Fichier incomplet — la base Temps ou Tâches est manquante.');
   }
   const favorites = Array.isArray(c.prefs?.favorites)
-    ? c.prefs.favorites.slice(0, 8).map(normalizeFavorite)
+    ? c.prefs.favorites.filter((f) => f && f.taskId).slice(0, 8).map(normalizeFavorite)
     : [];
   return {
     ...c,
+    // Après ...c : écrase tout notionToken qui traînerait dans le fichier importé. Ne jamais remonter cette ligne.
     notionToken: currentConfig?.notionToken || '',
     prefs: { ...(c.prefs || {}), favorites },
   };

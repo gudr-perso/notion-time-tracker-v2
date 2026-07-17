@@ -69,6 +69,9 @@ describe('parseImport — rejets', () => {
   it('format absent ou étranger', () => {
     expect(() => parseImport(JSON.stringify({ hello: 1 }), null)).toThrow(/pas un export/i);
   });
+  it('JSON « null » n’est pas un export valide', () => {
+    expect(() => parseImport('null', null)).toThrow(/pas un export/i);
+  });
   it('formatVersion plus récent que le connu', () => {
     const f = JSON.stringify({ format: FORMAT, formatVersion: FORMAT_VERSION + 1, config: {} });
     expect(() => parseImport(f, null)).toThrow(/plus récente/i);
@@ -111,6 +114,11 @@ describe('parseImport — favoris', () => {
     const out = parseImport(validFile({ prefs: { requireComment: true } }), null);
     expect(out.prefs.favorites).toEqual([]);
   });
+  it('écarte les favoris sans taskId (cohérent avec la sauvegarde)', () => {
+    const out = parseImport(validFile({ prefs: { favorites: [{ taskId: 't1' }, { customLabel: 'sans tâche' }] } }), null);
+    expect(out.prefs.favorites).toHaveLength(1);
+    expect(out.prefs.favorites[0].taskId).toBe('t1');
+  });
 });
 
 describe('aller-retour', () => {
@@ -128,6 +136,8 @@ describe('aller-retour', () => {
     expect(out.projetsDb).toEqual(cfg.projetsDb);
     expect(out.theme).toBe('light');
     expect(out.prefs.favorites[0]).toEqual({ taskId: 't1', customLabel: 'X', color: 'cyan', icon: 'code' });
+    expect(out.prefs.requireComment).toBe(true);
+    expect(out.prefs.weeklyHours).toBe(39);
     expect(out.notionToken).toBe('local');
   });
 });
