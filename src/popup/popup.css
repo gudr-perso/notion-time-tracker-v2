@@ -60,7 +60,14 @@ textarea.input { resize:vertical; min-height:56px; }
 .fav-title { color:var(--orange); font-weight:800; font-size:12px; margin-bottom:8px; }
 .manual-toggle.card-lite { margin-bottom:10px; }
 .fav-buttons { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
-.fav-buttons .btn { background:linear-gradient(180deg,var(--orange),#c94f00); color:#fff; }
+/* Liseret par ombre interne et non border-left : sur un bouton arrondi, la bordure
+   donne des extrémités biseautées, l'ombre interne épouse l'arrondi. */
+.fav-buttons .btn { display:flex; align-items:center; gap:7px; min-width:0; text-align:left;
+  padding:12px 12px 12px 14px; background:var(--bg-elev); color:var(--text);
+  border:1px solid var(--border);
+  box-shadow:inset 4px 0 0 var(--fav-color, var(--fav-orange)); }
+.fav-buttons .fav-ico { flex:0 0 auto; width:16px; height:16px; }
+.fav-buttons .fav-btn-label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .hint { color:var(--text-muted); font-size:12px; margin:8px 0 0; }
 .check-row { display:flex; align-items:center; gap:8px; font-size:13px; }
 /* Zone « saisie manuelle » (oubli de timer) : fond clair distinctif, comme la v1. */
