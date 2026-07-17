@@ -126,9 +126,7 @@ Le cadrage complet est dans **`CLAUDE.md`**. Rappels clés :
 
 ## Git / remote
 
-- Remote : `https://github.com/gudr-perso/notion-time-tracker-v2.git`, branche `main`. **v5.3.0 poussée** (2026-07-17).
-  ⚠️ **v5.3.1 committée sur la branche `claude/elastic-mccarthy-992eff`** : reste à **fusionner dans `main` puis à
-  pousser** — tant que ce n'est pas fait, le correctif ne vit que sur cette machine (cf. la règle ci-dessous).
+- Remote : `https://github.com/gudr-perso/notion-time-tracker-v2.git`, branche `main`. **v5.3.1 poussée** (2026-07-17).
 - **Identité git locale** = `gudr-perso` (email noreply GitHub) — à reconfigurer sur nouveau clone (cf. `docs/EVENEMENTS.md`).
 - **Pousser à chaque release** : pCloud sauvegarde les fichiers, **pas l'historique** — seul GitHub fait office de
   sauvegarde. Une version « livrée » mais non poussée meurt avec la machine (cf. `docs/EVENEMENTS.md` 2026-07-17).
