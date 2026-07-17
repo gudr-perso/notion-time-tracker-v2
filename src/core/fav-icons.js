@@ -1,7 +1,7 @@
 // src/core/fav-icons.js — table des pictos des favoris. Données pures, sans API Chrome ni DOM.
 //
 // Tracés repris de Tabler Icons — https://tabler.io/icons — licence MIT.
-// Copyright (c) 2020-2024 Paweł Kuna. https://github.com/tabler/tabler-icons/blob/main/LICENSE
+// Copyright (c) 2020-2024 Paweł Kuna. https://github.com/tabler/tabler-icons/blob/v3.31.0/LICENSE
 //
 // Les 80 tracés ci-dessous sont une portion substantielle de l'œuvre : la licence MIT exige que
 // la notice de copyright ET la notice de permission voyagent avec eux. Un lien ne vaut pas
