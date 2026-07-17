@@ -93,7 +93,16 @@ corrections de layout (débordements, modale, largeur) et thème clair lisible.
   étendre les tests à la CSS est un choix de cadrage à valider.
 
 ### ⬜ Tâches créées et non faites
-- (aucune pour l'instant)
+**Bug pré-existant** repéré en relisant le code pendant la v5.3.2, **aucune tâche lancée** à ce jour :
+- **Session restaurée affichée sans son projet** (`popup/timer-actions.js:169`) : à l'ouverture du popup,
+  `getCurrentSession().then(...)` cherche la tâche dans `T.tasks` **au câblage**, quand la liste est encore
+  vide. `enterRunning` retombe donc sur son repli : nom sans le suffixe `[projet]`, et URL Notion reconstruite
+  à la main au lieu de `task.notionUrl`. **Bénin** (repli en place, rien ne plante) — d'où le report.
+  **Troisième cas de la même famille** après les libellés de favoris (v5.3.0) et la course (v5.3.2) : *du code
+  qui lit `T.tasks` avant qu'elle soit chargée, et qui n'est jamais rejoué ensuite*. La v5.3.2 a créé le point
+  d'accroche qui manquait — `publishTasks()`, rejoué à chaque publication de la liste — donc le correctif tient
+  probablement en une ligne. À confirmer : redonner un nom à une session déjà restaurée pendant qu'elle tourne
+  demande de vérifier qu'on ne réécrit pas l'affichage d'un chronomètre en cours.
 
 *(Les deux bugs pré-existants repérés pendant la v5.3.0 sont traités : `.stats-custom` en **v5.3.1**, la
 course `loadAllTasks` / `loadLightTasks` en **v5.3.2** — cf. plus haut.)*
