@@ -75,6 +75,9 @@ function renderFavoriteButtons() {
     const label = fav.customLabel || task?.name || 'Favori';
     const btn = document.createElement('button');
     btn.className = 'btn';
+    // Un re-rendu pendant un enregistrement recréerait des boutons actifs : le clic serait
+    // avalé par la garde `saving` sans rien faire. On rejoue l'état plutôt que d'y renoncer.
+    btn.disabled = saving;
     // La clé est garantie par normalizeFavorite : pas d'injection possible dans le var().
     btn.style.setProperty('--fav-color', `var(--fav-${fav.color})`);
     btn.title = label; // le libellé se tronque en CSS : l'infobulle rend la version entière
