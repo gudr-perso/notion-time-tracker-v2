@@ -14,13 +14,6 @@
 
 ## Prérequis d'environnement
 
-**Node n'est pas dans le PATH sur cette machine** (constaté le 2026-07-17), alors qu'il est installé.
-Chaque commande `npm` de ce plan suppose la ligne suivante en préambule de la session PowerShell :
-
-```powershell
-$env:Path = "C:\Program Files\nodejs;$env:Path"
-```
-
 Vérification (attendu : `v24.18.0` puis `66 passed`) :
 
 ```powershell
@@ -29,6 +22,15 @@ npm test
 ```
 
 `node_modules/` est déjà présent (arrivé par pCloud) et fonctionne : pas de `npm install` nécessaire.
+
+**Si `node` est introuvable**, ce n'est pas un défaut d'installation : le PATH du registre est correct, mais
+la session Windows en cours a été ouverte **avant** que l'installateur Node n'ajoute ses entrées, et chaque
+processus hérite d'une copie figée de l'environnement de son parent. Se déconnecter/reconnecter (ou
+redémarrer) règle le problème définitivement. Contournement ponctuel, à ne pas pérenniser :
+
+```powershell
+$env:Path = "C:\Program Files\nodejs;$env:Path"
+```
 
 ---
 
@@ -923,8 +925,10 @@ Dans `docs/AVANCEMENT.md` :
   `docs/superpowers/specs/2026-07-17-favoris-couleur-picto-design.md`.
 - Section « Prochaine action » : le point « favoris 1 clic vs commentaire obligatoire » reste ouvert — il
   est explicitement hors périmètre de cette version (spec §7).
-- Section « Environnement & reprise » : ajouter que **Node est installé mais hors PATH** sur cette machine
-  (`C:\Program Files\nodejs`), avec la ligne `$env:Path = "C:\Program Files\nodejs;$env:Path"`.
+
+Ne **rien** écrire sur le PATH de Node dans la checklist de reprise : le PATH machine est correct, l'absence
+constatée le 2026-07-17 n'était qu'une session Windows ouverte avant l'installation. Ce n'est pas un état de
+la machine, donc pas une mémoire de projet.
 
 - [ ] **Step 5: Apply D² — documentation fonctionnelle**
 
