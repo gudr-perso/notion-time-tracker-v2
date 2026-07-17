@@ -114,6 +114,27 @@
       </div></div>
     </section>
 
+    <!-- ⑥ Sauvegarde & transfert -->
+    <section class="card" id="sec-backup">
+      <div class="card-head">⑥ Sauvegarde &amp; transfert</div>
+      <div class="row">
+        <label>Exporter</label>
+        <div class="cell">
+          <button type="button" id="btn-export" class="btn btn-ghost">⬇️ Exporter la config</button>
+          <span id="export-status" class="status"></span>
+        </div>
+      </div>
+      <div class="row">
+        <label>Importer</label>
+        <div class="cell">
+          <button type="button" id="btn-import" class="btn btn-ghost">⬆️ Importer une config</button>
+          <input type="file" id="import-file" accept="application/json,.json" hidden />
+          <span id="import-status" class="status"></span>
+        </div>
+      </div>
+      <p class="help-note">ℹ️ Le <strong>token Notion n'est jamais inclus</strong> dans le fichier exporté — pense à le saisir sur le nouveau poste après l'import. L'import remplace la configuration actuelle et recharge la page.</p>
+    </section>
+
     <div class="save-row">
       <button type="button" id="btn-save" class="btn btn-primary">✅ Enregistrer</button>
       <span id="save-status" class="status"></span>
