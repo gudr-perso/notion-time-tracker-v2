@@ -193,6 +193,10 @@ describe('normalizeFavorite', () => {
     expect(normalizeFavorite({ icon: 'toString' }).icon).toBe('none');
   });
 
+  it('rejette un picto qui n’est pas une chaîne', () => {
+    expect(normalizeFavorite({ icon: ['code'] }).icon).toBe('none');
+  });
+
   it('tolère undefined et rend un favori complet', () => {
     expect(normalizeFavorite(undefined)).toEqual({
       taskId: '', customLabel: '', color: 'orange', icon: 'none',
@@ -217,8 +221,27 @@ describe('nextFreeColor', () => {
   it('tolère undefined', () => {
     expect(nextFreeColor(undefined)).toBe(FAV_COLORS[0]);
   });
+
+  it('réserve la couleur affichée : un favori d’avant la v5.3.0 occupe orange', () => {
+    // Sans champ `color`, ce favori s'affiche pourtant en orange (cf. normalizeFavorite). Cyan
+    // étant déjà pris, orange serait le prochain candidat de la palette : il doit être sauté,
+    // sinon le nouveau favori serait le sosie de l'ancien.
+    const favs = [{ taskId: 'a' }, { taskId: 'b', color: 'cyan' }];
+    expect(nextFreeColor(favs)).toBe('green');
+  });
+
+  it('réserve la couleur affichée : une couleur invalide occupe le défaut', () => {
+    // Même raisonnement : 'chartreuse' n'existe pas dans la palette, ce favori s'affiche en orange.
+    const favs = [{ taskId: 'a', color: 'chartreuse' }, { taskId: 'b', color: 'cyan' }];
+    expect(nextFreeColor(favs)).toBe('green');
+  });
 });
 ```
+
+> ⚠️ Les deux derniers tests **doivent occuper cyan** pour mordre. Une première rédaction se contentait
+> de `expect(nextFreeColor([{ taskId: 'a' }])).not.toBe('orange')` : comme cyan est `FAV_COLORS[0]`, la
+> fonction **buguée** renvoyait déjà cyan et le test passait au vert sans rien prouver. En prenant cyan,
+> orange devient le candidat suivant et le saut est réellement vérifié.
 
 - [ ] **Step 2: Run test to verify it fails**
 
