@@ -147,6 +147,47 @@ function collectTasksFields() {
 }
 
 // ── Favoris ─────────────────────────────────────────────
+function colorPop(i, current) {
+  const pop = document.createElement('div');
+  pop.className = 'fav-pop fav-pop-color';
+  pop.hidden = true;
+  for (const c of FAV_COLORS) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'fav-choice fav-swatch' + (c === current ? ' is-current' : '');
+    b.dataset.kind = 'color';
+    b.dataset.value = c;
+    b.dataset.i = String(i);
+    b.style.background = `var(--fav-${c})`;
+    b.setAttribute('aria-label', c);
+    pop.appendChild(b);
+  }
+  return pop;
+}
+
+function iconPop(i, current) {
+  const pop = document.createElement('div');
+  pop.className = 'fav-pop fav-pop-icon';
+  pop.hidden = true;
+  // « Aucun » d'abord : c'est le défaut, il doit être le plus facile à retrouver.
+  const cells = [[NO_ICON, 'Aucun picto'], ...Object.entries(FAV_ICONS).map(([k, v]) => [k, v.label])];
+  for (const [key, label] of cells) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'fav-choice fav-icon-cell' + (key === current ? ' is-current' : '');
+    b.dataset.kind = 'icon';
+    b.dataset.value = key;
+    b.dataset.i = String(i);
+    b.title = label;
+    b.setAttribute('aria-label', label);
+    const svg = favIconSvg(key);
+    if (svg) b.appendChild(svg);
+    else b.textContent = '∅';
+    pop.appendChild(b);
+  }
+  return pop;
+}
+
 // Une cellule = le bouton déclencheur (aperçu de l'état courant) + son panneau (Task 7).
 function pickCell(i, fav, kind) {
   const cell = document.createElement('div');
@@ -180,6 +221,7 @@ function pickCell(i, fav, kind) {
   caret.textContent = '▾';
   trigger.appendChild(caret);
   cell.appendChild(trigger);
+  cell.appendChild(kind === 'color' ? colorPop(i, fav.color) : iconPop(i, fav.icon));
   return cell;
 }
 
@@ -207,6 +249,22 @@ function renderFavorites() {
   $('btn-add-fav').disabled = state.favorites.length >= 8;
 }
 
+function closePopovers() {
+  document.querySelectorAll('.fav-pop').forEach((p) => { p.hidden = true; });
+  document.querySelectorAll('.fav-trigger').forEach((t) => t.setAttribute('aria-expanded', 'false'));
+}
+
+// Un seul panneau ouvert à la fois ; re-cliquer le déclencheur referme.
+function togglePopover(trigger) {
+  const pop = trigger.parentElement.querySelector('.fav-pop');
+  const wasOpen = !pop.hidden;
+  closePopovers();
+  if (!wasOpen) {
+    pop.hidden = false;
+    trigger.setAttribute('aria-expanded', 'true');
+  }
+}
+
 function wireFavorites() {
   $('btn-add-fav').addEventListener('click', () => {
     if (state.favorites.length >= 8) return;
@@ -219,11 +277,21 @@ function wireFavorites() {
     if (e.target.classList.contains('fav-label')) state.favorites[i].customLabel = e.target.value;
   });
   $('fav-list').addEventListener('click', (e) => {
-    if (e.target.classList.contains('fav-del')) {
-      state.favorites.splice(Number(e.target.dataset.i), 1);
-      renderFavorites();
-    }
+    // closest() et pas e.target : le clic atterrit souvent sur le <svg> ou la pastille interne.
+    const del = e.target.closest('.fav-del');
+    if (del) { state.favorites.splice(Number(del.dataset.i), 1); renderFavorites(); return; }
+    const trigger = e.target.closest('.fav-trigger');
+    if (trigger) { togglePopover(trigger); return; }
+    const choice = e.target.closest('.fav-choice');
+    if (!choice) return;
+    const i = Number(choice.dataset.i);
+    if (choice.dataset.kind === 'color') state.favorites[i].color = choice.dataset.value;
+    else state.favorites[i].icon = choice.dataset.value;
+    renderFavorites(); // reconstruit la ligne (aperçu à jour) et referme le panneau au passage
   });
+  // Fermeture au clic extérieur : un clic dans .fav-pick est traité par le listener ci-dessus.
+  document.addEventListener('click', (e) => { if (!e.target.closest('.fav-pick')) closePopovers(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePopovers(); });
 }
 
 // ── Injection de champs Notion ──────────────────────────

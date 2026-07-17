@@ -61,6 +61,18 @@ header { display:flex; align-items:center; gap:16px; margin-bottom:24px; }
 .fav-trigger .fav-ico { width:18px; height:18px; }
 .fav-none { width:18px; text-align:center; color:var(--text-muted); }
 .fav-caret { color:var(--text-muted); font-size:11px; }
+.fav-pop { position:absolute; top:calc(100% + 6px); right:0; z-index:20; display:grid; gap:7px;
+  padding:10px; border:1px solid var(--border-soft); border-radius:12px; background:var(--bg-deep);
+  box-shadow:0 10px 30px rgba(0,0,0,.45); }
+.fav-pop-color { grid-template-columns:repeat(5, 26px); }
+.fav-pop-icon { grid-template-columns:repeat(8, 30px); }
+.fav-choice { padding:0; border:1px solid transparent; border-radius:7px; cursor:pointer; }
+.fav-swatch { width:26px; height:26px; }
+.fav-swatch.is-current { outline:2px solid var(--text); outline-offset:2px; }
+.fav-icon-cell { display:flex; align-items:center; justify-content:center; width:30px; height:30px;
+  background:var(--bg-elev); color:var(--text); border-color:var(--border); }
+.fav-icon-cell .fav-ico { width:17px; height:17px; }
+.fav-icon-cell.is-current { border-color:var(--cyan); }
 
 /* Thème clair : fonds de cartes/entêtes codés en dur repassés en clair pour la lisibilité
    (texte gris/bleu illisible sur l'ancien fond bleu foncé translucide). */
