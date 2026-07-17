@@ -86,3 +86,19 @@
   `git config user.name "gudr-perso"` / `git config user.email "285798810+gudr-perso@users.noreply.github.com"`.
 - **Résultat** : commit créé et poussé.
 - **Leçon** : sur ce repo, l'identité git est **locale** = `gudr-perso` (email noreply GitHub) ; à reconfigurer sur tout nouveau clone.
+
+## 2026-07-17 — pCloud ne synchronise pas `.git` : la v5.2.0 a failli être perdue avec le PC
+
+- **Contexte** : reprise du projet sur un **nouveau PC** (l'ancien, sous `C:\_pCloud\…`, est HS), dossier `E:\_pCloud\Extensions\notion-timer-v2` synchronisé par pCloud. Question de départ : « ce PC est-il à jour ? ».
+- **Erreur** :
+  ```
+  fatal: not a git repository (or any of the parent directories): .git
+  ```
+  Et surtout, en comparant au distant : `manifest.json` distant = `5.1.0`, local = `5.2.0`.
+- **Hypothèse** : pCloud a synchronisé les fichiers (y compris des dossiers cachés comme `.claude`, `.superpowers`, et même `node_modules/` pourtant git-ignored) **mais pas `.git`**. Le dossier n'était donc pas « en retard » : il était **en avance**, porteur de tout le travail v5.2.0 (onglet Stats) jamais poussé — et sans historique local.
+- **Action** :
+  1. Diagnostic : `git ls-remote` (distant joignable, `main` = `89dcf6a`), clone du distant à côté puis comparaison fichier par fichier (hash, puis re-comparaison **en normalisant les fins de ligne** pour écarter les faux positifs CRLF).
+  2. Rattachement : déplacer le `.git` du clone dans le dossier pCloud → l'historique jusqu'à v5.1.0 revient et le travail Stats apparaît en modifications non committées. (`Move-Item` C: → E: recopie puis échoue à supprimer la source en lecture seule : le dépôt est bien en place, seul le nettoyage est à refaire.)
+  3. Identité locale `gudr-perso`, `npm install` + `npm test` (66 verts) **avant** de figer, puis commit `release: v5.2.0` et push.
+- **Résultat** : `main` distant = `bca3293` = local, arbre propre. Rien de perdu.
+- **Leçon** : **pCloud n'est pas une sauvegarde de l'historique git** — seul le push vers GitHub l'est. Donc : **pousser à chaque release**, ne jamais laisser une version « livrée » vivre uniquement dans le dossier synchronisé. Corollaire de diagnostic : « pas à jour » n'est pas toujours « en retard » — comparer les deux sens avant d'agir. Et avec `core.autocrlf=true`, un clone frais fait apparaître des fichiers `M` qui n'ont **aucun** diff réel (`git diff` vide) : normaliser les fins de ligne avant de conclure, ils disparaissent d'eux-mêmes au `git add`.

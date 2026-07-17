@@ -1,7 +1,7 @@
 # Notion Time Tracker — État du projet & comment continuer
 
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
-> Dernière mise à jour : 2026-07-16.
+> Dernière mise à jour : 2026-07-17.
 
 **Version courante : `5.2.0`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
@@ -82,7 +82,11 @@ Le cadrage complet est dans **`CLAUDE.md`**. Rappels clés :
 ## Environnement & reprise (checklist)
 
 1. Ouvrir le dossier (déjà synchronisé) et lire ce fichier.
-2. `npm install` (deps = Vitest en devDependency ; `node_modules/` git-ignored).
+   ⚠️ **pCloud ne synchronise pas `.git`** : sur une machine neuve, le dossier arrive **sans historique**.
+   Cloner le remote à côté et déplacer son `.git` dans le dossier, ou repartir d'un clone. Cf. `docs/EVENEMENTS.md`
+   (2026-07-17). Vérifier **dans les deux sens** si le local est en retard **ou en avance** sur le remote.
+2. Node.js requis (non fourni par la synchro). `npm install` (deps = Vitest en devDependency ; `node_modules/`
+   git-ignored — il peut arriver par pCloud, mais reste inutilisable sans Node).
 3. `npm test` → doit afficher `66 passed`.
 4. **Charger l'extension** : `chrome://extensions` → mode développeur → « Charger l'extension non empaquetée »
    → sélectionner le **dossier racine** (celui du `manifest.json`). Recharger avec ↻ après chaque modif ;
@@ -90,7 +94,9 @@ Le cadrage complet est dans **`CLAUDE.md`**. Rappels clés :
 
 ## Git / remote
 
-- Remote : `https://github.com/gudr-perso/notion-time-tracker-v2.git`, branche `main`.
+- Remote : `https://github.com/gudr-perso/notion-time-tracker-v2.git`, branche `main`. **v5.2.0 poussée** (2026-07-17).
 - **Identité git locale** = `gudr-perso` (email noreply GitHub) — à reconfigurer sur nouveau clone (cf. `docs/EVENEMENTS.md`).
+- **Pousser à chaque release** : pCloud sauvegarde les fichiers, **pas l'historique** — seul GitHub fait office de
+  sauvegarde. Une version « livrée » mais non poussée meurt avec la machine (cf. `docs/EVENEMENTS.md` 2026-07-17).
 - **Release** : bumper `manifest.json` + `package.json` + `package-lock.json`, mettre à jour `VERSIONS.md` et la
   version reflétée ci-dessus, commit `release: vX.Y.Z`.
