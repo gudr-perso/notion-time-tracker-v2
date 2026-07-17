@@ -98,7 +98,7 @@ popup et par la config, qui se contentent d'afficher.
 | Export | Rôle |
 |---|---|
 | `FAV_COLORS` | Tableau **ordonné** des 10 clés de couleur. L'ordre pilote la grille de la config **et** l'attribution automatique. |
-| `FAV_ICONS` | Table `clé → { label, path }`. `path` = attribut `d` d'un tracé SVG en `viewBox="0 0 24 24"`, `stroke="currentColor"`, sans remplissage. |
+| `FAV_ICONS` | Table `clé → { label, paths }`. `paths` = **tableau** d'attributs `d`, en `viewBox="0 0 24 24"`, tracés en `stroke="currentColor"` sans remplissage. Un picto compte de 1 à 9 tracés (`beach` en a 5, `bug` 9) : le tableau est donc la forme obligée, pas un tracé unique. |
 | `normalizeFavorite(fav)` | Renvoie `{ taskId, customLabel, color, icon }` : défauts appliqués, clés inconnues remplacées par le défaut. |
 | `nextFreeColor(favorites)` | Première clé de `FAV_COLORS` non utilisée par les favoris existants ; si les 10 sont prises, retombe sur `FAV_COLORS[0]`. |
 
@@ -137,8 +137,8 @@ Le rendu ne code aucune couleur en dur : le JS pose
 
 ### 5.3 Rendu du picto
 
-Le SVG est construit avec `createElementNS` (jamais `innerHTML`) à partir du `path` du preset — cohérent
-avec l'échappement systématique déjà pratiqué dans `config.js` (`esc()`).
+Le SVG est construit avec `createElementNS` (jamais `innerHTML`), un `<path>` par entrée de `paths` —
+cohérent avec l'échappement systématique déjà pratiqué dans `config.js` (`esc()`).
 
 ### 5.4 Point d'attention — `setSaving()`
 
@@ -171,8 +171,8 @@ le reste du popup) :
 - `nextFreeColor()` : renvoie `FAV_COLORS[0]` sur une liste vide ; saute les couleurs déjà prises ;
   retombe sur `FAV_COLORS[0]` quand les 10 sont utilisées.
 - Intégrité des presets : `FAV_COLORS` compte 10 clés **uniques** ; chaque entrée de `FAV_ICONS` a un
-  `label` non vide et un `path` non vide ; `none` n'est pas une clé de `FAV_ICONS` (c'est une absence, pas
-  un picto).
+  `label` non vide et au moins un tracé dans `paths` ; `none` n'est pas une clé de `FAV_ICONS` (c'est une
+  absence, pas un picto).
 
 Vérification manuelle attendue au rechargement de l'extension : les favoris existants s'affichent en orange
 sans picto (apparence inchangée), et le liseret suit le basculement de thème.
