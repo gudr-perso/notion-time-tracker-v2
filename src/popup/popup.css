@@ -11,7 +11,10 @@
   --bg-deep:#f4f7ff; --bg-elev:#ffffff; --border:#d6ddf2; --border-soft:#b9c4e6;
   --text:#0b1533; --text-muted:#5a6a99; --cyan:#138fdb; --cyan-deep:#0d6fb0;
   --orange:#e05a00; --green:#059669; --red:#dc2626;
-  /* Mêmes clés, teintes assombries : c'est tout l'intérêt de stocker la clé et pas l'hexa. */
+  /* Mêmes clés, teintes assombries : c'est tout l'intérêt de stocker la clé et pas l'hexa.
+     --fav-amber n'est volontairement PAS amber-600 (#d97706) : mesuré à 2,97:1 sur le fond de
+     carte (sous le 3:1 requis) et à ΔE00 9,9 de l'orange, donc confondu avec lui. #a16207 tient
+     4,59:1 et ΔE00 15,8. Ne pas le « corriger » vers la rampe amber : c'est le bug. */
   --fav-cyan:#138fdb; --fav-orange:#e05a00; --fav-green:#059669; --fav-amber:#a16207;
   --fav-red:#dc2626; --fav-purple:#7c3aed; --fav-pink:#db2777; --fav-teal:#0d9488;
   --fav-lime:#4d7c0f; --fav-slate:#64748b;
