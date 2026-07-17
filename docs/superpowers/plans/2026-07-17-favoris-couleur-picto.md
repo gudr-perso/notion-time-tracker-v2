@@ -155,9 +155,12 @@ Puis ajouter à la fin du fichier :
 
 ```js
 describe('FAV_COLORS', () => {
-  it('compte 10 couleurs, toutes distinctes', () => {
-    expect(FAV_COLORS).toHaveLength(10);
-    expect(new Set(FAV_COLORS).size).toBe(10);
+  it('compte 10 couleurs dont l’ordre et les clés font contrat', () => {
+    // Clé persistée dans chrome.storage et liée au CSS --fav-<clé> : la renommer ferait perdre
+    // sa couleur à chaque favori concerné. L'ordre pilote la grille de config et nextFreeColor.
+    expect(FAV_COLORS).toEqual([
+      'cyan', 'orange', 'green', 'amber', 'red', 'purple', 'pink', 'teal', 'lime', 'slate',
+    ]);
   });
 
   it('contient la couleur par défaut des favoris historiques', () => {
@@ -250,16 +253,25 @@ export function normalizeFavorite(fav) {
     taskId: f.taskId || '',
     customLabel: f.customLabel || '',
     color: FAV_COLORS.includes(f.color) ? f.color : DEFAULT_FAV_COLOR,
-    // hasOwn et pas `in` : sinon 'toString' passerait pour un picto valide.
-    icon: Object.hasOwn(FAV_ICONS, f.icon) ? f.icon : NO_ICON,
+    // hasOwn et pas `in` : sinon 'toString' passerait pour un picto valide. Le typeof évite
+    // qu'une valeur non-string (storage bricolé à la main) ressorte telle quelle par coercition.
+    icon: typeof f.icon === 'string' && Object.hasOwn(FAV_ICONS, f.icon) ? f.icon : NO_ICON,
   };
 }
 
 export function nextFreeColor(favorites) {
-  const used = new Set((favorites || []).map((f) => f?.color));
+  // La couleur *affichée* et non la couleur brute : un favori d'avant la v5.3.0 n'a pas de champ
+  // `color` mais s'affiche en orange — sans ça, orange ne serait jamais réservé et le prochain
+  // favori créé serait un sosie des anciens.
+  const used = new Set((favorites || []).map((f) => normalizeFavorite(f).color));
   return FAV_COLORS.find((c) => !used.has(c)) || FAV_COLORS[0];
 }
 ```
+
+> ⚠️ Ce `nextFreeColor` a d'abord été écrit en lisant `f?.color` directement. C'était un bug : chez un
+> utilisateur ayant déjà 3 favoris (sans champ `color`, donc affichés en orange), le 4ᵉ favori prenait
+> cyan et le **5ᵉ reprenait orange** — un sosie des trois premiers, exactement ce que la fonction doit
+> empêcher. Passer par `normalizeFavorite` fait coïncider « couleur utilisée » et « couleur affichée ».
 
 - [ ] **Step 4: Run test to verify it passes**
 
