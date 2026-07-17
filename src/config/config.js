@@ -4,6 +4,9 @@ import { getConfig, saveConfig } from '../core/storage.js';
 import { planInjection, FIELD_SPECS_TIME, FIELD_SPECS_TASKS } from '../core/schema-injection.js';
 import { taskFromPage } from '../core/mapping.js';
 import { applyStoredTheme, toggleTheme } from '../theme.js';
+import { FAV_COLORS, NO_ICON, normalizeFavorite, nextFreeColor } from '../core/fav-presets.js';
+import { FAV_ICONS } from '../core/fav-icons.js';
+import { favIconSvg } from '../fav-icon.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -144,19 +147,61 @@ function collectTasksFields() {
 }
 
 // ── Favoris ─────────────────────────────────────────────
+// Une cellule = le bouton déclencheur (aperçu de l'état courant) + son panneau (Task 7).
+function pickCell(i, fav, kind) {
+  const cell = document.createElement('div');
+  cell.className = 'fav-pick';
+  const trigger = document.createElement('button');
+  trigger.type = 'button';
+  trigger.className = 'fav-trigger';
+  trigger.dataset.kind = kind;
+  trigger.dataset.i = String(i);
+  trigger.setAttribute('aria-expanded', 'false');
+  if (kind === 'color') {
+    trigger.setAttribute('aria-label', 'Couleur du favori');
+    const dot = document.createElement('span');
+    dot.className = 'fav-dot';
+    // Clé garantie par normalizeFavorite : le var() ne peut pas être détourné.
+    dot.style.background = `var(--fav-${fav.color})`;
+    trigger.appendChild(dot);
+  } else {
+    trigger.setAttribute('aria-label', 'Picto du favori');
+    const svg = favIconSvg(fav.icon);
+    if (svg) trigger.appendChild(svg);
+    else {
+      const none = document.createElement('span');
+      none.className = 'fav-none';
+      none.textContent = '∅';
+      trigger.appendChild(none);
+    }
+  }
+  const caret = document.createElement('span');
+  caret.className = 'fav-caret';
+  caret.textContent = '▾';
+  trigger.appendChild(caret);
+  cell.appendChild(trigger);
+  return cell;
+}
+
 function renderFavorites() {
   const list = $('fav-list');
   list.innerHTML = '';
   state.favorites.forEach((fav, i) => {
     const div = document.createElement('div');
-    div.className = 'cell';
-    div.style.marginBottom = '8px';
+    div.className = 'cell fav-row';
     const taskOpts = ['<option value="">— tâche —</option>',
       ...state.tasks.map((t) => `<option value="${esc(t.id)}"${t.id === fav.taskId ? ' selected' : ''}>${esc(t.name)}</option>`)].join('');
     div.innerHTML =
       `<select class="input fav-task" data-i="${i}">${taskOpts}</select>` +
-      `<input class="input fav-label" data-i="${i}" maxlength="20" placeholder="libellé" value="${esc(fav.customLabel || '')}" style="flex:0 0 160px" />` +
-      `<button type="button" class="btn btn-ghost fav-del" data-i="${i}">❌</button>`;
+      `<input class="input fav-label" data-i="${i}" maxlength="20" placeholder="libellé" value="${esc(fav.customLabel || '')}" />`;
+    div.appendChild(pickCell(i, fav, 'color'));
+    div.appendChild(pickCell(i, fav, 'icon'));
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'btn btn-ghost fav-del';
+    del.dataset.i = String(i);
+    del.textContent = '❌';
+    div.appendChild(del);
     list.appendChild(div);
   });
   $('btn-add-fav').disabled = state.favorites.length >= 8;
@@ -165,7 +210,7 @@ function renderFavorites() {
 function wireFavorites() {
   $('btn-add-fav').addEventListener('click', () => {
     if (state.favorites.length >= 8) return;
-    state.favorites.push({ taskId: '', customLabel: '' });
+    state.favorites.push(normalizeFavorite({ color: nextFreeColor(state.favorites), icon: NO_ICON }));
     renderFavorites();
   });
   $('fav-list').addEventListener('input', (e) => {
@@ -276,7 +321,7 @@ async function onSave() {
       externalButtonLabel: ($('p-externalLabel').value || 'CLICKUP').toUpperCase().slice(0, 20),
       weeklyHours,
       vacationTaskId: $('p-vacationTask').value || null,
-      favorites: state.favorites.filter((f) => f.taskId).slice(0, 8),
+      favorites: state.favorites.filter((f) => f.taskId).slice(0, 8).map(normalizeFavorite),
     },
     theme: document.documentElement.getAttribute('data-theme') || 'dark',
   };
@@ -298,7 +343,7 @@ async function init() {
   state.config = await getConfig();
   if (state.config) {
     state.token = state.config.notionToken || '';
-    state.favorites = (state.config.prefs?.favorites || []).map((f) => ({ ...f }));
+    state.favorites = (state.config.prefs?.favorites || []).map(normalizeFavorite);
     if (state.token) { $('token').value = state.token; $('token-status').textContent = 'Token présent — retester si besoin.'; }
     $('p-requireComment').checked = !!state.config.prefs?.requireComment;
     $('p-manualByDefault').checked = !!state.config.prefs?.manualByDefault;
