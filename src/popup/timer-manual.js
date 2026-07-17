@@ -133,6 +133,9 @@ function resetManual() {
 export function wireManual(sharedT, sharedHelpers) {
   T = sharedT; helpers = sharedHelpers;
   helpers.onManualSave = onManualSave;
+  // Exposé pour un second rendu une fois T.tasks chargé : au premier passage la liste est
+  // encore vide, les libellés issus des noms de tâches sortiraient tous en « Favori ».
+  helpers.renderFavorites = renderFavoriteButtons;
   $('manual-comment-label').textContent = T.config.prefs?.requireComment
     ? 'COMMENTAIRE (OBLIGATOIRE)' : 'COMMENTAIRE (OPTIONNEL)';
   $('manual-mode').addEventListener('change', (e) => toggleManual(e.target.checked));
