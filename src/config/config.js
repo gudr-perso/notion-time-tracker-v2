@@ -230,7 +230,7 @@ function renderFavorites() {
   list.innerHTML = '';
   state.favorites.forEach((fav, i) => {
     const div = document.createElement('div');
-    div.className = 'cell fav-row';
+    div.className = 'cell';
     const taskOpts = ['<option value="">— tâche —</option>',
       ...state.tasks.map((t) => `<option value="${esc(t.id)}"${t.id === fav.taskId ? ' selected' : ''}>${esc(t.name)}</option>`)].join('');
     div.innerHTML =

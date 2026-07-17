@@ -63,12 +63,18 @@ header { display:flex; align-items:center; gap:16px; margin-bottom:24px; }
 .fav-caret { color:var(--text-muted); font-size:11px; }
 /* Panneau vers le HAUT, et non vers le bas : la carte porte overflow:hidden (pour que le fond
    de .card-head épouse les coins arrondis), et la ligne Favoris est la dernière de sa carte —
-   un panneau descendant serait purement et simplement découpé. Vers le haut il reste dans la
-   carte, où les lignes de préférences laissent ~250px, largement de quoi loger les 126px du
-   panneau des pictos. Ne pas repasser en `top:` sans retirer l'overflow de .card. */
+   un panneau descendant serait découpé. Retirer l'overflow ne suffirait pas : il recouvrirait
+   alors le bouton Enregistrer. Vers le haut il reste dans la carte, où l'entête et les cinq
+   lignes de préférences laissent ~340px, de quoi loger les 126px du panneau des pictos (3
+   rangées de 30px + gouttières + padding). Le nombre de favoris ne change rien : ils
+   s'ajoutent vers le bas, la première ligne reste à hauteur constante. */
 .fav-pop { position:absolute; bottom:calc(100% + 6px); right:0; z-index:20; display:grid; gap:7px;
   padding:10px; border:1px solid var(--border-soft); border-radius:12px; background:var(--bg-deep);
   box-shadow:0 10px 30px rgba(0,0,0,.45); }
+/* Sans ça, le display:grid ci-dessus (déclaration d'auteur) l'emporte sur le [hidden] du
+   navigateur et TOUS les panneaux restent ouverts en permanence. Même piège que
+   .modal-overlay[hidden] et .toast[hidden] dans popup.css — troisième fois dans ce projet. */
+.fav-pop[hidden] { display:none; }
 .fav-pop-color { grid-template-columns:repeat(5, 26px); }
 .fav-pop-icon { grid-template-columns:repeat(8, 30px); }
 .fav-choice { padding:0; border:1px solid transparent; border-radius:7px; cursor:pointer; }
