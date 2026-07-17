@@ -21,7 +21,7 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Onglet Timer** (start/pause/stop, stop-at, saisie manuelle, congés, favoris, récents) | ✅ |
 | **Service worker** (badge + notifications via `chrome.alarms`) | ✅ |
 | **Thème clair / sombre** (bascule persistée) | ✅ |
-| **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`, `stats`, `fav-presets`, `fav-icons`) | ✅ **87 tests verts** |
+| **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`, `stats`, `fav-presets`, `fav-icons`, `schema-injection`, `config-io`) | ✅ **106 tests verts** |
 | **Onglet Stats** | ✅ v5.2.0 |
 | **Favoris : couleur + picto** | ✅ v5.3.0 |
 | **Export / import de la config** | ✅ v5.4.0 |
@@ -147,7 +147,7 @@ Le cadrage complet est dans **`CLAUDE.md`**. Rappels clés :
    (2026-07-17). Vérifier **dans les deux sens** si le local est en retard **ou en avance** sur le remote.
 2. Node.js requis (non fourni par la synchro). `npm install` (deps = Vitest en devDependency ; `node_modules/`
    git-ignored — il peut arriver par pCloud, mais reste inutilisable sans Node).
-3. `npm test` → doit afficher `87 passed`.
+3. `npm test` → doit afficher `106 passed`.
 4. **Charger l'extension** : `chrome://extensions` → mode développeur → « Charger l'extension non empaquetée »
    → sélectionner le **dossier racine** (celui du `manifest.json`). Recharger avec ↻ après chaque modif ;
    console du service worker via son lien dédié.
