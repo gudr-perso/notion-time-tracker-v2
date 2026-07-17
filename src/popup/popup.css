@@ -64,7 +64,7 @@ textarea.input { resize:vertical; min-height:56px; }
    donne des extrémités biseautées, l'ombre interne épouse l'arrondi. */
 .fav-buttons .btn { display:flex; align-items:center; gap:7px; min-width:0; text-align:left;
   padding:12px 12px 12px 14px; background:var(--bg-elev); color:var(--text);
-  border:1px solid var(--border);
+  border:1px solid var(--border); font-size:12px; font-weight:400;
   box-shadow:inset 4px 0 0 var(--fav-color, var(--fav-orange)); }
 .fav-buttons .fav-ico { flex:0 0 auto; width:16px; height:16px; }
 .fav-buttons .fav-btn-label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
