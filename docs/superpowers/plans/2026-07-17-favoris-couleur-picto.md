@@ -406,8 +406,11 @@ Dans `src/popup/popup.css`, remplacer le bloc `:root[data-theme="light"]` par :
   --bg-deep:#f4f7ff; --bg-elev:#ffffff; --border:#d6ddf2; --border-soft:#b9c4e6;
   --text:#0b1533; --text-muted:#5a6a99; --cyan:#138fdb; --cyan-deep:#0d6fb0;
   --orange:#e05a00; --green:#059669; --red:#dc2626;
-  /* Mêmes clés, teintes assombries : c'est tout l'intérêt de stocker la clé et pas l'hexa. */
-  --fav-cyan:#138fdb; --fav-orange:#e05a00; --fav-green:#059669; --fav-amber:#b45309;
+  /* Mêmes clés, teintes assombries : c'est tout l'intérêt de stocker la clé et pas l'hexa.
+     --fav-amber n'est volontairement PAS amber-600 (#d97706) : mesuré à 2,97:1 sur le fond de
+     carte (sous le 3:1 requis) et à ΔE00 9,9 de l'orange, donc confondu avec lui. #a16207 tient
+     4,59:1 et ΔE00 15,8. Ne pas le « corriger » vers la rampe amber : c'est le bug. */
+  --fav-cyan:#138fdb; --fav-orange:#e05a00; --fav-green:#059669; --fav-amber:#a16207;
   --fav-red:#dc2626; --fav-purple:#7c3aed; --fav-pink:#db2777; --fav-teal:#0d9488;
   --fav-lime:#4d7c0f; --fav-slate:#64748b;
 }
@@ -417,9 +420,16 @@ Dans `src/popup/popup.css`, remplacer le bloc `:root[data-theme="light"]` par :
 > « toutes validées lisibles » sans l'avoir vérifié. Contrôle fait : 20 rapports sur 20 passent le 3:1 contre
 > le fond des boutons, mais `#d97706` (ambre) et `#65a30d` (citron vert) tombaient à **2,97** et **2,88**
 > contre le fond de carte `#f6f7f9` visible entre les boutons. `#d97706` dérivait en outre de 11° de teinte
-> *vers l'orange*, écrasant l'écart orange/ambre de ΔE00 30 → 9,9 en clair. Remplacés par `#b45309` et
-> `#4d7c0f` (cran suivant de la même rampe, ~4,6:1). Le sombre était le plus confortable de la palette
-> (9,13 et 10,11) : **ne pas y toucher**.
+> *vers l'orange*, écrasant l'écart orange/ambre à ΔE00 9,9 — la paire la plus proche de la palette claire.
+>
+> Premier correctif proposé : `#b45309` (cran suivant de la rampe amber). **Mesuré, il empirait le
+> problème** : 1,9° de teinte de l'orange au lieu de 8°, ΔE00 9,86 → 9,59. Retenu à la place `#a16207`
+> (yellow-700) : 4,59:1, ΔE00 15,84 de l'orange, et 7,8° de dérive depuis l'ambre sombre contre 17,3° pour
+> `#b45309`. L'argument « rester sur la même rampe Tailwind » ne tenait pas : `--fav-cyan` et `--fav-orange`
+> sont les couleurs maison du projet, la palette mélange déjà les sources.
+>
+> Citron vert : `#4d7c0f`, non contesté (4,66:1, aucun voisin proche). Le sombre était le plus confortable
+> de la palette (9,13 et 10,11) : **ne pas y toucher**.
 
 - [ ] **Step 3: Apply the same two blocks to config.css**
 
