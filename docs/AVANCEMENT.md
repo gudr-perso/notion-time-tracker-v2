@@ -3,7 +3,7 @@
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
 > Dernière mise à jour : 2026-07-17.
 
-**Version courante : `5.3.2`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
+**Version courante : `5.4.0`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -24,10 +24,20 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`, `stats`, `fav-presets`, `fav-icons`) | ✅ **87 tests verts** |
 | **Onglet Stats** | ✅ v5.2.0 |
 | **Favoris : couleur + picto** | ✅ v5.3.0 |
+| **Export / import de la config** | ✅ v5.4.0 |
 
-**Tests** : `npm test` → `87 passed (7 files)`.
+**Tests** : `npm test` → `106 passed (8 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.4.0)
+- **Export / import de la configuration** depuis la page de réglages : un bouton télécharge un JSON
+  (`notion-timer-config-AAAA-MM-JJ.json`, date locale) contenant bases, mapping, préférences, congés et
+  favoris — **jamais le token Notion**. L'import valide le fichier (format, version, présence des deux bases),
+  affiche une confirmation avec la date et la version d'origine, **conserve le token du poste** (jamais celui
+  du fichier), écrit la config puis recharge la page ; le chargement habituel (`onLoadDb` → remap → favoris)
+  re-sélectionne tout ensuite. Nouveau module pur testé `core/config-io.js` (`buildExport` / `parseImport` /
+  `exportFileName`). Détail : `docs/VERSIONS.md`.
 
 ### ✅ Faites (v5.3.2)
 - **Course au chargement des tâches** (`popup/timer.js`) — le bug pré-existant suivi ci-dessous, corrigé :

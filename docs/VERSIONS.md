@@ -6,6 +6,24 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.4.0] — 2026-07-17
+
+Export et import de la configuration depuis la page de réglages — favoris compris, **sans le token**.
+
+### Ajouté
+- **Exporter la config** : télécharge un JSON (`notion-timer-config-AAAA-MM-JJ.json`) contenant bases, mapping
+  des champs, préférences, congés et favoris. Le **token Notion n'y figure jamais** : le fichier peut transiter
+  par un cloud sans exposer de secret.
+- **Importer une config** : recharge un fichier exporté. Une confirmation annonce la date et la version du
+  fichier avant de remplacer la configuration. Le **token du poste est conservé** (jamais écrasé), la page se
+  recharge, puis bases/champs/congés/favoris se re-sélectionnent via le chargement habituel.
+- Nouveau module pur testé `core/config-io.js` (`buildExport` / `parseImport` / `exportFileName`).
+
+### Notes
+- Usage visé : transfert entre postes/navigateurs et sauvegarde de sécurité, **au sein du même workspace
+  Notion** (les identifiants Notion du fichier y restent valides). Le partage à un tiers et les « profils »
+  multi-workspace sont hors périmètre.
+
 ## [5.3.2] — 2026-07-17
 
 Correctif : la liste complète des tâches pouvait être perdue si on cherchait pendant le chargement du popup.

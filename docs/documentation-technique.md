@@ -1,6 +1,6 @@
 # Documentation technique — Notion Time Tracker
 
-Version : `5.3.2` (source de vérité : `manifest.json`). Le **D-technique** du principe D² : décrit *comment
+Version : `5.4.0` (source de vérité : `manifest.json`). Le **D-technique** du principe D² : décrit *comment
 c'est fait*. Pour *ce que fait* l'app côté utilisateur, voir [`documentation-fonctionnelle.md`](documentation-fonctionnelle.md).
 
 ---
@@ -173,6 +173,39 @@ Encapsule la persistance : `getConfig`/`saveConfig`, `getCurrentSession`/`setCur
 `getTaskHistory`/`pushTaskHistory` (**LRU** : dédoublonne, préfixe, tronque à 20). Seul module qui touche
 directement `chrome.storage.local` côté UI.
 
+### `core/config-io.js` — export/import de la configuration (pur)
+
+Module **pur et testé** (Vitest, TDD) qui construit l'enveloppe exportée et valide un fichier importé, sans
+jamais toucher au DOM ni à `chrome.storage` — l'appelant (`config/config.js`) fournit `now`/`appVersion` et
+écrit le résultat.
+
+- **`buildExport(config, appVersion, now = new Date())`** : construit `{ format, formatVersion, exportedAt,
+  appVersion, config }`. Le **token est retiré par déstructuration objet** (`const { notionToken, ...rest } =
+  config`), donc sa clé est **absente** du JSON (jamais `null`, jamais une chaîne vide qui laisserait croire à
+  un choix délibéré). **`exportedAt` passe par `toNotionDate(now)`** : l'horodatage porte l'offset local, comme
+  toute date envoyée à Notion (cf. §4, `core/time.js`). Ne mute pas `config` (spread, pas d'affectation).
+- **`parseImport(text, currentConfig)`** : valide puis renvoie la config prête à écrire (lève une `Error` au
+  message clair sinon, affiché tel quel dans la zone de statut de la page) :
+  - JSON invalide → rejeté ; `format !== 'notion-timer-config'` → rejeté (fichier étranger) ;
+  - **`formatVersion` supérieur** à celui connu de l'extension installée → rejeté (« mets l'extension à jour »),
+    ce qui protège une extension **plus ancienne** contre un fichier exporté par une **plus récente** ;
+  - `timeDb.id` ou `tasksDb.id` absents → rejeté (fichier incomplet) ;
+  - les favoris (`config.prefs.favorites`) sont **normalisés** (`normalizeFavorite` de `fav-presets.js`),
+    **filtrés** à ceux qui ont un `taskId`, et **plafonnés à 8** — mêmes règles qu'à la saisie manuelle en config ;
+  - **le token ne vient jamais du fichier** : le retour vaut `{ ...c, notionToken: currentConfig?.notionToken ||
+    '', prefs: {...} }` — le `notionToken` est réécrit **après** le spread de `c`, donc toute valeur qui
+    traînerait dans le fichier importé (ancien export non nettoyé, fichier trafiqué) est **écrasée** par celui du
+    poste courant (ou `''` sur un poste neuf, jamais celui du fichier).
+- **`exportFileName(now = new Date())`** : `notion-timer-config-AAAA-MM-JJ.json`, construit à partir des
+  parties **locales** de la date (`getFullYear`/`getMonth`/`getDate`), pas de `toISOString` qui basculerait de
+  date le soir selon le fuseau.
+
+**Ne réimplémente pas la sélection** : après import, `config/config.js` recharge la page ; c'est le flux habituel
+de la config (`onLoadDb` → `remapTime`/`remapTasks` → `loadTasksList` → `renderFavorites`) qui re-sélectionne
+bases, champs, congés et favoris à partir de la config fraîchement écrite — aucune logique de ré-affichage n'est
+dupliquée ici. La colle DOM (construction du `Blob`, lien de téléchargement, `<input type="file">`, `confirm()`,
+`location.reload()`) vit entièrement dans `src/config/config.js` (`onExport`/`onImportFile`), pas dans ce module.
+
 ### `core/stats.js` — agrégations statistiques (pur)
 
 - **`periodRange(kind, refDate)`** : bornes `{start, end, label}` d'une période autour de `refDate` selon
@@ -342,6 +375,12 @@ et ferme le popup. Sinon applique le thème, câble le bouton thème + config, g
 - **`onSave`** : valide les champs obligatoires (Nom/Début/Fin, heures/semaine > 0), assemble l'objet `config`
   complet (token, 2 bases mappées, **base Projets** si choisie, `prefs`, thème) via `collectTimeFields`/
   `collectTasksFields`, `saveConfig`, puis referme l'onglet.
+- **`onExport`** : `buildExport` (config courante + version du manifeste) → `Blob` JSON → lien `<a download>`
+  cliqué par programme (`URL.createObjectURL`, révoqué juste après). **`onImportFile`** : lit le fichier
+  (`file.text()`), délègue la validation à `parseImport`, relit `exportedAt`/`appVersion` du JSON brut pour les
+  afficher dans un `confirm()` (date + version d'origine, rappel que le token du poste est conservé), puis
+  `saveConfig(next)` + `location.reload()` seulement après confirmation. Toute erreur de `parseImport` s'affiche
+  telle quelle dans `#import-status`, sans écriture. Cf. `core/config-io.js` ci-dessus pour la logique pure.
 - Au chargement : applique le thème, repeuple depuis la config existante, et **charge automatiquement les bases** si
   un token est déjà présent (plus de clic manuel).
 

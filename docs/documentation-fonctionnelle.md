@@ -1,6 +1,6 @@
 # Documentation fonctionnelle — Notion Time Tracker
 
-Version : `5.2.0`. Le **D-fonctionnel** du principe D² : décrit **ce que fait** l'application, du point de vue de
+Version : `5.4.0`. Le **D-fonctionnel** du principe D² : décrit **ce que fait** l'application, du point de vue de
 l'utilisateur, fonctionnalité par fonctionnalité. Aucun code ; pour l'implémentation, voir
 [`documentation-technique.md`](documentation-technique.md).
 
@@ -132,6 +132,28 @@ l'onglet de configuration.
 
 On peut exclure de la liste des tâches un ou plusieurs statuts (ex. tâches terminées). Plusieurs valeurs se
 séparent par `;` (ex. `termine;clos`) ; le type de propriété (`status` ou `select`) est détecté automatiquement.
+
+### 2.6 Sauvegarde & transfert de la configuration
+
+Carte **« ⑥ Sauvegarde & transfert »**, en bas de la page de config, avec deux boutons :
+
+- **⬇️ Exporter la config** : télécharge un fichier JSON (`notion-timer-config-AAAA-MM-JJ.json`, daté du jour)
+  contenant les deux bases et leur mapping de champs, les préférences, la tâche congés et les favoris.
+  **Le token Notion n'est jamais inclus dans le fichier** : sur un nouveau poste, il reste à le saisir et à le
+  tester après l'import. Un message confirme l'export une fois le téléchargement lancé.
+- **⬆️ Importer une config** : recharge un fichier précédemment exporté. Avant tout changement, une
+  **confirmation** rappelle la **date d'export** et la **version de l'extension** dont provient le fichier, et
+  précise que le **token du poste est conservé** (celui du fichier, s'il y en avait un, est ignoré). Une fois
+  confirmé : la configuration est remplacée et **la page se recharge**. Sur un poste neuf, il reste alors à
+  saisir le token, le tester, puis charger les bases — bases, champs, congés et favoris se **re-sélectionnent
+  automatiquement** via le même chargement qu'au premier réglage (§2.1-2.4). Un fichier invalide (mauvais
+  format, version plus récente que l'extension installée, bases manquantes) affiche un message d'erreur clair
+  et n'écrit rien.
+
+**Usage visé** : transférer la configuration entre postes ou navigateurs, ou en garder une sauvegarde de
+sécurité — **au sein d'un même workspace Notion** (les bases et propriétés référencées dans le fichier doivent
+exister côté Notion pour que le mapping soit valide après import). Ce n'est pas pensé pour partager sa config à
+un tiers ni pour gérer plusieurs profils multi-workspace.
 
 ---
 

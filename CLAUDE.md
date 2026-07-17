@@ -131,6 +131,7 @@ src/
     storage.js                   accès typé chrome.storage.local
     fav-icons.js                 table des 23 pictos (données, tracés Tabler/MIT)
     fav-presets.js               palette 10 couleurs, normalizeFavorite, nextFreeColor
+    config-io.js                 export/import config : buildExport, parseImport, exportFileName (token exclu)
   fav-icon.js                    favIconSvg() — picto SVG, partagé popup + config (DOM ⇒ hors core/)
   theme.js
 test/      *.test.js (Vitest)
