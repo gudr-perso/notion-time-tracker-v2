@@ -41,10 +41,11 @@ describe('buildExport', () => {
 });
 
 describe('exportFileName', () => {
-  it('nomme avec la date LOCALE (soirée = pas de bascule vers la veille en UTC)', () => {
-    // 2026-07-17 23:30 heure locale — toISOString() donnerait peut-être le 18 selon l’offset,
-    // mais le nom doit refléter la date vue par l’utilisateur.
-    const d = new Date(2026, 6, 17, 23, 30, 0);
+  it('nomme avec la date LOCALE — 00:30 le 17/07 reste le 17 (toISOString donnerait le 16 à +02:00)', () => {
+    // À 00:30 heure locale (France, +02:00), l'instant UTC est le 16/07 22:30.
+    // Un exportFileName basé sur toISOString().slice(0,10) renverrait donc « 2026-07-16 » :
+    // ce cas verrouille l'usage des getters LOCAUX (getFullYear/getMonth/getDate).
+    const d = new Date(2026, 6, 17, 0, 30, 0);
     expect(exportFileName(d)).toBe('notion-timer-config-2026-07-17.json');
   });
 });
