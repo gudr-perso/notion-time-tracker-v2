@@ -6,6 +6,36 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.5.0] — 2026-07-17
+
+Filtre d'état : choix des statuts par cases à cocher, et les erreurs Notion s'affichent enfin dans le popup.
+
+### Ajouté
+- **Bandeau d'erreur dans le popup** : une erreur Notion au chargement des tâches (token révoqué, base
+  départagée, propriété de filtre renommée…) s'affiche désormais avec le **message brut de Notion**, au lieu de
+  devenir une erreur silencieuse laissant la liste vide sans explication.
+- Nouveau module pur testé `core/tasks-query.js` (`buildStatusFilter` / `readExcludeValues`).
+- `getDatabaseSchema` expose maintenant les **valeurs** des propriétés `status` / `select` (champ `options`).
+
+### Modifié
+- **Filtre d'état — sélection au lieu de saisie libre** : les statuts à exclure se **cochent** parmi les vraies
+  valeurs de la propriété mappée, au lieu de se taper séparés par `;`. Fini les fautes de frappe et de séparateur.
+  Un statut sauvegardé qui n'existe plus dans la base est affiché **« (absent de la base) »** plutôt que perdu.
+- **Format stocké** : `statusFilter.excludeValue` (chaîne séparée par `;`) devient `statusFilter.excludeValues`
+  (**tableau** de noms exacts). Un séparateur pouvant légitimement apparaître dans un nom de statut, on n'en
+  garde aucun. Les anciennes configs restent lues (repli sur le découpage `;` de `excludeValue`).
+
+### Corrigé
+- **La liste des tâches ne se chargeait plus si une valeur d'exclusion contenait une virgule** : `"termine,clos"`
+  n'était pas découpé (séparateur attendu `;`), partait comme une seule valeur inexistante, et Notion rejetait le
+  filtre — sans que rien ne s'affiche. Le bandeau ci-dessus rend l'erreur visible ; les cases à cocher rendent la
+  faute impossible. Cf. `EVENEMENTS.md`.
+
+### Notes
+- **Aucune migration** : une config avec l'ancien `excludeValue` reste fonctionnelle. À la réouverture de la page
+  de config, une valeur qui ne correspond à aucun statut réel apparaît comme case **« (absent de la base) »** —
+  décocher, cocher les bons statuts, enregistrer suffit à repasser au nouveau format.
+
 ## [5.4.0] — 2026-07-17
 
 Export et import de la configuration depuis la page de réglages — favoris compris, **sans le token**.

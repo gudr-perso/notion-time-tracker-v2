@@ -1,6 +1,6 @@
 // test/notion-api.test.js
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { queryAll, searchDatabases, createPage, addDatabaseProperties } from '../src/core/notion-api.js';
+import { queryAll, searchDatabases, createPage, addDatabaseProperties, getDatabaseSchema } from '../src/core/notion-api.js';
 
 function jsonResponse(body, ok = true, status = 200, headers = {}) {
   return { ok, status, headers: { get: (k) => headers[k.toLowerCase()] }, json: async () => body };
@@ -42,6 +42,31 @@ describe('searchDatabases', () => {
     const dbs = await searchDatabases('tok');
     expect(dbs[0].id).toBe('d1');
     expect(dbs[0].name).toBe('Time');
+  });
+});
+
+describe('getDatabaseSchema', () => {
+  it('renvoie name/type et expose les valeurs des propriétés status et select', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce(jsonResponse({
+      properties: {
+        'Nom': { type: 'title', title: {} },
+        'Statut': { type: 'status', status: { options: [{ name: 'À faire' }, { name: 'Terminé' }] } },
+        'État': { type: 'select', select: { options: [{ name: 'Ouvert' }, { name: 'Clos' }] } },
+      },
+    }));
+    const schema = await getDatabaseSchema('tok', 'db1');
+    expect(schema).toContainEqual({ name: 'Nom', type: 'title' });
+    expect(schema).toContainEqual({ name: 'Statut', type: 'status', options: ['À faire', 'Terminé'] });
+    expect(schema).toContainEqual({ name: 'État', type: 'select', options: ['Ouvert', 'Clos'] });
+  });
+
+  it('n’ajoute pas de champ options aux propriétés sans valeurs', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce(jsonResponse({
+      properties: { 'URL': { type: 'url', url: {} } },
+    }));
+    const [prop] = await getDatabaseSchema('tok', 'db1');
+    expect(prop).toEqual({ name: 'URL', type: 'url' });
+    expect('options' in prop).toBe(false);
   });
 });
 

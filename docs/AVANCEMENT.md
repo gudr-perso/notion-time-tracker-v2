@@ -3,7 +3,7 @@
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
 > Dernière mise à jour : 2026-07-17.
 
-**Version courante : `5.4.0`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
+**Version courante : `5.5.0`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -21,14 +21,27 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Onglet Timer** (start/pause/stop, stop-at, saisie manuelle, congés, favoris, récents) | ✅ |
 | **Service worker** (badge + notifications via `chrome.alarms`) | ✅ |
 | **Thème clair / sombre** (bascule persistée) | ✅ |
-| **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`, `stats`, `fav-presets`, `fav-icons`, `schema-injection`, `config-io`) | ✅ **106 tests verts** |
+| **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`, `stats`, `fav-presets`, `fav-icons`, `schema-injection`, `config-io`, `tasks-query`) | ✅ **121 tests verts** |
 | **Onglet Stats** | ✅ v5.2.0 |
 | **Favoris : couleur + picto** | ✅ v5.3.0 |
 | **Export / import de la config** | ✅ v5.4.0 |
+| **Filtre d'état : cases à cocher + erreurs Notion visibles** | ✅ v5.5.0 |
 
-**Tests** : `npm test` → `106 passed (8 files)`.
+**Tests** : `npm test` → `121 passed (9 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.5.0)
+- **Filtre d'état par cases à cocher** : les statuts à exclure de la liste des tâches se cochent parmi les
+  vraies valeurs de la propriété mappée (fini la saisie libre séparée par `;`, source de la panne « liste qui
+  ne se charge plus » quand une virgule s'y glissait). Format stocké passé de `excludeValue` (chaîne) à
+  `excludeValues` (tableau de noms exacts, sans séparateur en clair) ; anciennes configs encore lues. Un statut
+  disparu de la base est affiché « (absent de la base) », jamais supprimé en silence.
+- **Erreurs Notion visibles dans le popup** : `initTimer()` est enveloppé d'un `try/catch` qui affiche le
+  message brut de Notion (token, base, propriété…) dans un bandeau, au lieu de le laisser filer en console.
+- Nouveau module pur testé `core/tasks-query.js` (`buildStatusFilter` / `readExcludeValues`) ;
+  `getDatabaseSchema` expose désormais les valeurs des propriétés `status` / `select`. Détail :
+  `docs/VERSIONS.md`, méthode : `docs/EVENEMENTS.md`.
 
 ### ✅ Faites (v5.4.0)
 - **Export / import de la configuration** depuis la page de réglages : un bouton télécharge un JSON

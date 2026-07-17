@@ -34,6 +34,11 @@ body { margin:0; width:700px; font-family:"Inter","Segoe UI",system-ui,sans-seri
 .tab { flex:1; background:transparent; border:none; color:var(--text-muted);
   padding:12px; font-weight:700; cursor:pointer; border-bottom:2px solid transparent; }
 .tab.active { color:var(--cyan); border-bottom-color:var(--cyan); }
+.load-error { margin:16px 16px 0; padding:12px 14px; border-radius:12px;
+  border:1px solid var(--red); background:rgba(248,113,113,.12); color:var(--red);
+  font-size:13px; line-height:1.45; white-space:pre-wrap; word-break:break-word; }
+.load-error[hidden] { display:none; }
+.load-error b { display:block; margin-bottom:2px; }
 main { padding:16px; }
 .card, .card-lite { border-radius:14px; border:1px solid var(--border); padding:14px; margin-bottom:14px; }
 .card { background:linear-gradient(180deg,rgba(10,24,112,.35),rgba(5,12,63,.35)); }

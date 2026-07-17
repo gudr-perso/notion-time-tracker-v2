@@ -85,8 +85,10 @@
       <div class="row"><label>🚦 Filtre d'état <span class="type">status/select — optionnel</span></label>
         <div class="cell">
           <select id="t-statusFilter" class="input" data-mapping-tasks></select>
-          <input type="text" id="t-statusExclude" class="input" style="flex:1 1 280px" placeholder="valeurs à exclure, séparées par ; (ex : termine;clos)" />
         </div>
+      </div>
+      <div class="row" id="row-statusExclude" hidden><label>🚫 États à exclure <span class="type">coche les états à masquer</span></label>
+        <div class="cell"><div id="t-statusExclude" class="status-exclude"></div></div>
       </div>
       <div class="row"><label>↕️ Tri <span class="type">propriété</span></label><div class="cell"><select id="t-sortProperty" class="input" data-mapping-tasks></select></div></div>
       <div class="row">
@@ -97,7 +99,7 @@
         </div>
       </div>
       <div id="inject-tasks-preview" class="inject-preview" hidden></div>
-      <p class="help-note">ℹ️ <strong>Filtre de statut — à créer manuellement.</strong> L'API Notion ne peut pas créer de propriété de type <em>Status</em>. Dans ta base Tâches, crée (ou réutilise) une propriété <strong>Statut</strong> (type <em>Status</em> ou <em>Select</em>) avec tes états de workflow, puis mappe-la dans « Filtre d'état » et indique la valeur à exclure (ex. <code>Terminé</code>). Le <strong>Tri</strong> se mappe aussi sur une propriété existante — rien à injecter.</p>
+      <p class="help-note">ℹ️ <strong>Filtre de statut — à créer manuellement.</strong> L'API Notion ne peut pas créer de propriété de type <em>Status</em>. Dans ta base Tâches, crée (ou réutilise) une propriété <strong>Statut</strong> (type <em>Status</em> ou <em>Select</em>) avec tes états de workflow, puis mappe-la dans « Filtre d'état » et coche les états à exclure (ex. <code>Terminé</code>). Le <strong>Tri</strong> se mappe aussi sur une propriété existante — rien à injecter.</p>
     </section>
 
     <!-- ⑤ Préférences -->

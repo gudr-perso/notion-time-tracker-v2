@@ -1,5 +1,6 @@
 // src/popup/timer.js — logique de l'onglet Timer : état partagé T + helpers, chargement des tâches.
 import { queryPage, queryAll, getPage } from '../core/notion-api.js';
+import { buildStatusFilter } from '../core/tasks-query.js';
 import { taskFromPage } from '../core/mapping.js';
 import { getTaskHistory } from '../core/storage.js';
 import { wireActions } from './timer-actions.js';
@@ -21,14 +22,7 @@ const T = {
 let helpers = null;
 
 function buildTasksFilter() {
-  const sf = T.tasksFields.statusFilter;
-  if (!sf || !sf.property || !sf.excludeValue) return undefined;
-  const key = sf.type === 'select' ? 'select' : 'status';
-  // Plusieurs statuts à exclure, séparés par ';' (ex. "termine;clos").
-  const values = String(sf.excludeValue).split(';').map((v) => v.trim()).filter(Boolean);
-  if (!values.length) return undefined;
-  if (values.length === 1) return { property: sf.property, [key]: { does_not_equal: values[0] } };
-  return { and: values.map((v) => ({ property: sf.property, [key]: { does_not_equal: v } })) };
+  return buildStatusFilter(T.tasksFields.statusFilter);
 }
 
 function buildTasksSorts() {

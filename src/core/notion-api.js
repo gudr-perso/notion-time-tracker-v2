@@ -56,7 +56,14 @@ export async function searchDatabases(token) {
 
 export async function getDatabaseSchema(token, dbId) {
   const data = await request(token, `/databases/${normId(dbId)}`);
-  return Object.entries(data.properties).map(([name, prop]) => ({ name, type: prop.type }));
+  return Object.entries(data.properties).map(([name, prop]) => {
+    const p = { name, type: prop.type };
+    // status et select portent la liste de leurs valeurs sous prop[type].options : on l'expose
+    // (noms seuls) pour offrir un choix des vrais statuts plutôt qu'une saisie libre.
+    const options = prop[prop.type]?.options;
+    if (Array.isArray(options)) p.options = options.map((o) => o.name);
+    return p;
+  });
 }
 
 export async function queryAll(token, dbId, { filter, sorts, pageSize = 100 } = {}) {

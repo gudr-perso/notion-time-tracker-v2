@@ -10,6 +10,45 @@
 
 ---
 
+## 2026-07-17 — La liste des tâches ne se charge plus, et le popup reste muet sur le pourquoi
+
+- **Contexte** : v5.5.0. « La liste des tâches ne se charge plus, malgré une config OK. » Seul indice fourni par
+  l'utilisateur : **le site où l'erreur est levée**, pas son texte — `core/notion-api.js`, `if (!res.ok) { throw
+  new Error(data.message || …) }`. Notion a donc répondu **non-ok** au chargement des tâches (`queryPage` →
+  `/databases/{id}/query`). Cause trouvée par l'utilisateur : dans le **filtre d'état**, valeurs d'exclusion
+  saisies séparées par une **virgule** au lieu du `;` attendu (`buildTasksFilter` ne découpe que sur `;`).
+- **Erreur** : **message Notion exact jamais capturé** — et c'est précisément le bug. `initTimer()` était
+  `await`é sans `try/catch` ([popup.js](../src/popup/popup.js)) ; le rejet devenait une *unhandled rejection*,
+  la liste restait vide, aucun texte à l'écran. L'utilisateur a dû **ouvrir les DevTools et coller le code
+  source du point de levée** faute de pouvoir lire le message. Le seul artefact disponible est donc le site de
+  levée, pas la chaîne `data.message`. Mécanisme côté valeur : `"termine,clos"` non découpé → **une seule**
+  valeur inexistante envoyée en `does_not_equal`, que Notion a refusée (statut non-ok confirmé par la levée).
+- **Hypothèse** : deux défauts distincts, empilés. (1) **Structurel** : toute erreur Notion au démarrage est
+  invisible, pas seulement celle-ci. (2) **Ergonomique** : encoder plusieurs valeurs dans une chaîne à
+  séparateur `;` est un piège — un séparateur (virgule **ou** point-virgule) peut légitimement apparaître dans
+  un nom de statut Notion, donc *aucun* séparateur en clair n'est sûr.
+- **Action** :
+  1. `try/catch` autour de `initTimer()` → bandeau `#load-error` affichant `e.message` **brut** de Notion.
+     Couvre toute la famille (token révoqué, base départagée, propriété renommée), pas ce seul cas.
+  2. Filtre d'état : la saisie libre devient des **cases à cocher** des vrais statuts (`getDatabaseSchema`
+     expose désormais `options` pour `status`/`select`). On ne peut plus taper une valeur fausse.
+  3. Format stocké : `excludeValue` (chaîne `;`) → `excludeValues` (**tableau** de noms exacts). Plus aucun
+     séparateur en clair. Logique extraite en `core/tasks-query.js` (`buildStatusFilter`, `readExcludeValues`),
+     testée, avec repli sur l'ancien découpage `;` pour les configs existantes.
+  4. Un statut sauvegardé absent des options réelles est rendu **« (absent de la base) »**, coché — préservé et
+     signalé, jamais supprimé en silence.
+- **Résultat** : 121 tests verts (15 nouveaux : 13 `tasks-query`, 2 `getDatabaseSchema`). Le câblage DOM
+  (bandeau, cases) n'est **pas** exécuté par les tests — l'extension dépend des API `chrome.*` et le navigateur
+  intégré ne rend `file://` qu'en captures statiques ; vérifié par relecture + `node --check`, pas en pilotant.
+- **Leçon** : **une erreur d'une couche externe qu'on `throw` doit finir à l'écran, pas seulement dans la
+  console.** Le signe qui ne trompe pas : l'utilisateur en est réduit à **coller le code source du point de
+  levée** parce qu'il n'a pas le message — l'information existait, elle a été jetée. Un `await` de haut niveau
+  sans `try/catch` sur un appel réseau est un trou d'observabilité. Et corollaire : **ne jamais encoder des
+  données utilisateur multi-valeurs avec un séparateur en clair** (`;`, `,`) quand ces données peuvent
+  légitimement contenir ce séparateur — préférer un tableau, ou un choix fermé (cases à cocher) qui supprime la
+  saisie. Réserve d'honnêteté : le *message* Notion exact n'a pas été observé (avalé avant le correctif) ; le
+  correctif du bandeau est justement ce qui rendra le prochain diagnostic immédiat.
+
 ## 2026-07-17 — Course au démarrage : la liste complète des tâches écrasée par le chargement léger
 
 - **Contexte** : v5.3.2. Deuxième bug pré-existant repéré en relisant le code pendant la v5.3.0, traité en session séparée. `initTimer()` branche l'écouteur de `#task-search` **avant** son `await loadLightTasks()` (20 tâches affichées vite) ; taper déclenche `loadAllTasks()` (liste complète, `T.allLoaded = true`). Les deux écrivent dans le **même** `T.tasks`, sans se concerter. Bug **livré depuis la v5.0.0**.

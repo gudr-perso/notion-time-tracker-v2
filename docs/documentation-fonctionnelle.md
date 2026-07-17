@@ -130,8 +130,14 @@ l'onglet de configuration.
 
 ### 2.5 Filtre de statuts (base des tâches)
 
-On peut exclure de la liste des tâches un ou plusieurs statuts (ex. tâches terminées). Plusieurs valeurs se
-séparent par `;` (ex. `termine;clos`) ; le type de propriété (`status` ou `select`) est détecté automatiquement.
+On peut exclure de la liste des tâches un ou plusieurs statuts (ex. tâches terminées). Une fois la propriété
+mappée dans « Filtre d'état », une rangée **« États à exclure »** affiche **une case à cocher par statut réel**
+de cette propriété : cocher un statut le masque de la liste. Le type de propriété (`status` ou `select`) est
+détecté automatiquement. Aucune valeur à taper — donc aucune faute de frappe ni d'erreur de séparateur possible.
+
+Si la configuration contient un statut qui **n'existe plus** dans la base (renommé ou supprimé), il apparaît
+coché avec la mention **« (absent de la base) »** : il est conservé tel quel plutôt que perdu en silence.
+Décocher cette case et cocher le bon statut suffit à corriger.
 
 ### 2.6 Sauvegarde & transfert de la configuration
 
@@ -171,6 +177,9 @@ et **en cours**. En-tête : bouton ⚙️ (config), titre, bouton ☀️/🌙 (t
 - **Boutons d'ouverture** : `🔗 CLICKUP` (libellé personnalisable) ouvre l'URL externe de la tâche ; `🔗 Notion`
   ouvre la tâche dans Notion. Ils s'activent selon la sélection et la disponibilité de l'URL.
 - **▶️ Démarrer** : lance le chronomètre sur la tâche sélectionnée.
+- **En cas d'échec de chargement** : si Notion refuse la requête (token révoqué, base départagée de l'intégration,
+  propriété de filtre renommée…), un **bandeau rouge** en haut du popup affiche le message d'erreur renvoyé par
+  Notion, au lieu de laisser la liste vide sans explication.
 
 ### 3.2 Démarrer un chronomètre
 

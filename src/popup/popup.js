@@ -37,7 +37,21 @@ async function main() {
     });
   });
 
-  await initTimer(config);
+  try {
+    await initTimer(config);
+  } catch (e) {
+    // Sans ce filet, une erreur Notion (token révoqué, base départagée, propriété de filtre
+    // renommée…) devenait une unhandled rejection : liste vide et popup muet. On affiche le
+    // message brut de Notion, qui dit précisément ce qui cloche.
+    const box = $('load-error');
+    box.innerHTML = '';
+    const title = document.createElement('b');
+    title.textContent = 'Impossible de charger les tâches';
+    const msg = document.createElement('span');
+    msg.textContent = e?.message || String(e);
+    box.append(title, msg);
+    box.hidden = false;
+  }
 }
 
 main();

@@ -3,6 +3,7 @@ import { testToken, searchDatabases, getDatabaseSchema, queryAll, addDatabasePro
 import { getConfig, saveConfig } from '../core/storage.js';
 import { planInjection, FIELD_SPECS_TIME, FIELD_SPECS_TASKS } from '../core/schema-injection.js';
 import { taskFromPage } from '../core/mapping.js';
+import { readExcludeValues } from '../core/tasks-query.js';
 import { buildExport, parseImport, exportFileName } from '../core/config-io.js';
 import { applyStoredTheme, toggleTheme } from '../theme.js';
 import { FAV_COLORS, FAV_COLOR_LABELS, NO_ICON, normalizeFavorite, nextFreeColor } from '../core/fav-presets.js';
@@ -113,6 +114,48 @@ function remapTasks() {
     fill(sel, state.schemaTasks, TASKS_TYPES[key], cur);
     if (AUTO_TASKS[key]) autoSelect(sel, state.schemaTasks, AUTO_TASKS[key], cur);
   }
+  renderStatusExclude();
+}
+
+// Cases à cocher des vrais statuts de la propriété mappée — remplace la saisie libre séparée par
+// ';' (source de fautes de frappe et de séparateur). Ne s'affiche que si un filtre d'état est mappé.
+function renderStatusExclude() {
+  const box = $('t-statusExclude');
+  const prop = $('t-statusFilter').value;
+  box.innerHTML = '';
+  $('row-statusExclude').hidden = !prop;
+  if (!prop) return;
+  const options = state.schemaTasks.find((p) => p.name === prop)?.options || [];
+  // Valeurs déjà exclues, uniquement si elles concernent la propriété actuellement mappée :
+  // changer de propriété repart de zéro, les anciennes valeurs appartiennent à l'autre champ.
+  const saved = state.config?.tasksDb?.fields?.statusFilter;
+  const preset = saved?.property === prop ? readExcludeValues(saved) : [];
+  const presetSet = new Set(preset);
+  const addBox = (name, absent) => {
+    const label = document.createElement('label');
+    if (absent) label.className = 'absent';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.value = name; cb.checked = absent || presetSet.has(name);
+    const txt = document.createElement('span');
+    txt.textContent = name;
+    label.append(cb, txt);
+    if (absent) {
+      const tag = document.createElement('span');
+      tag.className = 'absent-tag'; tag.textContent = '(absent de la base)';
+      label.append(tag);
+    }
+    box.appendChild(label);
+  };
+  options.forEach((name) => addBox(name, false));
+  // Valeur sauvegardée qui n'existe plus comme option (statut renommé/supprimé) : conservée et
+  // signalée plutôt que perdue en silence — on ne modifie jamais la config de l'utilisateur sans le dire.
+  preset.filter((v) => !options.includes(v)).forEach((name) => addBox(name, true));
+  if (!box.children.length) {
+    const empty = document.createElement('span');
+    empty.className = 'empty';
+    empty.textContent = 'Cette propriété n’a aucune valeur définie.';
+    box.appendChild(empty);
+  }
 }
 
 async function loadTasksList(tasksId, kf) {
@@ -142,7 +185,8 @@ function collectTasksFields() {
   const sfProp = $('t-statusFilter').value;
   if (sfProp) {
     const opt = $('t-statusFilter').selectedOptions[0];
-    f.statusFilter = { property: sfProp, type: opt?.dataset.type || 'status', excludeValue: $('t-statusExclude').value.trim() };
+    const excludeValues = [...$('t-statusExclude').querySelectorAll('input[type="checkbox"]:checked')].map((c) => c.value);
+    f.statusFilter = { property: sfProp, type: opt?.dataset.type || 'status', excludeValues };
   }
   return f;
 }
@@ -467,13 +511,13 @@ async function init() {
     $('p-manualByDefault').checked = !!state.config.prefs?.manualByDefault;
     $('p-externalLabel').value = state.config.prefs?.externalButtonLabel || 'CLICKUP';
     $('p-weeklyHours').value = state.config.prefs?.weeklyHours ?? 39;
-    if (state.config.tasksDb?.fields?.statusFilter?.excludeValue) $('t-statusExclude').value = state.config.tasksDb.fields.statusFilter.excludeValue;
   }
   $('btn-test').addEventListener('click', onTest);
   $('btn-load-db').addEventListener('click', onLoadDb);
   $('time-db').addEventListener('change', loadSchemas);
   $('tasks-db').addEventListener('change', loadSchemas);
   $('t-title').addEventListener('change', () => loadTasksList($('tasks-db').value, state.config?.tasksDb?.fields || {}));
+  $('t-statusFilter').addEventListener('change', renderStatusExclude);
   $('btn-save').addEventListener('click', onSave);
   $('btn-inject-time').addEventListener('click', () => onInject('time'));
   $('btn-inject-tasks').addEventListener('click', () => onInject('tasks'));

@@ -47,6 +47,13 @@ header { display:flex; align-items:center; gap:16px; margin-bottom:24px; }
 .btn-ghost { background:rgba(42,166,232,.1); color:var(--cyan); border:1px solid var(--border-soft); }
 .status { font-size:12.5px; color:var(--text-muted); }
 .status.ok { color:var(--green); } .status.err { color:var(--red); }
+/* Filtre d'état : cases à cocher des vrais statuts (remplace la saisie libre séparée par ;). */
+.status-exclude { display:flex; flex-wrap:wrap; gap:8px 16px; width:100%; }
+.status-exclude label { display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--text); cursor:pointer; }
+.status-exclude input[type="checkbox"] { accent-color:var(--cyan); cursor:pointer; }
+.status-exclude .empty { font-size:12.5px; color:var(--text-muted); font-style:italic; }
+.status-exclude .absent { opacity:.8; }
+.status-exclude .absent-tag { font-size:11px; color:var(--red); font-style:italic; }
 .save-row { display:flex; align-items:center; gap:12px; justify-content:flex-end; padding:8px 0; }
 /* Rangée favori : grid strict pour ne jamais déborder de la carte
    (select extensible → libellé fixe → couleur → picto → suppression). */
