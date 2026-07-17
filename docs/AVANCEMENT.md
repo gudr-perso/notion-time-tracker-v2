@@ -3,7 +3,7 @@
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
 > Dernière mise à jour : 2026-07-17.
 
-**Version courante : `5.3.1`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
+**Version courante : `5.3.2`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -28,6 +28,15 @@ L'onglet **Stats** est **livré en v5.2.0**.
 **Tests** : `npm test` → `87 passed (7 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.3.2)
+- **Course au chargement des tâches** (`popup/timer.js`) — le bug pré-existant suivi ci-dessous, corrigé :
+  taper dans la recherche pendant le chargement initial pouvait faire écraser la liste complète par les
+  20 tâches du chargement léger, `allLoaded` restant vrai → tâches hors des 20 premières **introuvables**
+  jusqu'à réouverture du popup. **Reproduit avant correction** sur le vrai module (harnais stubbant
+  `document`/`chrome`/`fetch`). Trois défauts voisins trouvés au passage et corrigés : **3 frappes = 3 scans
+  complets de la base** (→ 1 seul), rendu sur une saisie **périmée**, et écriture de `T.tasks` depuis une
+  fonction async. Détail : `docs/VERSIONS.md`, méthode : `docs/EVENEMENTS.md`.
 
 ### ✅ Faites (v5.3.1)
 - **Sélecteur de dates « Perso » affiché en permanence (onglet Stats)** — bug **livré depuis la v5.2.0**, corrigé :
@@ -84,18 +93,18 @@ corrections de layout (débordements, modale, largeur) et thème clair lisible.
   étendre les tests à la CSS est un choix de cadrage à valider.
 
 ### ⬜ Tâches créées et non faites
-**Bug pré-existant** repéré en relisant le code pendant la v5.3.0, lancé en session séparée (2026-07-17), non
-corrigé à ce jour :
-- **Course `loadAllTasks` / `loadLightTasks`** (`popup/timer.js`) : si une recherche résout avant le chargement
-  initial, `loadLightTasks` écrase `T.tasks` avec les 20 tâches légères **alors que `allLoaded` reste à `true`** — la
-  liste complète est perdue et jamais rechargée. Même famille que le bug des libellés corrigé en v5.3.0.
+- (aucune pour l'instant)
 
-*(L'autre bug pré-existant, `.stats-custom`, est **corrigé en v5.3.1** — cf. plus haut.)*
+*(Les deux bugs pré-existants repérés pendant la v5.3.0 sont traités : `.stats-custom` en **v5.3.1**, la
+course `loadAllTasks` / `loadLightTasks` en **v5.3.2** — cf. plus haut.)*
 
 ## Prochaine action
 
-1. Décider du point « favoris 1 clic vs commentaire obligatoire » ci-dessus.
-2. Suivre le bug pré-existant restant (course `loadAllTasks` / `loadLightTasks`).
+1. **Vérifier la v5.3.2 en chargeant l'extension** (le popup n'est pas couvert par les tests) : ouvrir le
+   popup et **taper aussitôt** dans la recherche, sans attendre l'affichage de la liste → une tâche située
+   hors des 20 premières doit rester trouvable, la liste affichée doit correspondre à la saisie, et les
+   favoris doivent porter le nom de leur tâche (pas « Favori »).
+2. Décider du point « favoris 1 clic vs commentaire obligatoire » ci-dessus.
 3. Décider du garde-fou `[hidden]` (test de contrôle statique) — cf. « Idées non tranchées ».
 
 ## Carte du code

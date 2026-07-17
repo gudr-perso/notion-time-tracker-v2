@@ -10,6 +10,43 @@
 
 ---
 
+## 2026-07-17 — Course au démarrage : la liste complète des tâches écrasée par le chargement léger
+
+- **Contexte** : v5.3.2. Deuxième bug pré-existant repéré en relisant le code pendant la v5.3.0, traité en session séparée. `initTimer()` branche l'écouteur de `#task-search` **avant** son `await loadLightTasks()` (20 tâches affichées vite) ; taper déclenche `loadAllTasks()` (liste complète, `T.allLoaded = true`). Les deux écrivent dans le **même** `T.tasks`, sans se concerter. Bug **livré depuis la v5.0.0**.
+- **Erreur** : pas de message — symptôme fonctionnel, et invisible en usage normal (il faut taper **pendant** le chargement). Reproduit sur le vrai module, harnais stubbant `document`/`chrome`/`fetch` avec le chargement léger relâché **après** le complet :
+  ```
+  recherche « zzz » → 0 option(s), zzz-cible INTROUVABLE   (attendu : 1 option)
+  ```
+  alors que la tâche existe bien dans la base.
+- **Hypothèse** : si `loadAllTasks` résout **avant** `loadLightTasks`, le léger écrase `T.tasks` avec ses 20 tâches **pendant que `allLoaded` reste vrai** → le popup se croit complet, ne recharge plus jamais, et toute tâche hors des 20 premières devient introuvable jusqu'à réouverture.
+- **Action** — la piste évidente (`if (T.allLoaded) return` **en tête** de `loadLightTasks`) est **mort-née** : à l'entrée, `allLoaded` est toujours faux (aucun `await` entre le branchement de l'écouteur et l'appel). Le test doit être **juste avant l'écriture**, après tous les `await`. Dans `src/popup/timer.js` :
+  1. `loadLightTasks` calcule sa liste puis teste `T.allLoaded || T.allLoading` **immédiatement avant** de publier.
+  2. `loadAllTasks` mémorise sa promesse dans `T.allLoading` : les appels concurrents la partagent (**3 frappes = 3 paginations complètes** avant, 1 après) et le drapeau signale « liste complète en route » au chargement léger.
+  3. `T.tasks` et `T.allLoaded` publiés **sans `await` entre les deux** → `allLoaded` ne peut plus mentir sur le contenu de `T.tasks`.
+  4. `ensurePinnedTasks` → `withPinnedTasks(tasks)`, qui **retourne** une liste au lieu d'écrire dans `T.tasks` (cf. Leçon).
+  5. Le rendu relit `#task-search` **au moment du rendu** (`applyFilter`) au lieu d'une valeur capturée avant un `await` : deux frappes rapides rendaient dans l'ordre d'arrivée des réponses, la dernière affichant le résultat d'une saisie **périmée** (`25` options pour « Tache 1 »).
+- **Résultat** : `1 option, zzz-cible TROUVÉE` ; 1 seule pagination ; le dernier rendu correspond toujours à la saisie. 87 tests verts (non-régression seulement : le popup n'est pas dans le socle testé).
+- **Leçon** : **un drapeau « c'est chargé » posé à la fin d'un chargement n'arbitre rien pendant le vol** — d'où le doublon `allLoaded` (fini) / `allLoading` (en route). Trois réflexes pour tout état partagé écrit par deux chemins async :
+  - le garde-fou va **juste avant l'écriture**, jamais en tête de fonction : chaque `await` rouvre la fenêtre ;
+  - publier l'état et son drapeau **d'un seul geste**, sans `await` entre les deux ;
+  - relire le DOM au moment du rendu ; une valeur lue avant un `await` est périmée au retour.
+
+  Et surtout : **corriger une course peut en réveiller une autre**. Faire s'effacer le chargement léger a failli annuler le correctif des favoris de la v5.3.0 — s'il ne publie pas, `T.tasks` reste `[]`, et le re-rendu des favoris placé *après* lui retombait sur la liste vide, réaffichant « Favori » à vie. D'où `publishTasks()` : **point de passage unique** qui publie la liste **et** rejoue tout ce qui en dépend, à chaque publication. C'est la leçon de l'entrée « Favoris affichant tous Favori » (tout ce qui lit `T.tasks` doit être rejoué, pas seulement câblé) poussée à sa conclusion — un rendu unique après le chargement léger ne couvrait qu'un cas sur deux.
+
+  Piège de langage vérifié au passage : `T.tasks.push(f(await g()))` capture le tableau **avant** d'évaluer l'argument — si `T.tasks` est réaffecté pendant le `await`, le push atterrit sur le tableau **orphelin**. Ici c'était **latent** (le chargement complet re-rapatriait l'épinglée) : mesuré, pas supposé — d'où « latent » et non « corrigé ». C'est la raison pour laquelle une fonction async ne doit pas écrire dans l'état partagé : elle **retourne**, l'appelant publie.
+
+## 2026-07-17 — Réécrire un fichier source en PowerShell 5.1 corrompt tous les accents
+
+- **Contexte** : v5.3.2. Pour prouver qu'un test échouait bien sans le correctif, neutralisation d'une ligne de `timer.js` via `(Get-Content $f -Raw) -replace ... | Set-Content $f -Encoding utf8`.
+- **Erreur** : le fichier ressort en mojibake, sur toute sa longueur :
+  ```
+  // src/popup/timer.js â€” logique de l'onglet Timer : Ã©tat partagÃ© T + helpers
+  ```
+- **Hypothèse** : double faute d'encodage. `Get-Content` lit un fichier UTF-8 **sans BOM** comme du **Windows-1252** (défaut ANSI de PS 5.1) → `é` (`C3 A9`) devient `Ã©` ; `Set-Content -Encoding utf8` réencode ce `Ã©` en UTF-8 (`C3 83 C2 A9`) **et ajoute un BOM**. Chaque caractère accentué double de taille.
+- **Action** : réparation par le chemin inverse — décoder les octets en UTF-8, retirer le `U+FEFF` de tête, réencoder en Windows-1252, réécrire en octets bruts (`[System.IO.File]::WriteAllBytes`). Vérifié réversible **avant** d'écrire : `0` caractère `U+FFFD` dans le texte décodé (sinon la perte aurait été définitive — les octets `81 8D 8F 90 9D` n'existent pas en 1252).
+- **Résultat** : fichier identique à l'octet près, accents intacts, BOM parti ; `git diff` ne montrait plus que les modifications voulues.
+- **Leçon** : sur ce projet (sources FR accentuées, Windows, PS 5.1), **ne jamais éditer un fichier source avec `Get-Content`/`Set-Content`** — utiliser l'outil d'édition, qui préserve l'encodage. La corruption est **silencieuse** : rien n'échoue, le code tourne toujours, seuls les accents sont détruits — et un `git diff` la noierait dans un fichier entièrement réécrit. Corollaire : la console PS 5.1 affiche aussi ces fichiers en mojibake (`Get-Content`, `Select-String`) alors qu'ils sont **sains sur le disque** ; ne pas confondre un défaut d'affichage avec un fichier corrompu — trancher sur les octets.
+
 ## 2026-07-17 — `.stats-custom` : le soupçon confirmé, et tout le CSS audité pour solde de tout compte
 
 - **Contexte** : suite **directe** de l'entrée « `[hidden]` sans effet » ci-dessous (v5.3.0), qui se terminait par
@@ -85,6 +122,11 @@
   clic sur un favori avec « Tâche du favori introuvable ». Dans ce popup, **tout ce qui lit `T.tasks` doit
   être rappelé après `loadLightTasks()`, pas seulement câblé avant**. Famille de bugs à surveiller : cf. la
   course `loadAllTasks` / `loadLightTasks` qui écrase `T.tasks` en laissant `allLoaded` à `true`.
+  > ✅ **Suivi (v5.3.2)** : la course est corrigée — et elle a bien failli **annuler ce correctif-ci**, le
+  > chargement léger pouvant désormais s'effacer sans jamais publier (`T.tasks` reste `[]`, le re-rendu placé
+  > après lui retombe sur la liste vide). Le rendu est donc rejoué à **chaque** publication, via `publishTasks()`.
+  > « Rappelé après `loadLightTasks()` » était le bon réflexe mais le mauvais point d'accroche : c'est
+  > **la publication de la liste** qu'il faut suivre, pas un chargement en particulier. Cf. l'entrée en tête.
 
 ## 2026-07-17 — Deux pièges de palette : couleur en double, et un correctif qui aggrave
 
@@ -213,3 +255,4 @@
   3. Identité locale `gudr-perso`, `npm install` + `npm test` (66 verts) **avant** de figer, puis commit `release: v5.2.0` et push.
 - **Résultat** : `main` distant = `bca3293` = local, arbre propre. Rien de perdu.
 - **Leçon** : **pCloud n'est pas une sauvegarde de l'historique git** — seul le push vers GitHub l'est. Donc : **pousser à chaque release**, ne jamais laisser une version « livrée » vivre uniquement dans le dossier synchronisé. Corollaire de diagnostic : « pas à jour » n'est pas toujours « en retard » — comparer les deux sens avant d'agir. Et avec `core.autocrlf=true`, un clone frais fait apparaître des fichiers `M` qui n'ont **aucun** diff réel (`git diff` vide) : normaliser les fins de ligne avant de conclure, ils disparaissent d'eux-mêmes au `git add`.
+

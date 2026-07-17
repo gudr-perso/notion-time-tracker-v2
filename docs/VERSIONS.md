@@ -6,6 +6,35 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.3.2] — 2026-07-17
+
+Correctif : la liste complète des tâches pouvait être perdue si on cherchait pendant le chargement du popup.
+
+### Corrigé
+- **Tâches introuvables après une recherche lancée trop tôt** (bug présent depuis la **v5.0.0**) : le popup
+  affiche d'abord 20 tâches (chargement léger), et la première recherche déclenche le chargement de la liste
+  complète. Les deux écrivent dans le même état, sans se concerter. Si la liste complète arrivait **avant** les
+  20 tâches, celles-ci l'écrasaient **alors que le drapeau « tout est chargé » restait posé** : le popup se
+  croyait complet, ne rechargeait plus jamais, et **toute tâche hors des 20 premières devenait introuvable**
+  jusqu'à réouverture. Correctif : le chargement léger s'efface si la liste complète est arrivée **ou est en
+  route**, et l'état n'est publié qu'en un seul geste. Cf. `EVENEMENTS.md`.
+- **Trois défauts voisins, même cause, trouvés en creusant** :
+  - **Une recherche de 3 caractères lançait 3 paginations complètes** de la base Tâches (le drapeau ne
+    protégeait qu'après coup, pas pendant le vol) → **une seule** désormais, partagée.
+  - **La liste affichée pouvait ne pas correspondre à la saisie** : deux frappes rapides rendaient dans l'ordre
+    d'arrivée des réponses, la dernière pouvant afficher le résultat d'une saisie **périmée**.
+  - **Les tâches épinglées** (favoris, congés) étaient ajoutées à l'état partagé depuis une fonction async, ce
+    qui pouvait les faire atterrir dans une liste déjà remplacée (latent, jamais observé).
+
+### Notes
+- **Reproduit avant correction**, puis vérifié après, sur le vrai module (`document`/`chrome`/`fetch` stubbés,
+  ordre d'arrivée des requêtes forcé) : le popup n'étant pas dans le socle testé, c'est le seul moyen d'établir
+  une course autrement invisible. Les 87 tests `core/` ne servent ici que de non-régression.
+- **Le correctif des libellés de favoris de la v5.3.0 a failli être annulé** : en s'effaçant, le chargement léger
+  laisse l'état vide, or le re-rendu des favoris n'avait lieu qu'après lui. Le rendu est désormais rejoué à
+  **chaque** publication de la liste (`publishTasks`), ce qui couvre aussi le cas où seule la liste complète
+  publie. Non-régression vérifiée dans les deux sens.
+
 ## [5.3.1] — 2026-07-17
 
 Correctif : le sélecteur de dates « Perso » de l'onglet Stats était affiché en permanence.

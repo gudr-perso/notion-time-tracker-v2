@@ -1,6 +1,6 @@
 # Documentation technique — Notion Time Tracker
 
-Version : `5.2.0` (source de vérité : `manifest.json`). Le **D-technique** du principe D² : décrit *comment
+Version : `5.3.2` (source de vérité : `manifest.json`). Le **D-technique** du principe D² : décrit *comment
 c'est fait*. Pour *ce que fait* l'app côté utilisateur, voir [`documentation-fonctionnelle.md`](documentation-fonctionnelle.md).
 
 ---
@@ -217,12 +217,29 @@ et ferme le popup. Sinon applique le thème, câble le bouton thème + config, g
 ### `popup/timer.js` — état partagé + chargement des tâches
 
 - Objet **`T`** : état partagé de l'onglet Timer (config, tokens, mappings, `tasks`, `history`, `selectedTaskId`,
-  `session`).
+  `session`). Deux drapeaux distincts pour la liste complète : **`allLoaded`** (publiée dans `tasks`) et
+  **`allLoading`** (promesse du chargement en cours, `null` sinon) — un drapeau posé en fin de chargement
+  n'arbitre rien pendant le vol.
 - `buildTasksFilter` : filtre Notion d'exclusion de statuts, **multi-valeurs** séparées par `;` (→ `and` de
   `does_not_equal`). `buildTasksSorts` : tri par la propriété configurée.
 - `sortTasks` : place les tâches récentes (ordre `taskHistory`) en tête, le reste trié alphabétiquement (FR), dédoublonné.
 - `loadLightTasks` (20 tâches au démarrage) vs `loadAllTasks` (pagination complète, déclenchée à la 1ʳᵉ recherche).
-- `ensurePinnedTasks` : charge à l'unité (`getPage`) les tâches épinglées (favoris + congés) absentes de la liste.
+  Les deux écrivent dans le **même** `T.tasks` et peuvent être en vol en même temps (l'écouteur de recherche
+  est branché avant la fin du chargement léger), d'où trois règles à ne pas casser :
+  **(1)** `loadLightTasks` teste `allLoaded || allLoading` **juste avant** de publier — jamais en tête de
+  fonction, où `allLoaded` est toujours faux ; **(2)** `loadAllTasks` mémorise sa promesse dans `allLoading`,
+  que les appels concurrents partagent (une frappe = un appel, mais une seule pagination) ; **(3)** `tasks` et
+  `allLoaded` sont publiés sans `await` entre les deux. Cf. `docs/EVENEMENTS.md` (2026-07-17).
+- `withPinnedTasks(tasks)` : complète une liste avec les tâches épinglées (favoris + congés) qui en sont
+  absentes, chargées à l'unité (`getPage`). **Retourne** la liste et n'écrit jamais dans `T.tasks` : publier
+  est l'affaire de l'appelant (`T.tasks.push(f(await g()))` capturerait le tableau avant l'`await` et
+  pousserait sur un tableau orphelin en cas de réaffectation).
+- `applyFilter` : rend la liste en relisant `#task-search` **au moment du rendu**, jamais une valeur capturée
+  avant un `await` (deux frappes rapides rendent dans l'ordre d'arrivée des réponses, pas de la saisie).
+- **`publishTasks(tasks)`** : **seul** endroit qui écrit `T.tasks`. Publie la liste **et rejoue tout ce qui en
+  dépend** (`applyFilter`, `helpers.renderFavorites`), car la liste est publiée jusqu'à **deux** fois (léger puis
+  complet) et le léger peut ne jamais publier. Y ajouter un `await` casserait l'atomicité dont dépend `allLoaded` ;
+  tout nouveau rendu lisant `T.tasks` s'accroche ici, pas dans `initTimer`. Cf. `docs/EVENEMENTS.md` (2026-07-17).
 - `initTimer(config)` : remplit l'état, câble la liste/recherche/boutons d'ouverture, puis délègue à
   `wireActions` / `wireManual` / `wireRecent` via un objet `helpers` partagé.
 
