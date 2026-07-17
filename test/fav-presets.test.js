@@ -43,9 +43,12 @@ describe('FAV_ICONS', () => {
 });
 
 describe('FAV_COLORS', () => {
-  it('compte 10 couleurs, toutes distinctes', () => {
-    expect(FAV_COLORS).toHaveLength(10);
-    expect(new Set(FAV_COLORS).size).toBe(10);
+  it('compte 10 couleurs dont l’ordre et les clés font contrat', () => {
+    // Clé persistée dans chrome.storage et liée au CSS --fav-<clé> : la renommer ferait perdre
+    // sa couleur à chaque favori concerné. L'ordre pilote la grille de config et nextFreeColor.
+    expect(FAV_COLORS).toEqual([
+      'cyan', 'orange', 'green', 'amber', 'red', 'purple', 'pink', 'teal', 'lime', 'slate',
+    ]);
   });
 
   it('contient la couleur par défaut des favoris historiques', () => {
@@ -72,6 +75,12 @@ describe('normalizeFavorite', () => {
 
   it('remplace un picto inconnu par « aucun »', () => {
     expect(normalizeFavorite({ icon: 'licorne' }).icon).toBe('none');
+  });
+
+  it('remplace un picto qui n’est pas une chaîne par « aucun »', () => {
+    // Object.hasOwn coercerait ['code'] en 'code' : sans test de type, un storage bricolé à la
+    // main ressortirait tel quel et casserait le contrat « icon est une clé valide ».
+    expect(normalizeFavorite({ icon: ['code'] }).icon).toBe('none');
   });
 
   it('ne se laisse pas piéger par une clé héritée d’Object.prototype', () => {
@@ -101,5 +110,19 @@ describe('nextFreeColor', () => {
 
   it('tolère undefined', () => {
     expect(nextFreeColor(undefined)).toBe(FAV_COLORS[0]);
+  });
+
+  it('réserve la couleur affichée : un favori d’avant la v5.3.0 occupe orange', () => {
+    // Sans champ `color`, ce favori s'affiche pourtant en orange (cf. normalizeFavorite). Cyan
+    // étant déjà pris, orange serait le prochain candidat de la palette : il doit être sauté,
+    // sinon le nouveau favori serait le sosie de l'ancien.
+    const favs = [{ taskId: 'a' }, { taskId: 'b', color: 'cyan' }];
+    expect(nextFreeColor(favs)).toBe('green');
+  });
+
+  it('réserve la couleur affichée : une couleur invalide occupe le défaut', () => {
+    // Même raisonnement : 'chartreuse' n'existe pas dans la palette, ce favori s'affiche en orange.
+    const favs = [{ taskId: 'a', color: 'chartreuse' }, { taskId: 'b', color: 'cyan' }];
+    expect(nextFreeColor(favs)).toBe('green');
   });
 });

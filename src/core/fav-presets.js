@@ -18,12 +18,17 @@ export function normalizeFavorite(fav) {
     taskId: f.taskId || '',
     customLabel: f.customLabel || '',
     color: FAV_COLORS.includes(f.color) ? f.color : DEFAULT_FAV_COLOR,
-    // hasOwn et pas `in` : sinon 'toString' passerait pour un picto valide.
-    icon: Object.hasOwn(FAV_ICONS, f.icon) ? f.icon : NO_ICON,
+    // hasOwn et pas `in` : sinon 'toString' passerait pour un picto valide. Le test de type est
+    // nécessaire car hasOwn coerce sa clé : sans lui, ['code'] ressortirait tel quel — un tableau
+    // là où le contrat promet une clé. (includes ci-dessus est immunisé : SameValueZero, sans coercition.)
+    icon: typeof f.icon === 'string' && Object.hasOwn(FAV_ICONS, f.icon) ? f.icon : NO_ICON,
   };
 }
 
 export function nextFreeColor(favorites) {
-  const used = new Set((favorites || []).map((f) => f?.color));
+  // La couleur *affichée* et non la couleur brute : un favori d'avant la v5.3.0 n'a pas de
+  // champ `color` mais s'affiche en orange — sans ça, orange ne serait jamais réservé et le
+  // prochain favori créé serait un sosie des anciens.
+  const used = new Set((favorites || []).map((f) => normalizeFavorite(f).color));
   return FAV_COLORS.find((c) => !used.has(c)) || FAV_COLORS[0];
 }
