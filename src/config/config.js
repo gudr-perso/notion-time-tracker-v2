@@ -5,6 +5,7 @@ import { planInjection, FIELD_SPECS_TIME, FIELD_SPECS_TASKS } from '../core/sche
 import { taskFromPage } from '../core/mapping.js';
 import { readExcludeValues } from '../core/tasks-query.js';
 import { buildExport, parseImport, exportFileName } from '../core/config-io.js';
+import { DEFAULT_SCHEDULE, weeklyTotalHours } from '../core/schedule.js';
 import { applyStoredTheme, toggleTheme } from '../theme.js';
 import { FAV_COLORS, FAV_COLOR_LABELS, NO_ICON, normalizeFavorite, nextFreeColor } from '../core/fav-presets.js';
 import { FAV_ICONS } from '../core/fav-icons.js';
@@ -189,6 +190,45 @@ function collectTasksFields() {
     f.statusFilter = { property: sfProp, type: opt?.dataset.type || 'status', excludeValues };
   }
   return f;
+}
+
+// ── Planning hebdomadaire ────────────────────────────────
+const SCHED_ROWS = [['mon', 'Lun'], ['tue', 'Mar'], ['wed', 'Mer'], ['thu', 'Jeu'], ['fri', 'Ven'], ['sat', 'Sam'], ['sun', 'Dim']];
+
+function renderSchedule(schedule) {
+  const s = schedule && Object.keys(schedule).length ? schedule : DEFAULT_SCHEDULE;
+  $('p-schedule').innerHTML = SCHED_ROWS.map(([k, lbl]) => {
+    const d = s[k] || { am: null, pm: null };
+    const t = (v) => v || '';
+    return `<div class="sched-row"><span class="sched-day">${lbl}</span>` +
+      `<input type="time" data-k="${k}" data-s="am" data-i="0" value="${t(d.am?.[0])}">` +
+      `<input type="time" data-k="${k}" data-s="am" data-i="1" value="${t(d.am?.[1])}">` +
+      `<span class="sched-sep">/</span>` +
+      `<input type="time" data-k="${k}" data-s="pm" data-i="0" value="${t(d.pm?.[0])}">` +
+      `<input type="time" data-k="${k}" data-s="pm" data-i="1" value="${t(d.pm?.[1])}"></div>`;
+  }).join('');
+  $('p-schedule').oninput = updateWeeklyTotal;
+  updateWeeklyTotal();
+}
+
+function readSchedule() {
+  const out = {};
+  for (const [k] of SCHED_ROWS) out[k] = { am: null, pm: null };
+  $('p-schedule').querySelectorAll('input[type=time]').forEach((el) => {
+    const { k, s, i } = el.dataset;
+    if (!out[k][s]) out[k][s] = [null, null];
+    out[k][s][+i] = el.value || null;
+  });
+  for (const k of Object.keys(out)) for (const s of ['am', 'pm']) {
+    const seg = out[k][s];
+    out[k][s] = (seg && seg[0] && seg[1]) ? seg : null; // segment incomplet → null
+  }
+  return out;
+}
+
+function updateWeeklyTotal() {
+  const h = weeklyTotalHours(readSchedule());
+  $('p-weekly-total').textContent = `${(Math.round(h * 10) / 10).toString().replace('.', ',')} h`;
 }
 
 // ── Favoris ─────────────────────────────────────────────
@@ -422,8 +462,9 @@ async function onSave() {
   if (!timeFields.taskName || !timeFields.startDate || !timeFields.endDate) {
     status.textContent = 'Champs obligatoires manquants (Nom, Début, Fin).'; status.className = 'status err'; return;
   }
-  const weeklyHours = parseFloat($('p-weeklyHours').value);
-  if (!(weeklyHours > 0)) { status.textContent = 'Heures/semaine doit être > 0.'; status.className = 'status err'; return; }
+  const schedule = readSchedule();
+  const weeklyHours = weeklyTotalHours(schedule);
+  if (!(weeklyHours > 0)) { status.textContent = 'Renseigne au moins un créneau dans le planning.'; status.className = 'status err'; return; }
   const config = {
     notionToken: state.token,
     timeDb: { id: $('time-db').value, name: $('time-db').selectedOptions[0]?.dataset.name || '', fields: timeFields },
@@ -434,6 +475,7 @@ async function onSave() {
       manualByDefault: $('p-manualByDefault').checked,
       externalButtonLabel: ($('p-externalLabel').value || 'CLICKUP').toUpperCase().slice(0, 20),
       weeklyHours,
+      schedule,
       vacationTaskId: $('p-vacationTask').value || null,
       favorites: state.favorites.filter((f) => f.taskId).slice(0, 8).map(normalizeFavorite),
     },
@@ -510,7 +552,9 @@ async function init() {
     $('p-requireComment').checked = !!state.config.prefs?.requireComment;
     $('p-manualByDefault').checked = !!state.config.prefs?.manualByDefault;
     $('p-externalLabel').value = state.config.prefs?.externalButtonLabel || 'CLICKUP';
-    $('p-weeklyHours').value = state.config.prefs?.weeklyHours ?? 39;
+    renderSchedule(state.config.prefs?.schedule);
+  } else {
+    renderSchedule(null);
   }
   $('btn-test').addEventListener('click', onTest);
   $('btn-load-db').addEventListener('click', onLoadDb);

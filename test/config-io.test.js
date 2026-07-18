@@ -121,6 +121,20 @@ describe('parseImport — favoris', () => {
   });
 });
 
+describe('aller-retour — planning', () => {
+  it('inclut le planning et exclut le token', () => {
+    const cfg = {
+      notionToken: 'secret', timeDb: { id: 't', name: 'T', fields: {} }, tasksDb: { id: 'k', name: 'K', fields: {} },
+      prefs: { weeklyHours: 39, schedule: { mon: { am: ['09:00', '13:00'], pm: ['14:00', '18:00'] } } }, theme: 'dark',
+    };
+    const exp = buildExport(cfg, '5.5.0');
+    expect(exp.config.prefs.schedule.mon.pm).toEqual(['14:00', '18:00']);
+    expect(JSON.stringify(exp)).not.toContain('secret');
+    const out = parseImport(JSON.stringify(exp), null);
+    expect(out.prefs.schedule.mon.am).toEqual(['09:00', '13:00']);
+  });
+});
+
 describe('aller-retour', () => {
   it('buildExport puis parseImport redonne la config, token mis à part', () => {
     const cfg = {
