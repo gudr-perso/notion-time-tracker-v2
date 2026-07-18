@@ -6,6 +6,15 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.7.2] — 2026-07-18
+
+### Modifié
+- **Message du récap de congés plus clair quand rien n'est à poser** : « Aucune demi-journée sélectionnée » (affiché
+  notamment quand la date tombe un jour non travaillé, ex. week-end) devient explicite selon la cause — **« Aucun
+  jour travaillé sur cette période (voir le planning) »** si la plage ne contient aucun jour travaillé, ou **« Rien
+  à poser (tout est sur "—") »** si tous les jours ont été écartés via « détailler ». `popup/timer-manual.js` seul,
+  aucun test impacté (vérifié au navigateur).
+
 ## [5.7.1] — 2026-07-18
 
 ### Corrigé

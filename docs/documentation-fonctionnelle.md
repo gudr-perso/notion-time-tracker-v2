@@ -230,7 +230,8 @@ se décoche), sélectionne cette tâche et préremplit le commentaire « En cong
 
 **Si un planning est configuré**, la coche remplace les champs début/fin par une saisie en **demi-journées** :
 **Du** [date + matin / après-midi / journée] **→ Au** [date + matin / après-midi / journée]. Un **récapitulatif**
-indique en direct le total en jours (ex. « 🌴 2,5 j ») et le nombre de lignes qui seront créées. Le lien
+indique en direct le total en jours (ex. « 🌴 2,5 j ») et le nombre de lignes qui seront créées ; s'il n'y a rien à
+poser, il en donne la raison (jours non travaillés selon le planning, ou tout écarté via « détailler »). Le lien
 **« Détailler les jours »** déplie une liste éditable jour par jour (type par jour, ou « — » pour ne rien poser) ;
 les jours non travaillés (planning vide, ex. week-end) sont grisés « non travaillé » et jamais posés.
 

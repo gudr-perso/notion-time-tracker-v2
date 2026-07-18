@@ -21,8 +21,23 @@ function currentSpans() {
 function vacActive() { return $('manual-vacation').checked && hasAnySchedule(vacSchedule()); }
 function updateVacRecap() {
   const spans = currentSpans();
-  const days = leaveDays(vacSchedule(), spans);
-  $('vac-recap').textContent = spans.length ? `🌴 ${fmtDays(days)} · ${spans.length} ligne${spans.length > 1 ? 's' : ''}` : 'Aucune demi-journée sélectionnée';
+  if (spans.length) {
+    const days = leaveDays(vacSchedule(), spans);
+    $('vac-recap').textContent = `🌴 ${fmtDays(days)} · ${spans.length} ligne${spans.length > 1 ? 's' : ''}`;
+    return;
+  }
+  // 0 créneau : dire pourquoi. Cas courant = la (ou les) date(s) tombent des jours non travaillés
+  // (week-end, planning vide) ; sinon = tout a été mis à « — » dans « détailler ».
+  const from = parseDay(VAC.from), to = parseDay(VAC.to);
+  let hasWorkday = false;
+  if (from && to && to >= from) {
+    for (const cur = new Date(from); cur <= to; cur.setDate(cur.getDate() + 1)) {
+      if (scheduledMsForDate(vacSchedule(), cur) > 0) { hasWorkday = true; break; }
+    }
+  }
+  $('vac-recap').textContent = hasWorkday
+    ? 'Rien à poser (tout est sur « — »)'
+    : 'Aucun jour travaillé sur cette période (voir le planning)';
 }
 function syncHalfButtons() {
   for (const [grp, key] of [['vac-from-half', 'fromHalf'], ['vac-to-half', 'toHalf']]) {

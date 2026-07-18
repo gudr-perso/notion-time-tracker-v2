@@ -3,7 +3,7 @@
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
 > Dernière mise à jour : 2026-07-18.
 
-**Version courante : `5.7.1`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
+**Version courante : `5.7.2`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -36,6 +36,11 @@ L'onglet **Stats** est **livré en v5.2.0**.
 **Tests** : `npm test` → `151 passed (10 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.7.2)
+- **Récap congés : message d'état vide clarifié** — au lieu de « Aucune demi-journée sélectionnée » (trompeur un
+  jour non travaillé), on indique la cause : « Aucun jour travaillé sur cette période (voir le planning) » ou
+  « Rien à poser (tout est sur « — ») ». `timer-manual.js` seul.
 
 ### ✅ Faites (v5.7.1)
 - **Correctif : bloc congés affiché même décoché** — `#vac-range { display:flex }` battait le `[hidden]` du
