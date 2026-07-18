@@ -18,6 +18,7 @@ function vacSchedule() { return T.config.prefs?.schedule || null; }
 function currentSpans() {
   return generateLeaveSpans(vacSchedule(), { fromDate: parseDay(VAC.from), fromHalf: VAC.fromHalf, toDate: parseDay(VAC.to), toHalf: VAC.toHalf, overrides: VAC.overrides });
 }
+function vacActive() { return $('manual-vacation').checked && hasAnySchedule(vacSchedule()); }
 function updateVacRecap() {
   const spans = currentSpans();
   const days = leaveDays(vacSchedule(), spans);
@@ -162,7 +163,38 @@ async function saveManualFor(taskId, sourceBtn) {
   }
 }
 
+// Congés avec planning : une ligne Notion par demi-journée (`currentSpans()`), au lieu d'une
+// seule session — chaque demi-journée est créée puis close indépendamment, pour survivre à un
+// échec en cours de route (ex. coupure réseau après quelques lignes déjà écrites).
+async function saveVacation() {
+  if (saving) return;
+  const spans = currentSpans();
+  if (!spans.length) { alert('Aucune demi-journée à poser (vérifie les dates et le planning).'); return; }
+  const task = T.tasks.find((t) => t.id === T.config.prefs.vacationTaskId);
+  if (!task) { alert('Tâche congés introuvable.'); return; }
+  const comment = $('manual-comment').value.trim();
+  saving = true;
+  setSaving(true, $('btn-primary'));
+  let done = 0;
+  try {
+    for (const sp of spans) {
+      const pageId = await createPage(T.token, T.config.timeDb.id, sessionPropertiesForCreate(task, sp.start, T.timeFields));
+      await updatePage(T.token, pageId, sessionPropertiesForUpdate({ endTime: sp.end, comment, pauseMin: 0 }, T.timeFields));
+      done += 1;
+    }
+    resetManual();
+    await helpers.reloadRecent();
+    showToast(`✅ ${done} ligne${done > 1 ? 's' : ''} de congés créée${done > 1 ? 's' : ''}`);
+  } catch (e) {
+    alert(`Congés : ${done}/${spans.length} créée(s), échec ensuite : ${e.message}`);
+  } finally {
+    saving = false;
+    setSaving(false, $('btn-primary'));
+  }
+}
+
 async function onManualSave() {
+  if (vacActive()) { await saveVacation(); return; }
   const task = helpers.currentTask();
   if (!task) { alert('Sélectionne une tâche.'); return; }
   await saveManualFor(task.id, $('btn-primary'));
