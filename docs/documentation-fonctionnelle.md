@@ -264,15 +264,18 @@ mode Perso, qui se navigue via les sélecteurs de date).
 
 Un **anneau de progression** affiche le temps travaillé sur la période au centre, avec l'objectif en sous-texte
 (ou « sans objectif » si aucun objectif ne s'applique). À côté, le détail : **Objectif**, **Travaillé**,
-**Reste** (temps restant pour atteindre l'objectif, 0 si dépassé), et un badge **🌴 N j** si des jours de congé
-ont été pris sur la période (rien si aucun).
+**Reste** (temps restant pour atteindre l'objectif, 0 si dépassé), et un badge **🌴 (durée)** totalisant les
+**heures** de congé prises sur la période (rien si aucun).
 
 ### 4.3 Rythme quotidien
 
-Une barre par jour de la période, hauteur proportionnelle au temps travaillé ce jour-là (le jour le plus chargé
-sert de référence à 100 %). Un jour de congé s'affiche en **doré** avec l'icône 🌴 ; un jour sans aucune session
-s'affiche en **gris**, vide. En dessous de chaque barre : l'initiale du jour de la semaine (ou le quantième en
-mode Mois). Au **survol** d'une barre, une infobulle donne la durée exacte du jour (ou « Congés »).
+Une barre par jour de la période, hauteur proportionnelle au **temps total du jour** (travail + congés ; le jour
+le plus chargé sert de référence à 100 %). Chaque barre **empile deux segments** : le **travail en bleu** (base)
+surmonté des **congés en doré**. Ainsi un jour mêlant travail et congés (ex. 4 h + 4 h) montre bien les deux ;
+un jour de **congé pur** est une barre **entièrement dorée** marquée 🌴 (8 h de congé = barre pleine hauteur,
+4 h = mi-hauteur) ; un jour sans aucune session s'affiche en **gris**, vide. En dessous de chaque barre :
+l'initiale du jour de la semaine (ou le quantième en mode Mois). Au **survol**, une infobulle détaille le jour :
+« 04:00 travaillé · 04:00 congés », « Congés · 08:00 », ou la seule durée travaillée.
 
 En vues **Jour** et **Semaine**, la durée du jour (ou l'icône congés) est aussi affichée au-dessus de la barre.
 En vue **Mois** (28 à 31 colonnes), cette étiquette d'heure serait illisible et déborderait : elle est masquée
@@ -286,13 +289,16 @@ pas dans ce bilan (ni dans le temps travaillé, ni dans un projet).
 
 ### 4.5 Prise en compte des congés
 
-Un jour est compté « congé » si sa session est liée à la **tâche congés** configurée (relation, ou repli sur le
-nom de la tâche si la relation n'est pas mappée). L'objectif de la période est **ajusté** en conséquence :
+Une session est « congé » si elle est liée à la **tâche congés** configurée (relation, ou repli sur le nom de la
+tâche si la relation n'est pas mappée). Les congés sont comptés **en heures** : l'objectif de la période
+retranche, pour chaque **jour ouvré**, la durée de congé de ce jour — **plafonnée à une journée** (un congé
+« 8 h » retire au plus une journée) et **ignorée le week-end** :
 
-> Objectif = (jours ouvrés de la période − jours de congé) × (heures hebdomadaires / 5)
+> Objectif = jours ouvrés × (heures hebdo / 5) − Σ min(heures de congé du jour ouvré, heures hebdo / 5)
 
-Une **semaine ouvrée** compte 5 jours (Lundi → Vendredi) ; les jours de week-end (samedi, dimanche) ne comptent
-ni dans les jours ouvrés ni dans l'objectif.
+Ainsi une **demi-journée** de congé ne retire qu'une demi-journée d'objectif (l'anneau et le « Reste » ne sont
+plus faussés). Une **semaine ouvrée** compte 5 jours (Lundi → Vendredi) ; les jours de week-end (samedi,
+dimanche) ne comptent ni dans les jours ouvrés ni dans l'objectif.
 
 ### 4.6 Période sans donnée
 

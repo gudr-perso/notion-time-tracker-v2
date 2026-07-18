@@ -64,6 +64,9 @@ describe('objectiveHours', () => {
   it('congés > jours ouvrés → clamp à 0', () => {
     expect(objectiveHours(5, 6, 39)).toBe(0);
   });
+  it('congé fractionnaire (demi-journée)', () => {
+    expect(objectiveHours(5, 0.5, 40)).toBeCloseTo(36); // (5 − 0,5) × 8 h
+  });
   it('cible quotidienne = weekly / 5', () => {
     expect(dailyTargetHours(39)).toBeCloseTo(7.8);
   });
@@ -102,11 +105,16 @@ describe('aggregate', () => {
     const a = aggregate(sessions, { ...range, isVacation: isVac, weeklyHours: 39 });
     expect(a.workedMs).toBe(11 * H);
   });
-  it('objectif ajusté congés (5 ouvrés − 1 congé) × 7,8 h', () => {
+  it('objectif ajusté congés (5 ouvrés − 1 congé plein) × 7,8 h', () => {
     const a = aggregate(sessions, { ...range, isVacation: isVac, weeklyHours: 39 });
+    // Congé mer = 8 h, plafonné à la cible quotidienne (7,8 h) → retire exactement 1 journée.
     expect(a.objectiveMs).toBeCloseTo(31.2 * H, -3);
     expect(a.remainingMs).toBeCloseTo(20.2 * H, -3);
     expect(a.congeDays).toBe(1);
+  });
+  it('congeMs = total des heures de congé de la période', () => {
+    const a = aggregate(sessions, { ...range, isVacation: isVac, weeklyHours: 39 });
+    expect(a.congeMs).toBe(8 * H); // congé mer 9→17
   });
   it('perProject trié décroissant avec ratios', () => {
     const a = aggregate(sessions, { ...range, isVacation: isVac, weeklyHours: 39 });
@@ -114,13 +122,36 @@ describe('aggregate', () => {
     expect(a.perProject[0].ms).toBe(8 * H);
     expect(a.perProject[0].ratio).toBeCloseTo(8 / 11);
   });
-  it('perDay couvre les 7 jours, marque congé et week-end', () => {
+  it('perDay couvre les 7 jours : workMs / congeMs / week-end séparés', () => {
     const a = aggregate(sessions, { ...range, isVacation: isVac, weeklyHours: 39 });
     expect(a.perDay).toHaveLength(7);
-    expect(a.perDay[0].ms).toBe(8 * H);            // lundi
-    expect(a.perDay[2].isVacation).toBe(true);     // mercredi
-    expect(a.perDay[2].ms).toBe(0);
+    expect(a.perDay[0].workMs).toBe(8 * H);        // lundi : 8 h travail
+    expect(a.perDay[0].congeMs).toBe(0);
+    expect(a.perDay[2].congeMs).toBe(8 * H);       // mercredi : 8 h congé…
+    expect(a.perDay[2].workMs).toBe(0);            // …et aucun travail
     expect(a.perDay[5].isWeekend).toBe(true);      // samedi
+  });
+  it('jour mixte : travail et congés le même jour cohabitent', () => {
+    const mixed = [
+      { name: 'Tâche [X]', startTime: new Date(2026, 6, 13, 9), endTime: new Date(2026, 6, 13, 13), pauseMin: 0, tasksRelIds: [] },   // 4 h travail lun
+      { name: 'Congés', startTime: new Date(2026, 6, 13, 14), endTime: new Date(2026, 6, 13, 18), pauseMin: 0, tasksRelIds: ['vac'] }, // 4 h congé lun
+    ];
+    const a = aggregate(mixed, { ...range, isVacation: isVac, weeklyHours: 39 });
+    expect(a.perDay[0].workMs).toBe(4 * H);
+    expect(a.perDay[0].congeMs).toBe(4 * H);
+    expect(a.workedMs).toBe(4 * H);                 // congé exclu du travaillé
+    expect(a.congeMs).toBe(4 * H);
+    // Objectif : 5 × 7,8 h − 4 h (la demi-journée ne retire que ses heures) = 35 h.
+    expect(a.objectiveMs).toBeCloseTo(35 * H, -3);
+  });
+  it('congé le week-end n\'ampute pas l\'objectif', () => {
+    const wk = [
+      { name: 'Congés', startTime: new Date(2026, 6, 18, 9), endTime: new Date(2026, 6, 18, 17), pauseMin: 0, tasksRelIds: ['vac'] }, // 8 h congé samedi
+    ];
+    const a = aggregate(wk, { ...range, isVacation: isVac, weeklyHours: 39 });
+    expect(a.perDay[5].isWeekend).toBe(true);
+    expect(a.perDay[5].congeMs).toBe(8 * H);
+    expect(a.objectiveMs).toBeCloseTo(39 * H, -3);  // 5 jours ouvrés pleins
   });
   it('déduit les pauses', () => {
     const s = [{ name: 'X', startTime: new Date(2026, 6, 13, 9), endTime: new Date(2026, 6, 13, 11), pauseMin: 30, tasksRelIds: [] }];

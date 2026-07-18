@@ -10,6 +10,35 @@
 
 ---
 
+## 2026-07-18 — Un jour « 4 h travail + 4 h congés » affiché comme une barre 100 % congé
+
+- **Contexte** : v5.5.5. Onglet Stats, « Rythme quotidien ». L'utilisateur signale que le 9 du mois — où il a
+  **4 h de congés et 4 h de travail** — apparaît comme une **barre orange** (congé), plus courte que ses voisines
+  travaillées. Il attend d'y voir les deux.
+- **Erreur** : pas d'exception — bug de données + rendu. Fait **brut** = à ce jour-là, l'agrégation ne retenait
+  qu'un seau `{ ms, isVacation }` : `ms` = temps **travaillé** seul (4 h), `isVacation = true`. Le rendu
+  (`renderDays`) faisait gagner `isVacation` sur tout : `class="bar conge"` (orange), 🌴, infobulle « Congés » —
+  mais **hauteur = `ms` = 4 h de travail**. D'où le paradoxe : *barre orange dont la hauteur est en réalité le
+  temps travaillé*, et **durée de congé introuvable** (jetée par le `continue` avant tout stockage). Un jour de
+  congé **pur** tombait lui à 2 px (`ms = 0`).
+- **Hypothèse** : le modèle par jour est **binaire** (un booléen congé) au lieu de mesuré. Impossible d'afficher
+  « 4 h + 4 h » ni « congé 8 h = barre pleine » tant que `congeMs` n'est pas conservé par jour. Corollaire côté
+  chiffres : `congeDays` compte des **jours entiers**, donc une demi-journée de congé retire une journée pleine à
+  l'objectif (anneau/Reste faussés).
+- **Action** : (1) `aggregate` conserve `workMs` **et** `congeMs` par jour (accumulation au lieu du `continue`
+  qui jetait la durée) et expose `congeMs` total. (2) Objectif « en heures » : `Σ min(congeMs_jour ouvré, cible
+  quotidienne)` retranché (plafond 1 journée, week-ends exclus), réinjecté via `objectiveHours` avec un
+  `congeDaysEquiv` **fractionnaire**. (3) `renderDays` empile deux segments `.seg` (bleu travail en base + orange
+  congés) ; `maxMs` inclut `workMs + congeMs`. (4) Badge congés en heures.
+- **Résultat** : vérifié au navigateur (mesures px sur `popup.css` réel) — jour mixte 4 h/4 h = barre 94 px
+  **orange 47 (haut) + bleu 47 (base)**, infobulle « 04:00 travaillé · 04:00 congés » ; congé plein 8 h = orange
+  94 px pleine hauteur ; demi-congé 4 h = orange 57 px. Objectif : la demi-journée ne retire plus que ses heures,
+  le congé plein reste plafonné à une journée (test 31,2 h conservé). **125 tests verts** (+4).
+- **Leçon** : quand une donnée doit s'**afficher en proportion**, la stocker en **quantité** (heures), pas en
+  **booléen** — un drapeau force ensuite le rendu à « choisir » et masque le reste. Et pour un bug de rendu,
+  l'« erreur brute » utile est une **mesure** (hauteurs de segments reconstruites hors extension), pas une
+  capture d'écran.
+
 ## 2026-07-18 — Scrollbar horizontale dans les Stats, uniquement en vue Mois
 
 - **Contexte** : v5.5.3. Le popup, agrandi, laisse voir tout l'onglet Stats. En vue **Mois** (et elle seule),

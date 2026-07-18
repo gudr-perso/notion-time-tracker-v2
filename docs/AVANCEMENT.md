@@ -3,7 +3,7 @@
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
 > Dernière mise à jour : 2026-07-18.
 
-**Version courante : `5.5.4`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
+**Version courante : `5.5.5`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -21,7 +21,7 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Onglet Timer** (start/pause/stop, stop-at, saisie manuelle, congés, favoris, récents) | ✅ |
 | **Service worker** (badge + notifications via `chrome.alarms`) | ✅ |
 | **Thème clair / sombre** (bascule persistée) | ✅ |
-| **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`, `stats`, `fav-presets`, `fav-icons`, `schema-injection`, `config-io`, `tasks-query`) | ✅ **121 tests verts** |
+| **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`, `stats`, `fav-presets`, `fav-icons`, `schema-injection`, `config-io`, `tasks-query`) | ✅ **125 tests verts** |
 | **Onglet Stats** | ✅ v5.2.0 |
 | **Favoris : couleur + picto** | ✅ v5.3.0 |
 | **Export / import de la config** | ✅ v5.4.0 |
@@ -29,10 +29,23 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Saisie manuelle sur fond marine + liseré cyan** | ✅ v5.5.1 |
 | **Stats Mois : plus de scrollbar horizontale (rythme quotidien)** | ✅ v5.5.3 |
 | **Fond des cartes factorisé en variable `--card-bg` (doublon supprimé)** | ✅ v5.5.4 |
+| **Stats : jour mixte travail+congés (barres empilées) + congés comptés en heures** | ✅ v5.5.5 |
 
-**Tests** : `npm test` → `121 passed (9 files)`.
+**Tests** : `npm test` → `125 passed (9 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.5.5)
+- **Jour mixte travail + congés dans « Rythme quotidien »** : un jour cumulant travail et congés (ex. 4 h + 4 h)
+  était écrasé en **barre orange unique** dont la hauteur ne valait, en plus, que le temps *travaillé* — la durée
+  de congé était **jetée** à l'agrégation. `aggregate` conserve maintenant `workMs` **et** `congeMs` par jour, et
+  `renderDays` empile deux segments (bleu travail en base + orange congés). Un congé **plein jour** redevient une
+  barre orange **pleine hauteur** (il tombait à un moignon de 2 px). Infobulle détaillée « 04:00 travaillé ·
+  04:00 congés ».
+- **Congés comptés en heures** (objectif + badge) : l'objectif retranche les **heures** de congé de chaque jour
+  ouvré (plafonnées à une journée, ignorées le week-end) au lieu d'une journée entière par jour touché — une
+  demi-journée de congé ne fausse plus l'anneau/Reste. Badge **Congés** affiché en heures (`🌴 20:00`).
+  `core/stats.js` + `popup/stats.js` + `popup.css` ; +4 tests (125 verts). Détail : `docs/VERSIONS.md`.
 
 ### ✅ Faites (v5.5.4)
 - **Fond des cartes factorisé en variable `--card-bg`** : la teinte de fond des cartes (dégradé marine en

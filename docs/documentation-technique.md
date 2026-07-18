@@ -231,18 +231,23 @@ l'objet vient de `config/config.js`.
 - **`weekdaysBetween(start, end)`** : nombre de jours **ouvrés** (Lundi → Vendredi inclus) entre deux dates.
 - **`dailyTargetHours(weeklyHours)`** : `weeklyHours / 5` (objectif journalier théorique, semaine de 5 jours ouvrés).
 - **`objectiveHours(weekdays, congeDays, weeklyHours)`** : objectif ajusté aux congés —
-  `max(0, (weekdays − congeDays) × weeklyHours / 5)`.
+  `max(0, (weekdays − congeDays) × weeklyHours / 5)`. `congeDays` peut être **fractionnaire** (équivalent-jours
+  des heures de congé, calculé par `aggregate`) : une demi-journée de congé passe `≈0,5`.
 - **`isVacationSession(session, {vacationTaskId, vacationName})`** : détecte une session de congés — priorité à
   la relation Tâches (`session.tasksRelIds` contient l'ID de la tâche congés, IDs normalisés sans tirets), repli
   sur l'égalité du nom (`session.name === vacationName`) si la relation n'est pas mappée ou vide.
 - **`aggregate(sessions, {start, end, isVacation, weeklyHours})`** : agrégation centrale de l'onglet Stats.
-  Amorce une entrée par jour de la plage (y compris week-ends, marqués `isWeekend`), puis pour chaque session :
-  si `isVacation(s)` la marque en congé (jour + compteur) et l'**exclut** du temps travaillé et des projets ;
-  sinon cumule `workedMs` (via `workedMs` de `time.js`), le total du jour, et le total du projet
-  (`extractProject(s.name)` de `mapping.js`). Retourne
-  `{ workedMs, objectiveMs, remainingMs, progress, congeDays, perDay[], perProject[] }` — `objectiveMs` via
-  `objectiveHours`, `remainingMs = max(0, objectiveMs − workedMs)`, `progress = workedMs / objectiveMs` (ou
-  `null` si aucun objectif), `perProject` trié par durée décroissante avec `ratio` (part du temps total).
+  Amorce une entrée par jour de la plage (`{ date, workMs, congeMs, isWeekend }`, week-ends inclus), puis pour
+  chaque session calcule sa durée (`workedMs` de `time.js`, pauses déduites) et l'ajoute — selon `isVacation(s)` —
+  soit au `congeMs` du jour et au total congés (**exclue** du temps travaillé et des projets), soit au `workMs`
+  du jour, au `workedMs` total et au total du projet (`extractProject(s.name)` de `mapping.js`). **Objectif en
+  heures** : pour chaque jour **ouvré** on retranche `min(congeMs, cible quotidienne)` (un congé plein jour
+  retire au plus une journée ; un congé posé le week-end n'ampute rien), converti en `congeDaysEquiv`
+  **fractionnaire** passé à `objectiveHours`. Retourne
+  `{ workedMs, congeMs, objectiveMs, remainingMs, progress, congeDays, perDay[], perProject[] }` — `congeMs` =
+  total des heures de congé (badge), `congeDays` = nombre de **jours** touchés par un congé,
+  `remainingMs = max(0, objectiveMs − workedMs)`, `progress = workedMs / objectiveMs` (ou `null` si aucun
+  objectif), `perProject` trié par durée décroissante avec `ratio` (part du temps total).
 
 ### `background/service-worker.js` — badge + notifications
 
@@ -360,12 +365,15 @@ brut de Notion, au lieu de devenir une *unhandled rejection* laissant la liste v
   l'enregistrement d'une session (non câblée à ce jour — le cache ne vit que le temps d'ouverture du popup, donc
   l'écart ne survit pas à une réouverture).
 - `renderObjective` / `renderDays` / `renderProjects` : rendu HTML de la carte objectif (anneau CSS piloté par
-  une variable `--p`, détail travaillé/objectif/reste/congés), des barres du rythme quotidien (hauteur
-  proportionnelle au jour le plus chargé, congés en doré, jour vide en gris), et du bilan par projet (barre de
-  proportion + durée + %). `renderDays` pose la durée du jour en `title` (infobulle) sur chaque barre, et **masque
-  l'étiquette d'heure au-dessus des barres en vue Mois** (seul le 🌴 des congés y reste) : à 28–31 colonnes le
-  libellé « 07:30 » insécable débordait. Côté CSS, `.day` porte `min-width:0` pour que les colonnes flex puissent
-  rétrécir (sans quoi `min-width:auto` empêchait tout rétrécissement → scrollbar horizontale).
+  une variable `--p`, détail travaillé/objectif/reste + badge congés **en heures**, `🌴 (durée)`), des barres du
+  rythme quotidien, et du bilan par projet (barre de proportion + durée + %). `renderDays` **empile** par jour
+  deux segments `.seg` — bleu (`workMs`, base) + doré (`congeMs`, au-dessus) — la hauteur totale étant
+  proportionnelle à `workMs + congeMs` du jour le plus chargé (`maxMs` inclut donc les congés, sans quoi un congé
+  pur n'atteindrait jamais sa hauteur) ; jour vide en gris. L'infobulle (`title`) détaille travail et/ou congés
+  (« 04:00 travaillé · 04:00 congés »), et l'étiquette d'heure au-dessus des barres est **masquée en vue Mois**
+  (seul le 🌴 des congés y reste) : à 28–31 colonnes le libellé « 07:30 » insécable débordait. Côté CSS, `.day`
+  porte `min-width:0` pour que les colonnes flex puissent rétrécir (sans quoi `min-width:auto` empêchait tout
+  rétrécissement → scrollbar horizontale).
 - `refresh()` : orchestre le cycle affichage → état (`stats-loading` / `stats-error` / `stats-empty` /
   `stats-content`) selon le résultat de `fetchAggregate` (vide si `workedMs === 0 && congeDays === 0`).
 

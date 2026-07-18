@@ -79,8 +79,8 @@ function renderObjective(agg) {
   $('stats-ring').style.setProperty('--p', Math.min(100, pct));
   $('stats-ring-worked').textContent = fmt(agg.workedMs);
   $('stats-ring-obj').textContent = agg.objectiveMs > 0 ? `/ ${fmt(agg.objectiveMs)}` : 'sans objectif';
-  const conge = agg.congeDays > 0
-    ? `<span class="conge-badge">🌴 ${agg.congeDays} j</span>` : '—';
+  const conge = agg.congeMs > 0
+    ? `<span class="conge-badge">🌴 ${fmt(agg.congeMs)}</span>` : '—';
   $('stats-obj-side').innerHTML =
     `<div class="line"><span class="k">Objectif</span><span class="v">${agg.objectiveMs > 0 ? fmt(agg.objectiveMs) : '—'}</span></div>` +
     `<div class="line"><span class="k">Travaillé</span><span class="v">${fmt(agg.workedMs)}</span></div>` +
@@ -89,21 +89,37 @@ function renderObjective(agg) {
 }
 
 function renderDays(agg) {
-  const maxMs = Math.max(1, ...agg.perDay.map((d) => d.ms));
+  const fmt = (ms) => formatDuration(ms, { withSeconds: false });
+  // Hauteur de référence = plus grand total (travail + congés) d'une journée : un jour de congé
+  // plein atteint ainsi la même hauteur qu'un jour travaillé équivalent.
+  const maxMs = Math.max(1, ...agg.perDay.map((d) => d.workMs + d.congeMs));
   const targetMs = dailyTargetHours(S.config.prefs?.weeklyHours ?? 39) * 3600_000;
   const targetPct = Math.min(100, Math.round((targetMs / maxMs) * 100));
   const line = targetMs > 0
     ? `<div class="target-line" style="bottom:${targetPct}%" title="Cible quotidienne"></div>`
     : '';
   const bars = agg.perDay.map((d) => {
-    const h = Math.round((d.ms / maxMs) * 100);
-    const cls = d.isVacation ? 'bar conge' : (d.ms === 0 ? 'bar empty' : 'bar');
-    const dur = d.isVacation ? 'Congés' : (d.ms ? formatDuration(d.ms, { withSeconds: false }) : 'Aucune session');
-    // En vue Mois (28–31 colonnes), l'étiquette d'heure « 07:30 » ne tient pas et débordait :
-    // on ne garde en tête de barre que le 🌴 des congés ; la durée exacte reste en tooltip (title).
-    const top = d.isVacation ? '🌴' : (S.kind === 'month' ? '' : (d.ms ? formatDuration(d.ms, { withSeconds: false }) : '·'));
+    const total = d.workMs + d.congeMs;
+    const h = Math.round((total / maxMs) * 100);
+    // Segments empilés : travail (bleu, base) puis congés (orange, au-dessus). Un jour mixte
+    // montre donc les deux : 4 h travail + 4 h congés = barre de 8 h moitié bleue, moitié orange.
+    let segs = '';
+    if (total > 0) {
+      const workPct = Math.round((d.workMs / total) * 100);
+      if (d.congeMs > 0) segs += `<i class="seg conge" style="height:${100 - workPct}%"></i>`;
+      if (d.workMs > 0) segs += `<i class="seg work" style="height:${workPct}%"></i>`;
+    }
+    const cls = total === 0 ? 'bar empty' : 'bar';
+    const dur = total === 0 ? 'Aucune session'
+      : (d.workMs && d.congeMs) ? `${fmt(d.workMs)} travaillé · ${fmt(d.congeMs)} congés`
+        : d.congeMs ? `Congés · ${fmt(d.congeMs)}`
+          : fmt(d.workMs);
+    // En tête de barre : 🌴 dès qu'il y a du congé ; sinon la durée travaillée (masquée en vue Mois
+    // où « 07:30 » ne tient pas — la durée exacte reste en infobulle).
+    const top = d.congeMs > 0 ? '🌴'
+      : (S.kind === 'month' ? '' : (d.workMs ? fmt(d.workMs) : '·'));
     const dn = S.kind === 'month' ? String(d.date.getDate()) : JOURS[d.date.getDay()];
-    return `<div class="day"><div class="dh">${top}</div><div class="${cls}" style="height:${Math.max(2, h)}%" title="${dur}"></div><div class="dn">${dn}</div></div>`;
+    return `<div class="day"><div class="dh">${top}</div><div class="${cls}" style="height:${Math.max(2, h)}%" title="${dur}">${segs}</div><div class="dn">${dn}</div></div>`;
   }).join('');
   $('stats-days').innerHTML = line + bars;
 }
@@ -125,7 +141,7 @@ async function refresh() {
   show('stats-loading');
   try {
     const agg = await fetchAggregate(range);
-    const empty = agg.workedMs === 0 && agg.congeDays === 0;
+    const empty = agg.workedMs === 0 && agg.congeMs === 0;
     if (empty) { show('stats-empty'); return; }
     renderObjective(agg);
     renderDays(agg);

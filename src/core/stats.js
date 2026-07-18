@@ -77,7 +77,7 @@ export function aggregate(sessions, { start, end, isVacation = () => false, week
   while (cursor.getTime() <= lastKey) {
     const wd = cursor.getDay();
     perDayMap.set(cursor.getTime(), {
-      date: new Date(cursor), ms: 0, isVacation: false, isWeekend: wd === 0 || wd === 6,
+      date: new Date(cursor), workMs: 0, congeMs: 0, isWeekend: wd === 0 || wd === 6,
     });
     cursor.setDate(cursor.getDate() + 1);
   }
@@ -85,19 +85,21 @@ export function aggregate(sessions, { start, end, isVacation = () => false, week
   const projMap = new Map();
   const congeDaySet = new Set();
   let workedTotal = 0;
+  let congeTotal = 0;
 
   for (const s of sessions) {
     if (!s.startTime || !s.endTime) continue;
     const k = dayKey(s.startTime);
     const bucket = perDayMap.get(k);
+    const dur = workedMs(s.startTime, s.endTime, (s.pauseMin || 0) * 60_000);
     if (isVacation(s)) {
+      congeTotal += dur;
       congeDaySet.add(k);
-      if (bucket) bucket.isVacation = true;
+      if (bucket) bucket.congeMs += dur; // ← durée conservée (avant : jetée)
       continue; // exclu du temps travaillé et des projets
     }
-    const dur = workedMs(s.startTime, s.endTime, (s.pauseMin || 0) * 60_000);
     workedTotal += dur;
-    if (bucket) bucket.ms += dur;
+    if (bucket) bucket.workMs += dur;
     const proj = extractProject(s.name);
     projMap.set(proj, (projMap.get(proj) || 0) + dur);
   }
@@ -107,11 +109,20 @@ export function aggregate(sessions, { start, end, isVacation = () => false, week
     .map(([project, ms]) => ({ project, ms, ratio: workedTotal ? ms / workedTotal : 0 }))
     .sort((a, b) => b.ms - a.ms);
 
+  // Objectif « en heures » : chaque jour ouvré vaut la cible quotidienne, dont on retranche les
+  // heures de congé du jour — plafonnées à une journée (un congé « 8 h » retire au plus une
+  // journée) et limitées aux jours ouvrés (un congé posé le week-end n'ampute pas l'objectif).
+  const dailyTargetMs = dailyTargetHours(weeklyHours) * 3600_000;
+  let congeWorkdayMs = 0;
+  for (const d of perDay) {
+    if (!d.isWeekend) congeWorkdayMs += Math.min(d.congeMs, dailyTargetMs);
+  }
   const weekdays = weekdaysBetween(start, end);
+  const congeDaysEquiv = dailyTargetMs > 0 ? congeWorkdayMs / dailyTargetMs : 0;
   const congeDays = congeDaySet.size;
-  const objectiveMs = objectiveHours(weekdays, congeDays, weeklyHours) * 3600_000;
+  const objectiveMs = objectiveHours(weekdays, congeDaysEquiv, weeklyHours) * 3600_000;
   const remainingMs = Math.max(0, objectiveMs - workedTotal);
   const progress = objectiveMs > 0 ? workedTotal / objectiveMs : null;
 
-  return { workedMs: workedTotal, objectiveMs, remainingMs, progress, congeDays, perDay, perProject };
+  return { workedMs: workedTotal, congeMs: congeTotal, objectiveMs, remainingMs, progress, congeDays, perDay, perProject };
 }

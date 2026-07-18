@@ -6,6 +6,38 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.5.5] — 2026-07-18
+
+Stats → Rythme quotidien : un jour qui mêle travail et congés montre désormais les **deux**, et les congés
+sont comptés **en heures** (plus en jours entiers).
+
+### Corrigé
+- **Jour mixte travail + congés écrasé en « barre orange »** : un jour comportant à la fois du travail et des
+  congés (ex. 4 h de chacun) s'affichait comme une **barre orange unique** dont la hauteur valait, en prime, le
+  seul temps *travaillé* — les heures de congé étant purement et simplement **jetées** par l'agrégation. Cause :
+  chaque jour n'avait qu'un seau `{ ms (travail), isVacation (booléen) }`, et le rendu laissait le drapeau congé
+  l'emporter sur tout. Désormais l'agrégation conserve **par jour** `workMs` **et** `congeMs`, et la barre est
+  **empilée** : segment bleu (travail, en base) surmonté d'un segment orange (congés). Un jour mixte 4 h/4 h
+  affiche donc une barre de 8 h moitié bleue, moitié orange, avec 🌴 et une infobulle « 04:00 travaillé ·
+  04:00 congés ».
+- **Congé plein jour redevenu une vraie barre** : comme la durée de congé était jetée, un jour de **congé pur**
+  tombait à une hauteur nulle (moignon de 2 px). Il s'affiche maintenant en **barre orange proportionnelle** :
+  8 h de congé = barre pleine hauteur, 4 h = mi-hauteur.
+
+### Modifié
+- **Congés comptés en heures dans l'objectif et le badge** : l'objectif de la période retranche désormais les
+  **heures** de congé de chaque jour ouvré — plafonnées à une journée (un congé « 8 h » retire au plus une
+  journée) et ignorées le week-end — au lieu de retrancher une journée entière dès qu'un congé, même d'une
+  demi-journée, tombait ce jour-là. Une demi-journée de congé ne fausse plus l'anneau ni le « Reste ». Le badge
+  **Congés** de la carte objectif affiche le **total en heures** (`🌴 20:00`) au lieu d'un nombre de jours
+  (`🌴 3 j`).
+
+### Notes
+- `src/core/stats.js` (`aggregate` : seau `workMs`/`congeMs`, objectif en heures, sortie `congeMs`),
+  `src/popup/stats.js` (`renderDays` empilé, badge en heures), `src/popup/popup.css` (segments `.seg`).
+  **125 tests verts** (+4 : jour mixte, congé plein plafonné, congé week-end sans impact, objectif fractionnaire).
+  Vérification navigateur : hauteurs de segments mesurées (mixte 47/47 px, congé plein 94 px, demi-congé 57 px).
+
 ## [5.5.4] — 2026-07-18
 
 Rangement interne : la couleur de fond des cartes n'est plus écrite en double.
