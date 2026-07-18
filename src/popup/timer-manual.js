@@ -118,6 +118,13 @@ function toggleManual(on) {
   if (on) prefillManual();
 }
 
+// Referme et vide la liste « détailler les jours » (évite d'afficher l'ancienne plage à la ré-entrée).
+function collapseVacDetail() {
+  $('vac-detail').hidden = true;
+  $('vac-detail').innerHTML = '';
+  $('vac-detail-toggle').textContent = 'Détailler les jours';
+}
+
 function onVacationToggle(e) {
   if (e.target.checked) {
     if (!T.config.prefs?.vacationTaskId) { alert('Aucune tâche congés configurée.'); e.target.checked = false; return; }
@@ -133,7 +140,7 @@ function onVacationToggle(e) {
       VAC.from = VAC.to = isoDay(new Date());
       $('vac-from').value = $('vac-to').value = VAC.from;
       VAC.fromHalf = VAC.toHalf = 'journee'; VAC.overrides = {};
-      syncHalfButtons(); updateVacRecap();
+      syncHalfButtons(); updateVacRecap(); collapseVacDetail();
     }
   } else {
     $('vacation-hint').hidden = true;
@@ -237,6 +244,7 @@ function resetManual() {
   $('manual-vacation').checked = false;
   $('vacation-hint').hidden = true;
   $('vac-range').hidden = true;
+  collapseVacDetail();
   setStartEndHidden(false);
   prefillManual();
 }
