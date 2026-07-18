@@ -1,6 +1,7 @@
 // test/stats.test.js
 import { describe, it, expect } from 'vitest';
 import { periodRange, weekdaysBetween, dailyTargetHours, objectiveHours, isVacationSession, aggregate } from '../src/core/stats.js';
+import { DEFAULT_SCHEDULE } from '../src/core/schedule.js';
 
 describe('periodRange', () => {
   it("semaine = lundi 00:00 → dimanche 23:59:59.999 (mer. 15 juil. 2026)", () => {
@@ -178,5 +179,33 @@ describe('aggregate', () => {
     expect(a.perProject).toHaveLength(1);
     expect(a.perProject[0].project).toBe('ClientA');
     expect(a.perProject[0].ms).toBe(5 * 3600_000);
+  });
+  it('avec planning : objectif = somme des heures planifiées de la période', () => {
+    const s = [{ name: 'T [X]', startTime: new Date(2026, 6, 13, 9), endTime: new Date(2026, 6, 13, 17), pauseMin: 0, tasksRelIds: [] }]; // 8h lun
+    const a = aggregate(s, { ...range, schedule: DEFAULT_SCHEDULE, weeklyHours: 39 });
+    expect(a.objectiveMs).toBeCloseTo(39 * H, -3); // lun-jeu 8h ×4 + ven 7h
+    expect(a.workedMs).toBe(8 * H);
+    expect(a.remainingMs).toBeCloseTo(31 * H, -3);
+  });
+  it('avec planning : congé plein jour retire les heures planifiées du jour', () => {
+    const s = [
+      { name: 'Congés', startTime: new Date(2026, 6, 13, 9), endTime: new Date(2026, 6, 13, 13), pauseMin: 0, tasksRelIds: ['vac'] },  // matin 4h
+      { name: 'Congés', startTime: new Date(2026, 6, 13, 14), endTime: new Date(2026, 6, 13, 18), pauseMin: 0, tasksRelIds: ['vac'] }, // aprem 4h
+    ];
+    const a = aggregate(s, { ...range, isVacation: isVac, schedule: DEFAULT_SCHEDULE, weeklyHours: 39 });
+    expect(a.objectiveMs).toBeCloseTo(31 * H, -3); // 39 − 8
+    expect(a.congeDays).toBeCloseTo(1);            // 8h / 8h planifiées
+  });
+  it('avec planning : demi-journée retire ses heures et vaut 0,5 j', () => {
+    const s = [{ name: 'Congés', startTime: new Date(2026, 6, 13, 9), endTime: new Date(2026, 6, 13, 13), pauseMin: 0, tasksRelIds: ['vac'] }]; // matin 4h
+    const a = aggregate(s, { ...range, isVacation: isVac, schedule: DEFAULT_SCHEDULE, weeklyHours: 39 });
+    expect(a.objectiveMs).toBeCloseTo(35 * H, -3); // 39 − 4
+    expect(a.congeDays).toBeCloseTo(0.5);          // 4h / 8h
+  });
+  it('perDay.targetMs reflète le planning', () => {
+    const a = aggregate([], { ...range, schedule: DEFAULT_SCHEDULE, weeklyHours: 39 });
+    expect(a.perDay[0].targetMs).toBe(8 * H); // lundi
+    expect(a.perDay[4].targetMs).toBe(7 * H); // vendredi
+    expect(a.perDay[5].targetMs).toBe(0);     // samedi
   });
 });

@@ -1,6 +1,7 @@
 // src/core/stats.js — agrégations statistiques pures (aucune API Chrome).
 import { workedMs, startOfDay } from './time.js';
 import { extractProject } from './mapping.js';
+import { scheduledMsForDate, hasAnySchedule } from './schedule.js';
 
 const MOIS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin',
   'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
@@ -67,7 +68,7 @@ export function isVacationSession(session, { vacationTaskId, vacationName } = {}
   return false;
 }
 
-export function aggregate(sessions, { start, end, isVacation = () => false, weeklyHours = 39 }) {
+export function aggregate(sessions, { start, end, isVacation = () => false, weeklyHours = 39, schedule = null }) {
   const dayKey = (d) => startOfDay(d).getTime();
 
   // Amorce toutes les journées de la plage (ordre chronologique).
@@ -83,7 +84,6 @@ export function aggregate(sessions, { start, end, isVacation = () => false, week
   }
 
   const projMap = new Map();
-  const congeDaySet = new Set();
   let workedTotal = 0;
   let congeTotal = 0;
 
@@ -94,7 +94,6 @@ export function aggregate(sessions, { start, end, isVacation = () => false, week
     const dur = workedMs(s.startTime, s.endTime, (s.pauseMin || 0) * 60_000);
     if (isVacation(s)) {
       congeTotal += dur;
-      congeDaySet.add(k);
       if (bucket) bucket.congeMs += dur; // ← durée conservée (avant : jetée)
       continue; // exclu du temps travaillé et des projets
     }
@@ -109,20 +108,29 @@ export function aggregate(sessions, { start, end, isVacation = () => false, week
     .map(([project, ms]) => ({ project, ms, ratio: workedTotal ? ms / workedTotal : 0 }))
     .sort((a, b) => b.ms - a.ms);
 
-  // Objectif « en heures » : chaque jour ouvré vaut la cible quotidienne, dont on retranche les
-  // heures de congé du jour — plafonnées à une journée (un congé « 8 h » retire au plus une
-  // journée) et limitées aux jours ouvrés (un congé posé le week-end n'ampute pas l'objectif).
+  // Cible de chaque jour : le planning s'il est défini, sinon le forfait plat des jours ouvrés (rétro-compat).
+  const useSchedule = hasAnySchedule(schedule);
   const dailyTargetMs = dailyTargetHours(weeklyHours) * 3600_000;
-  let congeWorkdayMs = 0;
+  const targetMsForDate = (date) => {
+    if (useSchedule) return scheduledMsForDate(schedule, date);
+    const wd = date.getDay();
+    return (wd >= 1 && wd <= 5) ? dailyTargetMs : 0;
+  };
+
+  let rawObjectiveMs = 0;
+  let congeCappedMs = 0;
+  let congeDaysAcc = 0;
   for (const d of perDay) {
-    if (!d.isWeekend) congeWorkdayMs += Math.min(d.congeMs, dailyTargetMs);
+    const t = targetMsForDate(d.date);
+    d.targetMs = t;                          // exposé pour le repère de cible par barre (rendu)
+    rawObjectiveMs += t;
+    const capped = Math.min(d.congeMs, t);   // un congé ne peut retirer plus que la cible du jour
+    congeCappedMs += capped;
+    if (t > 0) congeDaysAcc += capped / t;   // fraction d'heures réelles → jours
   }
-  const weekdays = weekdaysBetween(start, end);
-  const congeDaysEquiv = dailyTargetMs > 0 ? congeWorkdayMs / dailyTargetMs : 0;
-  const congeDays = congeDaySet.size;
-  const objectiveMs = objectiveHours(weekdays, congeDaysEquiv, weeklyHours) * 3600_000;
+  const objectiveMs = Math.max(0, rawObjectiveMs - congeCappedMs);
   const remainingMs = Math.max(0, objectiveMs - workedTotal);
   const progress = objectiveMs > 0 ? workedTotal / objectiveMs : null;
 
-  return { workedMs: workedTotal, congeMs: congeTotal, objectiveMs, remainingMs, progress, congeDays, perDay, perProject };
+  return { workedMs: workedTotal, congeMs: congeTotal, objectiveMs, remainingMs, progress, congeDays: congeDaysAcc, perDay, perProject };
 }
