@@ -10,6 +10,22 @@
 
 ---
 
+## 2026-07-18 — Bloc congés affiché en permanence (le `[hidden]` rebattu, encore)
+
+- **Contexte** : v5.7.1. Le bloc de saisie des congés (`#vac-range`) apparaissait dès l'ouverture de la saisie
+  manuelle, « Marquer comme congés » **décoché** — alors qu'il porte l'attribut `hidden` par défaut.
+- **Erreur** : pas d'exception. `getComputedStyle(#vac-range).display` = **`flex`** malgré `hidden` présent.
+- **Hypothèse** : `#vac-range { display:flex }` **écrase** la règle UA `[hidden] { display:none }`. **Troisième**
+  occurrence du même piège après `.stats-custom` (v5.3.1) et `.fav-pop` — tout bloc **flex/grid** rendu masquable
+  par `hidden` a besoin de son garde-fou explicite.
+- **Action** : `#vac-range[hidden] { display:none; }` (+ `#vac-detail[hidden]`).
+- **Résultat** : vérifié au navigateur contre le `popup.css` réel — `display:none` avec `hidden`, `flex` sans. Le
+  bloc n'apparaît plus qu'à la coche.
+- **Leçon** : réflexe désormais **obligatoire** — dès qu'on donne `display:flex/grid` à un élément masqué via
+  `hidden` (ou `.hidden`), ajouter `sélecteur[hidden] { display:none }` dans la foulée. Et **le vérifier à l'œil** :
+  un harnais qui teste `el.hidden = false` puis mesure ne révèle **pas** que `hidden = true` n'avait jamais caché
+  (c'est ce qui a laissé passer le bug en Phase 2).
+
 ## 2026-07-18 — Grandes barres du rythme quotidien toutes tassées à ~96 px
 
 - **Contexte** : v5.6.0. En ajoutant un **repère de cible par barre** au rythme quotidien, on remarque que des

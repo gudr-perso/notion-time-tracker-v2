@@ -354,7 +354,8 @@ brut de Notion, au lieu de devenir une *unhandled rejection* laissant la liste v
   n'a pas de libellé séparé) — écraser le `textContent` du bouton effacerait le picto SVG.
 - `onVacationToggle` : coche « congés » → sélectionne la tâche congés et force le commentaire « En congés » ; **si un
   planning existe**, masque début/fin et affiche le bloc demi-journées (`#vac-range`) réinitialisé à aujourd'hui,
-  sinon garde la saisie début/fin (repli).
+  sinon garde la saisie début/fin (repli). ⚠️ Côté CSS, `#vac-range[hidden]` / `#vac-detail[hidden]` forcent
+  `display:none` : leur `display:flex` battrait sinon l'attribut `hidden` (même garde-fou que `.stats-custom`).
 - **Saisie congés en demi-journées** : `currentSpans()` = `generateLeaveSpans(planning, {from/to, halves, overrides})` ;
   `updateVacRecap` affiche les jours (`leaveDays`) + le nombre de lignes ; `renderVacDetail` / `defaultTypeFor`
   construisent la liste « détailler » (un `<select>` par jour travaillé, jours non travaillés grisés) alimentant

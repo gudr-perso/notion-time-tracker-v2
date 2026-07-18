@@ -195,6 +195,10 @@ textarea.input { resize:vertical; min-height:56px; }
 
 /* ===== Congés : bloc plage demi-journées (mode manuel) ===== */
 #vac-range { margin-top:10px; display:flex; flex-direction:column; gap:10px; }
+/* Le display:flex bat le [hidden] du navigateur (même piège que .stats-custom / .fav-pop) :
+   sans cette règle, le bloc congés reste visible même « Marquer comme congés » décoché.
+   Cf. EVENEMENTS.md (2026-07-17). */
+#vac-range[hidden] { display:none; }
 .vac-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .vac-lbl { width:28px; color:var(--text-muted); font-size:13px; }
 .seg-half { display:inline-flex; border:1px solid var(--border-soft); border-radius:8px; overflow:hidden; }
@@ -203,6 +207,7 @@ textarea.input { resize:vertical; min-height:56px; }
 .vac-recap { display:inline-flex; align-items:center; gap:8px; align-self:flex-start; background:rgba(243,97,0,.14); color:var(--orange); border-radius:8px; padding:6px 12px; font-size:13px; }
 .vac-detail-toggle { align-self:flex-start; background:none; border:none; color:var(--cyan); cursor:pointer; font-size:13px; padding:0; }
 #vac-detail { display:flex; flex-direction:column; gap:6px; }
+#vac-detail[hidden] { display:none; }
 .vac-day { display:flex; align-items:center; justify-content:space-between; border:1px solid var(--border); border-radius:8px; padding:6px 12px; font-size:13px; }
 .vac-day.off { border-style:dashed; color:var(--text-muted); }
 .vac-day select { background:var(--bg-deep); color:var(--text); border:1px solid var(--border-soft); border-radius:6px; padding:3px 8px; }

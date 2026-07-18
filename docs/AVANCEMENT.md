@@ -3,7 +3,7 @@
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
 > Dernière mise à jour : 2026-07-18.
 
-**Version courante : `5.7.0`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
+**Version courante : `5.7.1`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -36,6 +36,11 @@ L'onglet **Stats** est **livré en v5.2.0**.
 **Tests** : `npm test` → `151 passed (10 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.7.1)
+- **Correctif : bloc congés affiché même décoché** — `#vac-range { display:flex }` battait le `[hidden]` du
+  navigateur ; ajout des garde-fous `#vac-range[hidden]` / `#vac-detail[hidden]`. 3ᵉ occurrence du piège (après
+  `.stats-custom`, `.fav-pop`). CSS seul. Détail : `docs/EVENEMENTS.md`.
 
 ### ✅ Faites (v5.7.0) — Phase 2 « congés / saisie »
 - **Saisie des congés en demi-journées** : coche congés (avec planning) → **Du [date + matin/aprem/journée] → Au

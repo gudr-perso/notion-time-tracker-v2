@@ -6,6 +6,16 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.7.1] — 2026-07-18
+
+### Corrigé
+- **Bloc de saisie des congés visible même « Marquer comme congés » décoché** : la règle `#vac-range { display:flex }`
+  battait l'attribut `[hidden]` du navigateur, laissant le bloc (Du/Au + demi-journées + récap) affiché en
+  permanence dès l'ouverture de la saisie manuelle. Ajout des garde-fous `#vac-range[hidden]` et
+  `#vac-detail[hidden]` (`{ display:none }`) — **même piège** que `.stats-custom` / `.fav-pop`. Vérifié au
+  navigateur contre le `popup.css` réel (`display:none` avec `hidden`, `flex` sans). CSS seul, aucun test impacté.
+  Cf. `docs/EVENEMENTS.md`.
+
 ## [5.7.0] — 2026-07-18
 
 Saisie des congés en **demi-journées** : matin / après-midi / journée sur une **plage de dates**, avec récap live
