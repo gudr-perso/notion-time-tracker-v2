@@ -6,6 +6,39 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.6.0] — 2026-07-18
+
+Stats → l'objectif se calcule à partir d'un **planning hebdomadaire** configurable (au lieu d'un forfait
+d'heures/semaine), les congés s'affichent **en jours**, et chaque barre du rythme quotidien porte son **repère de
+cible du jour**. (Socle de la saisie des congés en demi-journées, à venir en Phase 2.)
+
+### Ajouté
+- **Planning hebdomadaire** (config) : une grille 7 jours × horaires **matin / après-midi**, remplaçant le champ
+  « Heures / semaine ». Le total hebdomadaire est **dérivé** et affiché en direct. Défaut pré-rempli : lun–jeu
+  09:00–13:00 / 14:00–18:00, ven 14:00–17:00, sam/dim non travaillés → 39 h. Nouveau module pur testé
+  `core/schedule.js` (`scheduledMsForDate`, `hasAnySchedule`, `weeklyTotalHours`, `DEFAULT_SCHEDULE`).
+- **Repère de cible par barre** : le rythme quotidien affiche sur chaque barre un repère à la hauteur de la cible
+  **du jour** (issue du planning), à la place de l'ancienne ligne de cible unique — devenue fausse dès que la
+  cible varie d'un jour à l'autre. Les jours non travaillés n'ont pas de repère.
+
+### Modifié
+- **Objectif dérivé du planning** : l'objectif d'une période est la **somme des heures planifiées** de ses jours
+  (un jour sans horaires = non travaillé), au lieu de `jours ouvrés × heures/5`. Les congés en sont retranchés en
+  **heures réelles** (plafonnées à la cible du jour). Rétro-compatible : sans planning, le calcul retombe sur le
+  forfait `weeklyHours/5` d'avant (aucun test de non-régression cassé).
+- **Badge Congés en jours** : la carte objectif affiche les congés en **jours** (`🌴 2,5 j`), décimale `,0`
+  masquée (`1 j`, pas `1,0 j`), au lieu d'un total d'heures.
+- **Barres du rythme à hauteur exacte** : chaque barre vit désormais dans un **cadre à hauteur fixe** (`.track`),
+  ce qui corrige au passage un tassement des grandes barres (7 h/8 h/9 h se retrouvaient toutes ~96 px, les
+  libellés partageant la hauteur flex de la colonne). Cf. `docs/EVENEMENTS.md`.
+
+### Notes
+- `core/schedule.js` (nouveau) + `core/stats.js` (`aggregate` reçoit `schedule`, expose `perDay[].targetMs`,
+  `congeDays` fractionnaire) + `config/*` (grille planning) + `popup/stats.js` & `popup.css` (badge jours, track,
+  repère). **140 tests verts** (+15). Vérif navigateur : grille (total 39 h, segment incomplet → null), barres
+  linéaires (7,5 h→91 px, 9 h→110 px) et repères alignés à la cible du jour. **Saisie des congés en demi-journées
+  = Phase 2** (plan séparé).
+
 ## [5.5.5] — 2026-07-18
 
 Stats → Rythme quotidien : un jour qui mêle travail et congés montre désormais les **deux**, et les congés

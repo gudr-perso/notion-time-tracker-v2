@@ -111,7 +111,10 @@ base Temps pointe, lui, vers la base Tâches sélectionnée.
 - **Commentaire obligatoire à l'arrêt** : empêche d'arrêter (ou d'enregistrer) une session sans commentaire.
 - **Saisie manuelle par défaut** : le popup s'ouvre directement en mode saisie manuelle (oubli de timer).
 - **Nom du bouton « application interne »** : libellé du bouton gris (défaut `CLICKUP`, max 20 car., majuscules).
-- **Heures hebdomadaires** : objectif de temps par semaine (défaut 39, décimales acceptées ; **doit être > 0**).
+- **Planning type** : une grille 7 jours × horaires **matin / après-midi**. Il définit l'**objectif** (somme des
+  heures planifiées ; un jour sans horaires = non travaillé) **et** fournit les horaires réutilisés pour les congés.
+  Le **total hebdomadaire** est dérivé et affiché en direct (défaut pré-rempli : lun–jeu 8 h, ven 7 h → 39 h ; au
+  moins un créneau requis).
 - **Tâche congés** (optionnelle) : tâche utilisée pour marquer les congés.
 - **Favoris (jusqu'à 8)** : tâches à accès rapide. Chaque ligne réunit la **tâche** Notion, un **libellé** de bouton
   personnalisable (max 20 car., facultatif — à défaut le nom de la tâche s'affiche), une **couleur** et un **picto**.
@@ -264,8 +267,8 @@ mode Perso, qui se navigue via les sélecteurs de date).
 
 Un **anneau de progression** affiche le temps travaillé sur la période au centre, avec l'objectif en sous-texte
 (ou « sans objectif » si aucun objectif ne s'applique). À côté, le détail : **Objectif**, **Travaillé**,
-**Reste** (temps restant pour atteindre l'objectif, 0 si dépassé), et un badge **🌴 (durée)** totalisant les
-**heures** de congé prises sur la période (rien si aucun).
+**Reste** (temps restant pour atteindre l'objectif, 0 si dépassé), et un badge **🌴 (jours)** totalisant les congés
+de la période en **jours** (ex. `2,5 j` ; une décimale, `,0` masquée → `1 j`), rien si aucun.
 
 ### 4.3 Rythme quotidien
 
@@ -275,7 +278,8 @@ surmonté des **congés en doré**. Ainsi un jour mêlant travail et congés (ex
 un jour de **congé pur** est une barre **entièrement dorée** marquée 🌴 (8 h de congé = barre pleine hauteur,
 4 h = mi-hauteur) ; un jour sans aucune session s'affiche en **gris**, vide. En dessous de chaque barre :
 l'initiale du jour de la semaine (ou le quantième en mode Mois). Au **survol**, une infobulle détaille le jour :
-« 04:00 travaillé · 04:00 congés », « Congés · 08:00 », ou la seule durée travaillée.
+« 04:00 travaillé · 04:00 congés », « Congés · 08:00 », ou la seule durée travaillée. Un **repère pointillé** sur
+chaque barre marque la **cible du jour** (issue du planning) ; les jours non travaillés n'en ont pas.
 
 En vues **Jour** et **Semaine**, la durée du jour (ou l'icône congés) est aussi affichée au-dessus de la barre.
 En vue **Mois** (28 à 31 colonnes), cette étiquette d'heure serait illisible et déborderait : elle est masquée
@@ -290,11 +294,14 @@ pas dans ce bilan (ni dans le temps travaillé, ni dans un projet).
 ### 4.5 Prise en compte des congés
 
 Une session est « congé » si elle est liée à la **tâche congés** configurée (relation, ou repli sur le nom de la
-tâche si la relation n'est pas mappée). Les congés sont comptés **en heures** : l'objectif de la période
-retranche, pour chaque **jour ouvré**, la durée de congé de ce jour — **plafonnée à une journée** (un congé
-« 8 h » retire au plus une journée) et **ignorée le week-end** :
+tâche si la relation n'est pas mappée). Les congés sont comptés **en heures réelles** : l'objectif de la période
+est la **somme des heures planifiées** de ses jours (planning), dont on retranche la durée de congé de chaque
+jour — **plafonnée à la cible du jour** (un congé ne retire jamais plus qu'une journée) :
 
-> Objectif = jours ouvrés × (heures hebdo / 5) − Σ min(heures de congé du jour ouvré, heures hebdo / 5)
+> Objectif = Σ heures planifiées(jour) − Σ min(heures de congé(jour), heures planifiées(jour))
+
+Sans planning configuré, l'objectif retombe sur l'ancien forfait `jours ouvrés × (heures hebdo / 5)`
+(rétro-compatibilité).
 
 Ainsi une **demi-journée** de congé ne retire qu'une demi-journée d'objectif (l'anneau et le « Reste » ne sont
 plus faussés). Une **semaine ouvrée** compte 5 jours (Lundi → Vendredi) ; les jours de week-end (samedi,

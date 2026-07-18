@@ -10,6 +10,27 @@
 
 ---
 
+## 2026-07-18 — Grandes barres du rythme quotidien toutes tassées à ~96 px
+
+- **Contexte** : v5.6.0. En ajoutant un **repère de cible par barre** au rythme quotidien, on remarque que des
+  journées de durées différentes (7,5 h, 8 h, 9 h) rendent des barres de **hauteur quasi identique** — le repère
+  n'aurait alors aucun sens visuel.
+- **Erreur** : pas d'exception. Mesure **brute** au navigateur (harnais reproduisant `.day`/`.bar` sur le
+  `popup.css` réel) : barres de 7,5 h et 9 h mesurées **~96 px toutes les deux**, là où elles devraient différer
+  d'environ 20 %.
+- **Hypothèse** : `.day` était une **colonne flex** (`height:100%`) contenant l'étiquette d'heure (`.dh`), la barre
+  (`height:X%`) puis le libellé du jour (`.dn`). Pour une grande barre, `dh + barre(≈100 %) + dn` dépasse la
+  hauteur de la colonne → **`flex-shrink` écrase la barre** pour tout faire tenir, aplatissant le haut de l'échelle
+  (toutes les grandes barres convergent vers la même hauteur résiduelle).
+- **Action** : envelopper la barre dans un **cadre à hauteur fixe** `.track` (`height:110px`, `position:relative`),
+  en laissant `.dh`/`.dn` **hors** du cadre. La barre (`height:X%`) et le repère (`bottom:X%`) se résolvent alors
+  contre une hauteur **définie et constante** → géométrie exacte.
+- **Résultat** : mesuré au navigateur — 7,5 h→91 px, 9 h→110 px, 5,5 h→67 px (linéaire), repères de cible alignés
+  au sommet d'une journée pleine ; aucun débordement en vue Mois (`min-width:0` conservé). 140 tests verts.
+- **Leçon** : une barre en `height:%` dans une colonne flex qui contient **aussi** d'autres éléments n'est pas
+  fiable — ses voisins lui volent de la place via `flex-shrink`. Pour une échelle exacte, isoler la zone graphique
+  dans un conteneur à hauteur **fixe**, libellés à l'extérieur.
+
 ## 2026-07-18 — Un jour « 4 h travail + 4 h congés » affiché comme une barre 100 % congé
 
 - **Contexte** : v5.5.5. Onglet Stats, « Rythme quotidien ». L'utilisateur signale que le 9 du mois — où il a

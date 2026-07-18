@@ -3,7 +3,7 @@
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
 > Dernière mise à jour : 2026-07-18.
 
-**Version courante : `5.5.5`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
+**Version courante : `5.6.0`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -21,7 +21,7 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Onglet Timer** (start/pause/stop, stop-at, saisie manuelle, congés, favoris, récents) | ✅ |
 | **Service worker** (badge + notifications via `chrome.alarms`) | ✅ |
 | **Thème clair / sombre** (bascule persistée) | ✅ |
-| **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`, `stats`, `fav-presets`, `fav-icons`, `schema-injection`, `config-io`, `tasks-query`) | ✅ **125 tests verts** |
+| **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`, `stats`, `schedule`, `fav-presets`, `fav-icons`, `schema-injection`, `config-io`, `tasks-query`) | ✅ **140 tests verts** |
 | **Onglet Stats** | ✅ v5.2.0 |
 | **Favoris : couleur + picto** | ✅ v5.3.0 |
 | **Export / import de la config** | ✅ v5.4.0 |
@@ -30,10 +30,24 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Stats Mois : plus de scrollbar horizontale (rythme quotidien)** | ✅ v5.5.3 |
 | **Fond des cartes factorisé en variable `--card-bg` (doublon supprimé)** | ✅ v5.5.4 |
 | **Stats : jour mixte travail+congés (barres empilées) + congés comptés en heures** | ✅ v5.5.5 |
+| **Stats : objectif dérivé d'un planning hebdo + congés en jours + repère de cible par barre** | ✅ v5.6.0 |
 
-**Tests** : `npm test` → `125 passed (9 files)`.
+**Tests** : `npm test` → `140 passed (10 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.6.0) — Phase 1 « congés / planning »
+- **Planning hebdomadaire en config** : grille 7 jours × horaires matin/après-midi, remplace « Heures/semaine » ;
+  total hebdo dérivé et affiché en direct ; défaut pré-rempli (lun–jeu 8 h, ven 7 h → 39 h). Nouveau module pur
+  testé `core/schedule.js`.
+- **Objectif dérivé du planning** : objectif d'une période = somme des heures planifiées de ses jours (jour sans
+  horaires = non travaillé) ; congés retranchés en heures réelles (plafonnées à la cible du jour). Rétro-compatible
+  (sans planning, forfait `weeklyHours/5` d'avant).
+- **Congés en jours** (badge `🌴 2,5 j`, `,0` masqué) et **repère de cible par barre** (cible du jour du planning,
+  remplace la ligne globale). Restructuration `.day` → `.track` à hauteur fixe : corrige au passage le tassement
+  des grandes barres (cf. EVENEMENTS). +15 tests (140 verts). Détail : `docs/VERSIONS.md`.
+- **Reste à faire — Phase 2** : saisie des congés en **demi-journées** (matin/aprem/journée + plage, écriture
+  1 ligne/demi-journée via les horaires du planning). Spec : `docs/superpowers/specs/2026-07-18-conges-demi-journees-design.md`.
 
 ### ✅ Faites (v5.5.5)
 - **Jour mixte travail + congés dans « Rythme quotidien »** : un jour cumulant travail et congés (ex. 4 h + 4 h)
