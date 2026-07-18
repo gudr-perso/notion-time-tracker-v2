@@ -171,19 +171,19 @@ textarea.input { resize:vertical; min-height:56px; }
 .obj-side .v { font-weight:600; }
 .conge-badge { display:inline-block; background:rgba(243,97,0,.15); color:var(--orange); padding:2px 9px; border-radius:999px; font-size:12px; }
 
-.days { display:flex; align-items:flex-end; gap:6px; height:130px; }
-.days { position:relative; }
-.target-line { position:absolute; left:0; right:0; border-top:1px dashed var(--border-soft); pointer-events:none; }
+.days { display:flex; align-items:flex-end; gap:6px; }
 /* min-width:0 : sans lui, un item flex garde min-width:auto et refuse de rétrécir sous la
    largeur intrinsèque de son contenu. En vue Mois (31 colonnes), les libellés « 07:30 »
    (insécables) forçaient alors la rangée à ~656px > 638px dispo → débordement horizontal du
    popup. min-width:0 rend les colonnes compressibles (comportement flex correct). */
-.day { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
+.day { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.day .track { position:relative; width:100%; height:110px; display:flex; align-items:flex-end; justify-content:center; }
 .day .bar { width:100%; max-width:34px; border-radius:4px 4px 0 0; min-height:2px; overflow:hidden; }
 .day .bar .seg { display:block; width:100%; }
 .day .bar .seg.work { background:var(--cyan); }   /* travail : base bleue */
 .day .bar .seg.conge { background:var(--orange); } /* congés : empilés au-dessus */
 .day .bar.empty { background:var(--border); }
+.day .day-target { position:absolute; left:0; right:0; border-top:1px dashed var(--border-soft); pointer-events:none; }
 .day .dh { font-size:10px; color:var(--text-muted); }
 .day .dn { font-size:11px; color:var(--text-muted); }
 

@@ -2,7 +2,7 @@
 import { queryAll, getPage } from '../core/notion-api.js';
 import { sessionFromPage, taskFromPage, titleWithProject } from '../core/mapping.js';
 import { formatDuration, toNotionDate } from '../core/time.js';
-import { periodRange, aggregate, isVacationSession, dailyTargetHours } from '../core/stats.js';
+import { periodRange, aggregate, isVacationSession } from '../core/stats.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -68,6 +68,7 @@ async function fetchAggregate(range) {
   const agg = aggregate(sessions, {
     start: range.start, end: range.end, isVacation,
     weeklyHours: S.config.prefs?.weeklyHours ?? 39,
+    schedule: S.config.prefs?.schedule || null,
   });
   S.cache.set(key, agg);
   return agg;
@@ -79,8 +80,12 @@ function renderObjective(agg) {
   $('stats-ring').style.setProperty('--p', Math.min(100, pct));
   $('stats-ring-worked').textContent = fmt(agg.workedMs);
   $('stats-ring-obj').textContent = agg.objectiveMs > 0 ? `/ ${fmt(agg.objectiveMs)}` : 'sans objectif';
-  const conge = agg.congeMs > 0
-    ? `<span class="conge-badge">🌴 ${fmt(agg.congeMs)}</span>` : '—';
+  const fmtDays = (n) => {
+    const r = Math.round(n * 10) / 10;
+    return (Number.isInteger(r) ? String(r) : r.toFixed(1).replace('.', ',')) + ' j';
+  };
+  const conge = agg.congeDays > 0
+    ? `<span class="conge-badge">🌴 ${fmtDays(agg.congeDays)}</span>` : '—';
   $('stats-obj-side').innerHTML =
     `<div class="line"><span class="k">Objectif</span><span class="v">${agg.objectiveMs > 0 ? fmt(agg.objectiveMs) : '—'}</span></div>` +
     `<div class="line"><span class="k">Travaillé</span><span class="v">${fmt(agg.workedMs)}</span></div>` +
@@ -90,19 +95,11 @@ function renderObjective(agg) {
 
 function renderDays(agg) {
   const fmt = (ms) => formatDuration(ms, { withSeconds: false });
-  // Hauteur de référence = plus grand total (travail + congés) d'une journée : un jour de congé
-  // plein atteint ainsi la même hauteur qu'un jour travaillé équivalent.
-  const maxMs = Math.max(1, ...agg.perDay.map((d) => d.workMs + d.congeMs));
-  const targetMs = dailyTargetHours(S.config.prefs?.weeklyHours ?? 39) * 3600_000;
-  const targetPct = Math.min(100, Math.round((targetMs / maxMs) * 100));
-  const line = targetMs > 0
-    ? `<div class="target-line" style="bottom:${targetPct}%" title="Cible quotidienne"></div>`
-    : '';
+  // Référence = plus grand entre (travail+congés) et la cible du jour, pour que le repère de cible tienne dans le cadre.
+  const maxMs = Math.max(1, ...agg.perDay.map((d) => Math.max(d.workMs + d.congeMs, d.targetMs || 0)));
   const bars = agg.perDay.map((d) => {
     const total = d.workMs + d.congeMs;
     const h = Math.round((total / maxMs) * 100);
-    // Segments empilés : travail (bleu, base) puis congés (orange, au-dessus). Un jour mixte
-    // montre donc les deux : 4 h travail + 4 h congés = barre de 8 h moitié bleue, moitié orange.
     let segs = '';
     if (total > 0) {
       const workPct = Math.round((d.workMs / total) * 100);
@@ -114,14 +111,15 @@ function renderDays(agg) {
       : (d.workMs && d.congeMs) ? `${fmt(d.workMs)} travaillé · ${fmt(d.congeMs)} congés`
         : d.congeMs ? `Congés · ${fmt(d.congeMs)}`
           : fmt(d.workMs);
-    // En tête de barre : 🌴 dès qu'il y a du congé ; sinon la durée travaillée (masquée en vue Mois
-    // où « 07:30 » ne tient pas — la durée exacte reste en infobulle).
-    const top = d.congeMs > 0 ? '🌴'
-      : (S.kind === 'month' ? '' : (d.workMs ? fmt(d.workMs) : '·'));
+    const top = d.congeMs > 0 ? '🌴' : (S.kind === 'month' ? '' : (d.workMs ? fmt(d.workMs) : '·'));
     const dn = S.kind === 'month' ? String(d.date.getDate()) : JOURS[d.date.getDay()];
-    return `<div class="day"><div class="dh">${top}</div><div class="${cls}" style="height:${Math.max(2, h)}%" title="${dur}">${segs}</div><div class="dn">${dn}</div></div>`;
+    const mark = d.targetMs > 0
+      ? `<div class="day-target" style="bottom:${Math.min(100, Math.round((d.targetMs / maxMs) * 100))}%"></div>` : '';
+    return `<div class="day"><div class="dh">${top}</div>` +
+      `<div class="track">${mark}<div class="${cls}" style="height:${Math.max(2, h)}%" title="${dur}">${segs}</div></div>` +
+      `<div class="dn">${dn}</div></div>`;
   }).join('');
-  $('stats-days').innerHTML = line + bars;
+  $('stats-days').innerHTML = bars;
 }
 
 function renderProjects(agg) {
