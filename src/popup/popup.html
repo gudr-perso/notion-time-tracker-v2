@@ -36,6 +36,23 @@
             <div class="field"><label id="manual-comment-label">COMMENTAIRE (OPTIONNEL)</label><textarea id="manual-comment" class="input" placeholder="Décris ton travail…"></textarea></div>
             <label class="check-row"><input type="checkbox" id="manual-vacation" /> Marquer comme congés</label>
             <p class="hint" id="vacation-hint">La tâche congés sera utilisée et le commentaire sera « En congés ».</p>
+            <div id="vac-range" hidden>
+              <div class="vac-row"><span class="vac-lbl">Du</span>
+                <input type="date" id="vac-from" class="input">
+                <div class="seg-half" id="vac-from-half" role="group">
+                  <button type="button" data-h="matin">Matin</button><button type="button" data-h="aprem">Après-midi</button><button type="button" data-h="journee" class="on">Journée</button>
+                </div>
+              </div>
+              <div class="vac-row"><span class="vac-lbl">Au</span>
+                <input type="date" id="vac-to" class="input">
+                <div class="seg-half" id="vac-to-half" role="group">
+                  <button type="button" data-h="matin">Matin</button><button type="button" data-h="aprem">Après-midi</button><button type="button" data-h="journee" class="on">Journée</button>
+                </div>
+              </div>
+              <div class="vac-recap" id="vac-recap">—</div>
+              <button type="button" class="vac-detail-toggle" id="vac-detail-toggle">Détailler les jours</button>
+              <div id="vac-detail" hidden></div>
+            </div>
           </div>
 
           <div id="favorites-box" class="card fav-box" hidden>

@@ -192,3 +192,17 @@ textarea.input { resize:vertical; min-height:56px; }
 .proj .ptrack { flex:1; height:14px; background:var(--border); border-radius:4px; overflow:hidden; }
 .proj .ptrack > i { display:block; height:100%; background:var(--cyan); }
 .proj .pv { width:82px; text-align:right; flex:0 0 auto; color:var(--text-muted); font-variant-numeric:tabular-nums; }
+
+/* ===== Congés : bloc plage demi-journées (mode manuel) ===== */
+#vac-range { margin-top:10px; display:flex; flex-direction:column; gap:10px; }
+.vac-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.vac-lbl { width:28px; color:var(--text-muted); font-size:13px; }
+.seg-half { display:inline-flex; border:1px solid var(--border-soft); border-radius:8px; overflow:hidden; }
+.seg-half button { background:transparent; border:none; color:var(--text-muted); padding:7px 12px; cursor:pointer; font-size:13px; }
+.seg-half button.on { background:var(--cyan); color:#031024; font-weight:600; }
+.vac-recap { display:inline-flex; align-items:center; gap:8px; align-self:flex-start; background:rgba(243,97,0,.14); color:var(--orange); border-radius:8px; padding:6px 12px; font-size:13px; }
+.vac-detail-toggle { align-self:flex-start; background:none; border:none; color:var(--cyan); cursor:pointer; font-size:13px; padding:0; }
+#vac-detail { display:flex; flex-direction:column; gap:6px; }
+.vac-day { display:flex; align-items:center; justify-content:space-between; border:1px solid var(--border); border-radius:8px; padding:6px 12px; font-size:13px; }
+.vac-day.off { border-style:dashed; color:var(--text-muted); }
+.vac-day select { background:var(--bg-deep); color:var(--text); border:1px solid var(--border-soft); border-radius:6px; padding:3px 8px; }
