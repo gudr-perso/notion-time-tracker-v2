@@ -202,9 +202,10 @@ async function saveManualFor(taskId, sourceBtn) {
   }
 }
 
-// Congés avec planning : une ligne Notion par demi-journée (`currentSpans()`), au lieu d'une
-// seule session — chaque demi-journée est créée puis close indépendamment, pour survivre à un
-// échec en cours de route (ex. coupure réseau après quelques lignes déjà écrites).
+// Congés avec planning : une ligne Notion par demi-journée (`currentSpans()`), au lieu d'une seule
+// session — chaque demi-journée est créée puis close indépendamment. En cas d'échec en cours de
+// route, on signale le nombre déjà créé ; réenregistrer la même plage recréerait ces lignes-là
+// (doublons) — corriger la plage avant de réessayer.
 async function saveVacation() {
   if (saving) return;
   const spans = currentSpans();
@@ -212,6 +213,8 @@ async function saveVacation() {
   const task = T.tasks.find((t) => t.id === T.config.prefs.vacationTaskId);
   if (!task) { alert('Tâche congés introuvable.'); return; }
   const comment = $('manual-comment').value.trim();
+  // Même règle que la saisie manuelle et l'arrêt : commentaire obligatoire si l'option est activée.
+  if (T.config.prefs?.requireComment && !comment) { alert('Le commentaire est obligatoire.'); $('manual-comment').focus(); return; }
   saving = true;
   setSaving(true, $('btn-primary'));
   let done = 0;

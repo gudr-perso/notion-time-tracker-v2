@@ -235,8 +235,10 @@ indique en direct le total en jours (ex. « 🌴 2,5 j ») et le nombre de ligne
 les jours non travaillés (planning vide, ex. week-end) sont grisés « non travaillé » et jamais posés.
 
 À l'enregistrement, l'app crée **une ligne Notion par demi-journée** (une journée = 2 lignes, matin + après-midi
-aux horaires du planning), toutes liées à la tâche congés ; en cas d'échec en cours de route, un message indique
-combien de lignes ont été créées. **Sans planning configuré**, la coche congés conserve l'ancienne saisie début/fin.
+aux horaires du planning), toutes liées à la tâche congés. Le **commentaire obligatoire** (si activé) s'applique
+aussi ici. En cas d'échec en cours de route, un message indique combien de lignes ont été créées — **corrigez alors
+la plage avant de réenregistrer** pour ne pas recréer les demi-journées déjà posées. **Sans planning configuré**,
+la coche congés conserve l'ancienne saisie début/fin.
 
 ### 3.9 Favoris (enregistrement rapide)
 
