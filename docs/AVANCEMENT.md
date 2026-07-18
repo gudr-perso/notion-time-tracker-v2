@@ -3,7 +3,7 @@
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
 > Dernière mise à jour : 2026-07-18.
 
-**Version courante : `5.5.3`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
+**Version courante : `5.5.4`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -28,10 +28,19 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Filtre d'état : cases à cocher + erreurs Notion visibles** | ✅ v5.5.0 |
 | **Saisie manuelle sur fond marine + liseré cyan** | ✅ v5.5.1 |
 | **Stats Mois : plus de scrollbar horizontale (rythme quotidien)** | ✅ v5.5.3 |
+| **Fond des cartes factorisé en variable `--card-bg` (doublon supprimé)** | ✅ v5.5.4 |
 
 **Tests** : `npm test` → `121 passed (9 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.5.4)
+- **Fond des cartes factorisé en variable `--card-bg`** : la teinte de fond des cartes (dégradé marine en
+  sombre, blanc en clair) était recopiée à l'identique sur la coche *Saisie manuelle* — un doublon qui aurait
+  divergé à la moindre retouche du fond de carte. Désormais définie **une seule fois par thème** et référencée
+  par `.card` et `.manual-toggle.card-lite` ; les deux surcharges de thème clair devenues redondantes sont
+  supprimées. **Aucun changement visible** (rendu strictement identique en clair et en sombre). CSS seul
+  (`src/popup/popup.css`), aucun test impacté. Détail : `docs/VERSIONS.md`.
 
 ### ✅ Faites (v5.5.3)
 - **Scrollbar horizontale corrigée en vue Mois (Stats → Rythme quotidien)** : les 28–31 colonnes débordaient parce
@@ -178,7 +187,7 @@ Le cadrage complet est dans **`CLAUDE.md`**. Rappels clés :
    (2026-07-17). Vérifier **dans les deux sens** si le local est en retard **ou en avance** sur le remote.
 2. Node.js requis (non fourni par la synchro). `npm install` (deps = Vitest en devDependency ; `node_modules/`
    git-ignored — il peut arriver par pCloud, mais reste inutilisable sans Node).
-3. `npm test` → doit afficher `106 passed`.
+3. `npm test` → doit afficher `121 passed`.
 4. **Charger l'extension** : `chrome://extensions` → mode développeur → « Charger l'extension non empaquetée »
    → sélectionner le **dossier racine** (celui du `manifest.json`). Recharger avec ↻ après chaque modif ;
    console du service worker via son lien dédié.

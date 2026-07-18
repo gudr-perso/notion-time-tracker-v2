@@ -2,6 +2,8 @@
   --bg-deep:#030826; --bg-elev:#0a1870; --border:#1c2470; --border-soft:#3a4ba0;
   --text:#DDE3F0; --text-muted:#7D8AAD; --cyan:#2aa6e8; --cyan-deep:#138fdb;
   --orange:#f36100; --green:#34d399; --red:#f87171;
+  /* Fond des cartes, résolu par thème : partagé par .card et la coche « saisie manuelle ». */
+  --card-bg:linear-gradient(180deg,rgba(10,24,112,.35),rgba(5,12,63,.35));
   /* Palette des favoris — clé stockée côté données, teinte résolue ici (cf. core/fav-presets.js). */
   --fav-cyan:#2aa6e8; --fav-orange:#f36100; --fav-green:#34d399; --fav-amber:#fbbf24;
   --fav-red:#f87171; --fav-purple:#a78bfa; --fav-pink:#f472b6; --fav-teal:#2dd4bf;
@@ -11,6 +13,7 @@
   --bg-deep:#f4f7ff; --bg-elev:#ffffff; --border:#d6ddf2; --border-soft:#b9c4e6;
   --text:#0b1533; --text-muted:#5a6a99; --cyan:#138fdb; --cyan-deep:#0d6fb0;
   --orange:#e05a00; --green:#059669; --red:#dc2626;
+  --card-bg:#ffffff;
   /* Mêmes clés, teintes assombries : c'est tout l'intérêt de stocker la clé et pas l'hexa.
      --fav-amber n'est volontairement PAS amber-600 (#d97706) : mesuré à 2,97:1 sur le fond de
      carte (sous le 3:1 requis) et à ΔE00 9,9 de l'orange, donc confondu avec lui. #a16207 tient
@@ -41,7 +44,7 @@ body { margin:0; width:700px; font-family:"Inter","Segoe UI",system-ui,sans-seri
 .load-error b { display:block; margin-bottom:2px; }
 main { padding:16px; }
 .card, .card-lite { border-radius:14px; border:1px solid var(--border); padding:14px; margin-bottom:14px; }
-.card { background:linear-gradient(180deg,rgba(10,24,112,.35),rgba(5,12,63,.35)); }
+.card { background:var(--card-bg); }
 .card-lite { background:linear-gradient(180deg,rgba(220,235,255,.06),transparent); display:flex; align-items:center; gap:10px; }
 .field { margin-bottom:12px; display:flex; flex-direction:column; gap:6px; }
 .field-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
@@ -75,13 +78,11 @@ textarea.input { resize:vertical; min-height:56px; }
 .fav-buttons .fav-btn-label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .hint { color:var(--text-muted); font-size:12px; margin:8px 0 0; }
 .check-row { display:flex; align-items:center; gap:8px; font-size:13px; }
-/* Zone « saisie manuelle » (oubli de timer) : fond des cartes (identique aux widgets
-   stats), souligné par un liseré cyan pour rester un repère distinctif. */
-.manual-toggle.card-lite { background:linear-gradient(180deg,rgba(10,24,112,.35),rgba(5,12,63,.35));
+/* Zone « saisie manuelle » (oubli de timer) : même fond que les cartes (var(--card-bg),
+   résolu par thème), souligné par un liseré cyan pour rester un repère distinctif. */
+.manual-toggle.card-lite { background:var(--card-bg);
   border:1.5px solid var(--cyan); color:var(--text); }
 #manual-fields { border:1.5px solid var(--cyan); padding:12px; }
-/* En thème clair, les cartes sont blanches : la coche suit (le liseré cyan reste le repère). */
-:root[data-theme="light"] .manual-toggle.card-lite { background:#ffffff; }
 /* Compactage du mode manuel : faire tenir les 6 favoris dans les 600px max du popup. */
 #manual-fields .field { margin-bottom:8px; }
 #manual-fields textarea.input { min-height:38px; }
@@ -124,9 +125,8 @@ textarea.input { resize:vertical; min-height:56px; }
 .modal-actions { display:flex; gap:10px; }
 .modal-actions .btn { flex:1; }
 
-/* Thème clair : les fonds de cartes codés en dur (bleu foncé translucide) rendent
-   terne sur fond clair — on les repasse en clair. */
-:root[data-theme="light"] .card { background:#ffffff; }
+/* Thème clair : quelques fonds encore codés en dur (bleu foncé translucide) rendent
+   terne sur fond clair — on les repasse en clair. (.card passe désormais par --card-bg.) */
 :root[data-theme="light"] .fav-box { background:#f6f7f9; }
 :root[data-theme="light"] .recent .day-head { background:#eef2fb; }
 :root[data-theme="light"] .icon-btn { background:rgba(11,21,51,.04); }

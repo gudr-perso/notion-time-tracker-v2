@@ -6,6 +6,22 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.5.4] — 2026-07-18
+
+Rangement interne : la couleur de fond des cartes n'est plus écrite en double.
+
+### Modifié
+- **Fond des cartes factorisé en variable `--card-bg`** : la teinte de fond des cartes (dégradé marine
+  translucide en thème sombre, blanc en thème clair) était recopiée **à l'identique** sur la coche
+  *Saisie manuelle* — un doublon qui risquait de diverger à la moindre retouche. Elle est désormais définie
+  **une seule fois par thème** (`--card-bg`), référencée par `.card` et `.manual-toggle.card-lite` ; les deux
+  surcharges de thème clair devenues redondantes (celle de `.card` et celle de la coche) sont supprimées.
+  **Aucun changement visible** : rendu strictement identique en clair comme en sombre.
+
+### Notes
+- `src/popup/popup.css` seul (2 déclarations de variable + 2 références + 2 suppressions). Aucun module `core/`
+  ni test touché.
+
 ## [5.5.3] — 2026-07-18
 
 Le graphe « Rythme quotidien » de l'onglet Stats ne provoque plus de scrollbar horizontale en vue Mois.
