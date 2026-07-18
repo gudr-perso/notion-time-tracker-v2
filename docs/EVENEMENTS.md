@@ -10,6 +10,34 @@
 
 ---
 
+## 2026-07-18 — Scrollbar horizontale dans les Stats, uniquement en vue Mois
+
+- **Contexte** : v5.5.3. Le popup, agrandi, laisse voir tout l'onglet Stats. En vue **Mois** (et elle seule),
+  une **scrollbar horizontale** apparaît sur tout le popup ; en Jour/Semaine, rien. Le suspect visuel évident
+  aurait été « Par projet » (noms longs), mais ses colonnes sont à largeur fixe (`.pn` 130px, `.pv` 82px).
+- **Erreur** : pas d'exception — bug de mise en page. Artefact **brut** = mesures `scrollWidth`/`clientWidth` du
+  conteneur `#stats-days` reconstruit à l'identique dans le navigateur, à la largeur réelle du popup :
+  - Mois (31 col.) : `clientWidth=638`, **`scrollWidth=656` → débordement +18 px**.
+  - Semaine (7 col.) : `638` / `638` → 0. Jour (1 col.) : `638` / `638` → 0.
+  - Une colonne « jour travaillé » était **forcée à ~23,7 px** au lieu des ~14,8 px du partage équitable.
+- **Hypothèse** : chaque colonne est un item flex (`.day { flex:1 }`) **sans `min-width:0`**. Par défaut un item
+  flex garde `min-width:auto` : il refuse de rétrécir sous la largeur intrinsèque de son contenu. Or l'étiquette
+  d'heure `07:30` (`.dh`) est **insécable** (aucune coupure possible dans « 07:30 ») → largeur plancher ~24 px par
+  jour travaillé. Sur ~10–13 jours étiquetés + gouttières, la somme dépasse les 638 px du conteneur. Ni `.days` ni
+  `.card` n'ayant d'`overflow`, ce débordement remonte jusqu'au `body` (largeur figée 700 px) → scrollbar. Jour et
+  Semaine ont trop peu de colonnes pour atteindre le seuil, d'où la spécificité « Mois ».
+- **Action** : (1) `min-width:0` sur `.day` — le remède **conforme à la spec Flexbox** (c'est précisément
+  `min-width:auto` que la spec pointe comme cause de ces débordements). (2) En vue Mois, `renderDays` n'émet plus
+  l'étiquette d'heure au-dessus des barres (illisible à 31 colonnes) — la durée exacte passe en **`title`**
+  (infobulle) de la barre, présent aussi en Jour/Semaine ; le 🌴 des congés est conservé.
+- **Résultat** : débordement Mois **18 px → 0** (vérifié au navigateur contre le `popup.css` patché), Jour/Semaine
+  inchangés, aucun chevauchement de libellés, 🌴 congés préservé. 121 tests verts (aucun module `core/` touché —
+  `renderDays` est du rendu DOM, hors périmètre testé).
+- **Leçon** : un item flex qui « refuse de rétrécir » = réflexe **`min-width:0`** (défaut `auto` = plancher au
+  contenu). Et un texte **insécable** (heure, ID, mot sans espace) impose sa largeur : le détecter tôt. Pour un
+  bug de layout, l'« erreur brute » utile n'est pas un message mais une **mesure** (`scrollWidth` vs `clientWidth`)
+  — reconstruire le fragment hors extension et mesurer bat toute conjecture.
+
 ## 2026-07-17 — La liste des tâches ne se charge plus, et le popup reste muet sur le pourquoi
 
 - **Contexte** : v5.5.0. « La liste des tâches ne se charge plus, malgré une config OK. » Seul indice fourni par

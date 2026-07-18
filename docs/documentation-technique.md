@@ -362,7 +362,10 @@ brut de Notion, au lieu de devenir une *unhandled rejection* laissant la liste v
 - `renderObjective` / `renderDays` / `renderProjects` : rendu HTML de la carte objectif (anneau CSS piloté par
   une variable `--p`, détail travaillé/objectif/reste/congés), des barres du rythme quotidien (hauteur
   proportionnelle au jour le plus chargé, congés en doré, jour vide en gris), et du bilan par projet (barre de
-  proportion + durée + %).
+  proportion + durée + %). `renderDays` pose la durée du jour en `title` (infobulle) sur chaque barre, et **masque
+  l'étiquette d'heure au-dessus des barres en vue Mois** (seul le 🌴 des congés y reste) : à 28–31 colonnes le
+  libellé « 07:30 » insécable débordait. Côté CSS, `.day` porte `min-width:0` pour que les colonnes flex puissent
+  rétrécir (sans quoi `min-width:auto` empêchait tout rétrécissement → scrollbar horizontale).
 - `refresh()` : orchestre le cycle affichage → état (`stats-loading` / `stats-error` / `stats-empty` /
   `stats-content`) selon le résultat de `fetchAggregate` (vide si `workedMs === 0 && congeDays === 0`).
 

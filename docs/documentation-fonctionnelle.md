@@ -271,8 +271,12 @@ ont été pris sur la période (rien si aucun).
 
 Une barre par jour de la période, hauteur proportionnelle au temps travaillé ce jour-là (le jour le plus chargé
 sert de référence à 100 %). Un jour de congé s'affiche en **doré** avec l'icône 🌴 ; un jour sans aucune session
-s'affiche en **gris**, vide. Chaque barre porte la durée du jour (ou l'icône congés) au-dessus, et l'initiale du
-jour de la semaine (ou le quantième en mode Mois) en dessous.
+s'affiche en **gris**, vide. En dessous de chaque barre : l'initiale du jour de la semaine (ou le quantième en
+mode Mois). Au **survol** d'une barre, une infobulle donne la durée exacte du jour (ou « Congés »).
+
+En vues **Jour** et **Semaine**, la durée du jour (ou l'icône congés) est aussi affichée au-dessus de la barre.
+En vue **Mois** (28 à 31 colonnes), cette étiquette d'heure serait illisible et déborderait : elle est masquée
+au-dessus des jours travaillés (seule reste l'infobulle au survol) ; le 🌴 des congés, lui, reste affiché.
 
 ### 4.4 Bilan par projet
 

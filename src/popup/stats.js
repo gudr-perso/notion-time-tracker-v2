@@ -98,9 +98,12 @@ function renderDays(agg) {
   const bars = agg.perDay.map((d) => {
     const h = Math.round((d.ms / maxMs) * 100);
     const cls = d.isVacation ? 'bar conge' : (d.ms === 0 ? 'bar empty' : 'bar');
-    const top = d.isVacation ? '🌴' : (d.ms ? formatDuration(d.ms, { withSeconds: false }) : '·');
+    const dur = d.isVacation ? 'Congés' : (d.ms ? formatDuration(d.ms, { withSeconds: false }) : 'Aucune session');
+    // En vue Mois (28–31 colonnes), l'étiquette d'heure « 07:30 » ne tient pas et débordait :
+    // on ne garde en tête de barre que le 🌴 des congés ; la durée exacte reste en tooltip (title).
+    const top = d.isVacation ? '🌴' : (S.kind === 'month' ? '' : (d.ms ? formatDuration(d.ms, { withSeconds: false }) : '·'));
     const dn = S.kind === 'month' ? String(d.date.getDate()) : JOURS[d.date.getDay()];
-    return `<div class="day"><div class="dh">${top}</div><div class="${cls}" style="height:${Math.max(2, h)}%"></div><div class="dn">${dn}</div></div>`;
+    return `<div class="day"><div class="dh">${top}</div><div class="${cls}" style="height:${Math.max(2, h)}%" title="${dur}"></div><div class="dn">${dn}</div></div>`;
   }).join('');
   $('stats-days').innerHTML = line + bars;
 }

@@ -1,9 +1,9 @@
 # Notion Time Tracker — État du projet & comment continuer
 
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
-> Dernière mise à jour : 2026-07-17.
+> Dernière mise à jour : 2026-07-18.
 
-**Version courante : `5.5.1`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
+**Version courante : `5.5.3`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -27,10 +27,20 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Export / import de la config** | ✅ v5.4.0 |
 | **Filtre d'état : cases à cocher + erreurs Notion visibles** | ✅ v5.5.0 |
 | **Saisie manuelle sur fond marine + liseré cyan** | ✅ v5.5.1 |
+| **Stats Mois : plus de scrollbar horizontale (rythme quotidien)** | ✅ v5.5.3 |
 
 **Tests** : `npm test` → `121 passed (9 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.5.3)
+- **Scrollbar horizontale corrigée en vue Mois (Stats → Rythme quotidien)** : les 28–31 colonnes débordaient parce
+  que chaque colonne (item flex) gardait `min-width:auto` et que le libellé d'heure « 07:30 » insécable imposait
+  une largeur incompressible. Correctif `min-width:0` sur `.day` + masquage des étiquettes d'heure en vue Mois
+  (illisibles à 31 colonnes), la durée passant en **infobulle** (`title`) de la barre. 🌴 congés et quantième
+  conservés ; vues Jour/Semaine inchangées. `popup.css` + `stats.js`, aucun test impacté. Détail : `docs/VERSIONS.md`.
+- **Routine « Rapport de fin de release » codifiée dans `CLAUDE.md`** : format imposé du bloc de synthèse (AVEC +
+  D², règle « n/a », preuve de vérification, état commit) à produire à chaque release.
 
 ### ✅ Faites (v5.5.1)
 - **Zone « saisie manuelle » sur fond marine + liseré cyan** : la coche *Saisie manuelle (oubli de timer)* et le

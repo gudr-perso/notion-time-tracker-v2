@@ -6,6 +6,28 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.5.3] — 2026-07-18
+
+Le graphe « Rythme quotidien » de l'onglet Stats ne provoque plus de scrollbar horizontale en vue Mois.
+
+### Corrigé
+- **Scrollbar horizontale en vue Mois** : les 28–31 colonnes du rythme quotidien débordaient (~656 px de contenu
+  pour ~638 px disponibles), forçant une barre de défilement horizontale sur tout le popup. Cause : chaque colonne
+  est un item flex qui, par défaut (`min-width:auto`), refuse de rétrécir sous la largeur intrinsèque de son
+  contenu — et le libellé d'heure « 07:30 », **insécable**, imposait cette largeur incompressible sur chaque jour
+  travaillé. Correctif : `min-width:0` sur `.day` (comportement flex correct, conforme à la spec) **et**, en vue
+  Mois uniquement, l'étiquette d'heure au-dessus de chaque barre est masquée (elle était de toute façon illisible
+  à cette densité) — la **durée exacte reste accessible en infobulle** (`title`) au survol de la barre. Le 🌴 des
+  congés et le quantième sont conservés. Vues Jour/Semaine inchangées.
+
+### Documentation
+- **`CLAUDE.md`** : les routines codifient désormais un **« Rapport de fin de release » au format imposé** (bloc
+  « Méthode projet appliquée » AVEC + D², règle « n/a » pour les briques non concernées, preuve de vérification,
+  état commit).
+
+### Notes
+- `src/popup/popup.css` (`.day`) + `src/popup/stats.js` (`renderDays`). Aucun module `core/` touché, 121 tests verts.
+
 ## [5.5.1] — 2026-07-17
 
 La zone « saisie manuelle » adopte le fond des cartes (comme les widgets Stats), souligné d'un liseré cyan.

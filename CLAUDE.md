@@ -49,6 +49,25 @@ toujours le code livré ; si une doc est absente, on la crée.
   si elles manquent) — le tout dans le commit de release (`release: vX.Y.Z`).
 - **Feature terminée, nouvelle demande, ou idée écartée** → mettre à jour `docs/AVANCEMENT.md`.
 
+#### Rapport de fin de release (format imposé)
+
+À **chaque** release, clore par ce bloc de synthèse, **exactement** dans cet ordre et ce libellé (une ligne par
+brique AVEC + D²). Cocher ce qui a été fait ; pour une brique non concernée, l'écrire (« n/a — … ») au lieu de la
+retirer, pour prouver qu'elle a été considérée.
+
+```
+Méthode projet appliquée (release vX.Y.Z)
+- Version : manifest.json + package.json + package-lock.json → X.Y.Z.
+- V — VERSIONS.md : section X.Y.Z (Ajouté / Modifié / Corrigé selon le cas).
+- A — AVANCEMENT.md : version, date, tableau, « Faites (vX.Y.Z) ».
+- É — EVENEMENTS.md : entrée (…)  [ou : n/a — pas de diagnostic non trivial].
+- D² — documentation-fonctionnelle.md §X et documentation-technique.md (fonction) mises à jour  [ou : n/a — sans impact].
+```
+
+Compléter ce bloc par : une **preuve de vérification** (tests `npm test` +, si UI/layout, une mesure ou capture au
+navigateur — pas seulement les tests), la liste des fichiers modifiés, et l'état commit (**ne commiter que sur
+demande** ; proposer le message `release: vX.Y.Z — …` sinon).
+
 ## Décisions de cadrage (validées)
 
 | Sujet | Décision |
