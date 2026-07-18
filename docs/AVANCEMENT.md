@@ -194,6 +194,15 @@ corrections de layout (débordements, modale, largeur) et thème clair lisible.
 *(Les deux bugs pré-existants repérés pendant la v5.3.0 sont traités : `.stats-custom` en **v5.3.1**, la
 course `loadAllTasks` / `loadLightTasks` en **v5.3.2** — cf. plus haut.)*
 
+**Cosmétiques congés (v5.7.0)** repérés en revue finale, **non bloquants** (la donnée écrite reste correcte) :
+- **Segmenté matin/aprem non reflété par un override** : quand « Détailler les jours » pose un type différent sur
+  un jour-borne (Du/Au), le contrôle segmenté garde son ancienne sélection en surbrillance (`syncHalfButtons` ne lit
+  que `VAC.fromHalf`/`toHalf`, pas `VAC.overrides`). Purement visuel.
+- **Vider entièrement « Au »** : `renderVacDetail` blanchit la liste (`!to`) alors que le récap/`generateLeaveSpans`
+  retombent sur un jour unique (`toDate || fromDate`) → petite incohérence liste ⇄ récap dans un cas rare.
+- *Rappel (déjà documenté, pas un cosmétique)* : réenregistrer la même plage après un **échec partiel** recrée les
+  demi-journées déjà posées (pas de reprise automatique).
+
 ## Prochaine action
 
 1. **Vérifier la v5.3.2 en chargeant l'extension** (le popup n'est pas couvert par les tests) : ouvrir le
