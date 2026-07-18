@@ -4,9 +4,40 @@ import { sessionPropertiesForCreate, sessionPropertiesForUpdate } from '../core/
 import { roundToNearestFiveMinutes, formatDateTimeLocalValue } from '../core/time.js';
 import { normalizeFavorite } from '../core/fav-presets.js';
 import { favIconSvg } from '../fav-icon.js';
+import { hasAnySchedule, generateLeaveSpans, leaveDays } from '../core/schedule.js';
 
 const $ = (id) => document.getElementById(id);
 let T = null, helpers = null;
+
+// État de la sélection de plage congés (demi-journées), tant que le popup reste ouvert.
+const VAC = { from: null, to: null, fromHalf: 'journee', toHalf: 'journee', overrides: {} };
+const fmtDays = (n) => { const r = Math.round(n * 10) / 10; return (Number.isInteger(r) ? String(r) : r.toFixed(1).replace('.', ',')) + ' j'; };
+const isoDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const parseDay = (v) => (v ? new Date(v + 'T00:00:00') : null);
+function vacSchedule() { return T.config.prefs?.schedule || null; }
+function currentSpans() {
+  return generateLeaveSpans(vacSchedule(), { fromDate: parseDay(VAC.from), fromHalf: VAC.fromHalf, toDate: parseDay(VAC.to), toHalf: VAC.toHalf, overrides: VAC.overrides });
+}
+function updateVacRecap() {
+  const spans = currentSpans();
+  const days = leaveDays(vacSchedule(), spans);
+  $('vac-recap').textContent = spans.length ? `🌴 ${fmtDays(days)} · ${spans.length} ligne${spans.length > 1 ? 's' : ''}` : 'Aucune demi-journée sélectionnée';
+}
+function syncHalfButtons() {
+  for (const [grp, key] of [['vac-from-half', 'fromHalf'], ['vac-to-half', 'toHalf']]) {
+    [...$(grp).children].forEach((b) => b.classList.toggle('on', b.dataset.h === VAC[key]));
+  }
+}
+// Masque/rétablit les champs début/fin ET leurs libellés : chacun vit dans son propre `.field`
+// (deux `.field` côte à côte dans `#manual-fields .field-row` — cf. popup.html) ; les masquer
+// individuellement fait s'effondrer la ligne (grid sans piste à dimensionner).
+function setStartEndHidden(hidden) {
+  for (const id of ['manual-start', 'manual-end']) {
+    const el = $(id); if (!el) continue;
+    const wrap = el.closest('.field') || el.parentElement;
+    if (wrap) wrap.hidden = hidden;
+  }
+}
 
 let toastTimer = null;
 // Petit message de confirmation en bas de popup, qui s'efface tout seul.
@@ -62,8 +93,19 @@ function onVacationToggle(e) {
     const sel = $('task-select');
     if ([...sel.options].some((o) => o.value === T.selectedTaskId)) sel.value = T.selectedTaskId;
     $('vacation-hint').hidden = false;
+    const withSchedule = hasAnySchedule(vacSchedule());
+    $('vac-range').hidden = !withSchedule; // sans planning configuré : on garde le début/fin classique
+    setStartEndHidden(withSchedule);
+    if (withSchedule) {
+      VAC.from = VAC.to = isoDay(new Date());
+      $('vac-from').value = $('vac-to').value = VAC.from;
+      VAC.fromHalf = VAC.toHalf = 'journee'; VAC.overrides = {};
+      syncHalfButtons(); updateVacRecap();
+    }
   } else {
     $('vacation-hint').hidden = true;
+    $('vac-range').hidden = true;
+    setStartEndHidden(false);
   }
 }
 
@@ -130,6 +172,8 @@ function resetManual() {
   $('manual-comment').value = '';
   $('manual-vacation').checked = false;
   $('vacation-hint').hidden = true;
+  $('vac-range').hidden = true;
+  setStartEndHidden(false);
   prefillManual();
 }
 
@@ -144,6 +188,15 @@ export function wireManual(sharedT, sharedHelpers) {
   $('manual-mode').addEventListener('change', (e) => toggleManual(e.target.checked));
   $('manual-vacation').addEventListener('change', onVacationToggle);
   $('vacation-hint').hidden = true;
+  $('vac-from').addEventListener('change', () => {
+    VAC.from = $('vac-from').value || null;
+    if (VAC.to && VAC.from && parseDay(VAC.to) < parseDay(VAC.from)) { VAC.to = VAC.from; $('vac-to').value = VAC.to; }
+    VAC.overrides = {}; updateVacRecap();
+  });
+  $('vac-to').addEventListener('change', () => { VAC.to = $('vac-to').value || null; VAC.overrides = {}; updateVacRecap(); });
+  for (const [grp, key] of [['vac-from-half', 'fromHalf'], ['vac-to-half', 'toHalf']]) {
+    $(grp).addEventListener('click', (e) => { const b = e.target.closest('button[data-h]'); if (!b) return; VAC[key] = b.dataset.h; syncHalfButtons(); updateVacRecap(); });
+  }
   renderFavoriteButtons();
   // Ouverture directe en mode saisie manuelle si l'option est activée en config.
   if (T.config.prefs?.manualByDefault) {
