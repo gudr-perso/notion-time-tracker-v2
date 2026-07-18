@@ -4,7 +4,7 @@ import { sessionPropertiesForCreate, sessionPropertiesForUpdate } from '../core/
 import { roundToNearestFiveMinutes, formatDateTimeLocalValue } from '../core/time.js';
 import { normalizeFavorite } from '../core/fav-presets.js';
 import { favIconSvg } from '../fav-icon.js';
-import { hasAnySchedule, generateLeaveSpans, leaveDays } from '../core/schedule.js';
+import { hasAnySchedule, generateLeaveSpans, leaveDays, scheduledMsForDate } from '../core/schedule.js';
 
 const $ = (id) => document.getElementById(id);
 let T = null, helpers = null;
@@ -28,6 +28,38 @@ function syncHalfButtons() {
   for (const [grp, key] of [['vac-from-half', 'fromHalf'], ['vac-to-half', 'toHalf']]) {
     [...$(grp).children].forEach((b) => b.classList.toggle('on', b.dataset.h === VAC[key]));
   }
+}
+
+const HALF_LABELS = [['journee', 'Journée'], ['matin', 'Matin'], ['aprem', 'Après-midi'], ['none', '—']];
+const WD = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
+
+// Type par défaut d'un jour (avant override) : bornes = demi-journée choisie, milieu = journée.
+function defaultTypeFor(key) {
+  if (key in VAC.overrides) return VAC.overrides[key];
+  if (VAC.from === VAC.to) return VAC.fromHalf;
+  if (key === VAC.from) return VAC.fromHalf;
+  if (key === VAC.to) return VAC.toHalf;
+  return 'journee';
+}
+
+function renderVacDetail() {
+  const from = parseDay(VAC.from), to = parseDay(VAC.to);
+  if (!from || !to || to < from) { $('vac-detail').innerHTML = ''; return; }
+  const rows = []; const cur = new Date(from);
+  while (cur <= to) {
+    const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}-${String(cur.getDate()).padStart(2, '0')}`;
+    const worked = scheduledMsForDate(vacSchedule(), cur) > 0;
+    const label = `${WD[cur.getDay()]} ${cur.getDate()}`;
+    if (!worked) {
+      rows.push(`<div class="vac-day off"><span>${label}</span><span>non travaillé</span></div>`);
+    } else {
+      const t = defaultTypeFor(key);
+      const opts = HALF_LABELS.map(([v, l]) => `<option value="${v}"${v === t ? ' selected' : ''}>${l}</option>`).join('');
+      rows.push(`<div class="vac-day"><span>${label}</span><select data-key="${key}">${opts}</select></div>`);
+    }
+    cur.setDate(cur.getDate() + 1);
+  }
+  $('vac-detail').innerHTML = rows.join('');
 }
 // Masque/rétablit les champs début/fin ET leurs libellés : chacun vit dans son propre `.field`
 // (deux `.field` côte à côte dans `#manual-fields .field-row` — cf. popup.html) ; les masquer
@@ -224,11 +256,27 @@ export function wireManual(sharedT, sharedHelpers) {
     VAC.from = $('vac-from').value || null;
     if (VAC.to && VAC.from && parseDay(VAC.to) < parseDay(VAC.from)) { VAC.to = VAC.from; $('vac-to').value = VAC.to; }
     VAC.overrides = {}; updateVacRecap();
+    if (!$('vac-detail').hidden) renderVacDetail();
   });
-  $('vac-to').addEventListener('change', () => { VAC.to = $('vac-to').value || null; VAC.overrides = {}; updateVacRecap(); });
+  $('vac-to').addEventListener('change', () => {
+    VAC.to = $('vac-to').value || null; VAC.overrides = {}; updateVacRecap();
+    if (!$('vac-detail').hidden) renderVacDetail();
+  });
   for (const [grp, key] of [['vac-from-half', 'fromHalf'], ['vac-to-half', 'toHalf']]) {
-    $(grp).addEventListener('click', (e) => { const b = e.target.closest('button[data-h]'); if (!b) return; VAC[key] = b.dataset.h; syncHalfButtons(); updateVacRecap(); });
+    $(grp).addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-h]'); if (!b) return; VAC[key] = b.dataset.h; syncHalfButtons(); updateVacRecap();
+      if (!$('vac-detail').hidden) renderVacDetail();
+    });
   }
+  $('vac-detail-toggle').addEventListener('click', () => {
+    const d = $('vac-detail'); d.hidden = !d.hidden;
+    $('vac-detail-toggle').textContent = d.hidden ? 'Détailler les jours' : 'Masquer le détail';
+    if (!d.hidden) renderVacDetail();
+  });
+  $('vac-detail').addEventListener('change', (e) => {
+    const sel = e.target.closest('select[data-key]'); if (!sel) return;
+    VAC.overrides[sel.dataset.key] = sel.value; updateVacRecap();
+  });
   renderFavoriteButtons();
   // Ouverture directe en mode saisie manuelle si l'option est activée en config.
   if (T.config.prefs?.manualByDefault) {
