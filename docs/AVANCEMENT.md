@@ -3,7 +3,7 @@
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
 > Dernière mise à jour : 2026-07-18.
 
-**Version courante : `5.6.0`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
+**Version courante : `5.7.0`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -21,7 +21,7 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Onglet Timer** (start/pause/stop, stop-at, saisie manuelle, congés, favoris, récents) | ✅ |
 | **Service worker** (badge + notifications via `chrome.alarms`) | ✅ |
 | **Thème clair / sombre** (bascule persistée) | ✅ |
-| **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`, `stats`, `schedule`, `fav-presets`, `fav-icons`, `schema-injection`, `config-io`, `tasks-query`) | ✅ **140 tests verts** |
+| **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`, `stats`, `schedule`, `fav-presets`, `fav-icons`, `schema-injection`, `config-io`, `tasks-query`) | ✅ **151 tests verts** |
 | **Onglet Stats** | ✅ v5.2.0 |
 | **Favoris : couleur + picto** | ✅ v5.3.0 |
 | **Export / import de la config** | ✅ v5.4.0 |
@@ -31,10 +31,20 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Fond des cartes factorisé en variable `--card-bg` (doublon supprimé)** | ✅ v5.5.4 |
 | **Stats : jour mixte travail+congés (barres empilées) + congés comptés en heures** | ✅ v5.5.5 |
 | **Stats : objectif dérivé d'un planning hebdo + congés en jours + repère de cible par barre** | ✅ v5.6.0 |
+| **Congés : saisie en demi-journées (plage + détailler, 1 ligne/demi-journée)** | ✅ v5.7.0 |
 
-**Tests** : `npm test` → `140 passed (10 files)`.
+**Tests** : `npm test` → `151 passed (10 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.7.0) — Phase 2 « congés / saisie »
+- **Saisie des congés en demi-journées** : coche congés (avec planning) → **Du [date + matin/aprem/journée] → Au
+  [date + …]**, récap live (jours + lignes), et lien **« Détailler les jours »** (liste éditable jour par jour,
+  `—` pour sauter, jours non travaillés grisés). Enregistrement = **1 ligne Notion par demi-journée** aux horaires
+  du planning (échec partiel signalé). Sans planning : ancienne saisie début/fin conservée.
+- Nouvelles fonctions pures testées `segmentSpan` / `generateLeaveSpans` / `leaveDays` (`core/schedule.js`).
+  `popup/timer-manual.js` + `popup.html`/`popup.css`. +11 tests (151 verts). Détail : `docs/VERSIONS.md`.
+- **Feature congés terminée** (Phases 1 + 2). Spec : `docs/superpowers/specs/2026-07-18-conges-demi-journees-design.md`.
 
 ### ✅ Faites (v5.6.0) — Phase 1 « congés / planning »
 - **Planning hebdomadaire en config** : grille 7 jours × horaires matin/après-midi, remplace « Heures/semaine » ;

@@ -228,6 +228,16 @@ création puis clôture de la page en une passe (sans chronomètre), reset du fo
 Case **« Marquer comme congés »** (en saisie manuelle) : vérifie qu'une tâche congés est configurée (sinon alerte et
 se décoche), sélectionne cette tâche et préremplit le commentaire « En congés » (modifiable).
 
+**Si un planning est configuré**, la coche remplace les champs début/fin par une saisie en **demi-journées** :
+**Du** [date + matin / après-midi / journée] **→ Au** [date + matin / après-midi / journée]. Un **récapitulatif**
+indique en direct le total en jours (ex. « 🌴 2,5 j ») et le nombre de lignes qui seront créées. Le lien
+**« Détailler les jours »** déplie une liste éditable jour par jour (type par jour, ou « — » pour ne rien poser) ;
+les jours non travaillés (planning vide, ex. week-end) sont grisés « non travaillé » et jamais posés.
+
+À l'enregistrement, l'app crée **une ligne Notion par demi-journée** (une journée = 2 lignes, matin + après-midi
+aux horaires du planning), toutes liées à la tâche congés ; en cas d'échec en cours de route, un message indique
+combien de lignes ont été créées. **Sans planning configuré**, la coche congés conserve l'ancienne saisie début/fin.
+
 ### 3.9 Favoris (enregistrement rapide)
 
 Section **« ⭐ Enregistrement rapide »** (visible en mode saisie manuelle s'il existe des favoris) : jusqu'à **8**

@@ -6,6 +6,32 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.7.0] — 2026-07-18
+
+Saisie des congés en **demi-journées** : matin / après-midi / journée sur une **plage de dates**, avec récap live
+et « détailler les jours » — l'app crée **une ligne Notion par demi-journée** aux horaires du planning. Complète
+la Phase 1 « planning / objectif » de la v5.6.0.
+
+### Ajouté
+- **Saisie congés en demi-journées** : quand « Marquer comme congés » est coché **et** qu'un planning est
+  configuré, les champs début/fin sont remplacés par **Du [date + matin/aprem/journée] → Au [date +
+  matin/aprem/journée]**. Un **récap** live indique le total en jours (fraction, ex. « 🌴 2,5 j ») et le nombre de
+  lignes qui seront créées.
+- **« Détailler les jours »** : déplie une liste éditable jour par jour (type par jour, `—` pour sauter) ; les
+  jours non travaillés (planning vide, ex. week-end) sont grisés « non travaillé ».
+- **Fonctions pures testées** `segmentSpan`, `generateLeaveSpans`, `leaveDays` (`core/schedule.js`) — bornes de
+  plage respectées, jours non travaillés sautés, overrides par jour.
+
+### Modifié
+- À l'enregistrement d'un congé : création d'**une page Notion par demi-journée** (matin / après-midi aux horaires
+  du planning ; une journée = 2 lignes), liées à la tâche Congés. **Échec partiel** signalé (« N/M créées »).
+- **Rétro-compat** : sans planning configuré, la coche congés conserve l'ancienne saisie début/fin.
+
+### Notes
+- `core/schedule.js` (+`segmentSpan`/`generateLeaveSpans`/`leaveDays`), `popup/timer-manual.js` (bascule, récap,
+  `saveVacation`, « détailler »), `popup.html`/`popup.css` (bloc `#vac-range`). **151 tests verts** (+11). Vérifs
+  navigateur : récap (2,5 j · 5 lignes…), week-ends sautés, liste détaillée et overrides recalculant le récap.
+
 ## [5.6.0] — 2026-07-18
 
 Stats → l'objectif se calcule à partir d'un **planning hebdomadaire** configurable (au lieu d'un forfait

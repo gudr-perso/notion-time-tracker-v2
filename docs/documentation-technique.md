@@ -233,6 +233,14 @@ congés. `schedule = { mon:{am:[deb,fin]|null, pm:…}, … }`, heures en `"HH:M
   si jour non travaillé ou planning absent.
 - **`hasAnySchedule(schedule)`** : vrai si au moins un créneau non vide (sinon `aggregate` retombe sur le forfait).
 - **`weeklyTotalHours(schedule)`** : total hebdomadaire en heures (affiché en config).
+- **`segmentSpan(schedule, date, seg)`** : `seg ∈ {'am','pm'}` → `{ start, end }` (Date) du créneau ce jour-là, ou
+  `null` si absent.
+- **`generateLeaveSpans(schedule, {fromDate, fromHalf, toDate, toHalf, overrides})`** : un créneau `{start,end}` par
+  demi-journée retenue sur la plage. `half ∈ {matin,aprem,journee}` ; bornes = demi-journée choisie, milieu =
+  journée, jours non travaillés **sautés** ; `overrides` (`{'YYYY-MM-DD': matin|aprem|journee|none}`) remplace le
+  type d'un jour. Consommé par la saisie des congés (`timer-manual.js`).
+- **`leaveDays(schedule, spans)`** : somme des créneaux en **jours** (heures réelles / cible du jour, plafonné
+  1/jour) — pour le récap de saisie.
 
 ### `core/stats.js` — agrégations statistiques (pur)
 
@@ -344,7 +352,16 @@ brut de Notion, au lieu de devenir une *unhandled rejection* laissant la liste v
   `EVENEMENTS.md` (2026-07-17).
 - `setSaving(on, sourceBtn)` : ne remplace que le **`.fav-btn-label`** (repli sur le bouton pour « Enregistrer », qui
   n'a pas de libellé séparé) — écraser le `textContent` du bouton effacerait le picto SVG.
-- `onVacationToggle` : coche « congés » → sélectionne la tâche congés configurée et force le commentaire « En congés ».
+- `onVacationToggle` : coche « congés » → sélectionne la tâche congés et force le commentaire « En congés » ; **si un
+  planning existe**, masque début/fin et affiche le bloc demi-journées (`#vac-range`) réinitialisé à aujourd'hui,
+  sinon garde la saisie début/fin (repli).
+- **Saisie congés en demi-journées** : `currentSpans()` = `generateLeaveSpans(planning, {from/to, halves, overrides})` ;
+  `updateVacRecap` affiche les jours (`leaveDays`) + le nombre de lignes ; `renderVacDetail` / `defaultTypeFor`
+  construisent la liste « détailler » (un `<select>` par jour travaillé, jours non travaillés grisés) alimentant
+  `VAC.overrides` ; `collapseVacDetail` la referme à la ré-entrée du mode congés.
+- `saveVacation()` (routée par `onManualSave` quand `vacActive()`) : crée **une page Notion par créneau** (même
+  schéma `createPage`+`updatePage` que la saisie manuelle, liées à la tâche congés) ; **échec partiel** signalé
+  (« N/M créées »).
 - `renderFavoriteButtons` : jusqu'à 8 boutons d'enregistrement rapide (libellé personnalisé, tronqué à 20 car.).
 - `manualByDefault` : ouvre directement en mode saisie manuelle si l'option est activée en config.
 
