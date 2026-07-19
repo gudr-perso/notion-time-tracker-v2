@@ -1,7 +1,7 @@
 # Notion Time Tracker — État du projet & comment continuer
 
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
-> Dernière mise à jour : 2026-07-18.
+> Dernière mise à jour : 2026-07-19.
 
 **Version courante : `5.7.2`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
@@ -213,6 +213,17 @@ course `loadAllTasks` / `loadLightTasks` en **v5.3.2** — cf. plus haut.)*
 - *Rappel (déjà documenté, pas un cosmétique)* : réenregistrer la même plage après un **échec partiel** recrée les
   demi-journées déjà posées (pas de reprise automatique).
 
+### ⬜ Outillage & sécurité — à faire plus tard
+- **Installer le plugin de revue `security-guidance`** (revue de sécurité auto à chaque édition/commit) : il est
+  **déjà activé** pour le projet dans `.claude/settings.json` (`enabledPlugins`), mais l'installation effective se
+  fait **dans un terminal `claude` interactif** — commandes non lançables depuis une session non interactive :
+  `/plugin install security-guidance@claude-plugins-official` puis `/reload-plugins`. **À faire au prochain passage
+  en terminal.**
+- **Point de sécurité à corriger** : échappement du planning importé dans `renderSchedule` — détail, chemin d'attaque
+  et correctif dans **`docs/SECURITY.md`** (faible sévérité, neutralisé aujourd'hui par la CSP MV3 par défaut ; à
+  fermer proprement à la prochaine occasion). ⚠️ **`docs/SECURITY.md` est git-ignoré** (interne, non exposé sur
+  GitHub) : présent via la synchro pCloud, **absent d'un clone GitHub neuf** — s'il manque, c'est normal.
+
 ## Prochaine action
 
 1. **Vérifier la v5.3.2 en chargeant l'extension** (le popup n'est pas couvert par les tests) : ouvrir le
@@ -221,6 +232,9 @@ course `loadAllTasks` / `loadLightTasks` en **v5.3.2** — cf. plus haut.)*
    favoris doivent porter le nom de leur tâche (pas « Favori »).
 2. Décider du point « favoris 1 clic vs commentaire obligatoire » ci-dessus.
 3. Décider du garde-fou `[hidden]` (test de contrôle statique) — cf. « Idées non tranchées ».
+4. **En terminal** : installer le plugin `security-guidance` (`/plugin install …` + `/reload-plugins`) — cf.
+   « Outillage & sécurité » ci-dessus.
+5. **Sécurité** : appliquer le correctif d'échappement de `renderSchedule` — cf. `docs/SECURITY.md`.
 
 ## Carte du code
 

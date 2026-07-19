@@ -11,3 +11,6 @@ docs/brief-commercial-CAP3.md
 
 # Config locale du harness Claude Code
 .claude/
+
+# Suivi sécurité interne (points non corrigés — hors dépôt, ne pas exposer sur GitHub)
+docs/SECURITY.md
