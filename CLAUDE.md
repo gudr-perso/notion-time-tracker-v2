@@ -48,11 +48,17 @@ toujours le code livré ; si une doc est absente, on la crée.
   jour `docs/documentation-fonctionnelle.md` et `docs/documentation-technique.md` si le changement les impacte (les créer
   si elles manquent) — le tout dans le commit de release (`release: vX.Y.Z`).
 - **Feature terminée, nouvelle demande, ou idée écartée** → mettre à jour `docs/AVANCEMENT.md`.
+- **Revue sécurité avant chaque commit** → analyser le diff (`git diff HEAD`) selon la grille sécurité (token
+  Notion jamais loggé/en URL, CSP + `innerHTML`/XSS, message passing popup↔SW, injection de champs Notion,
+  permissions MV3/`host_permissions`, secrets en dur), puis consigner une entrée datée dans **`docs/SECURITY.md`**
+  (registre **interne, gitignoré** — jamais poussé). Un garde-fou local (hook `PreToolUse` sur `git commit`, dans
+  `.claude/`, non versionné) **bloque le commit** tant que la revue du diff courant n'est pas consignée ; la routine
+  reste **due même si le hook est absent/désactivé** (autre PC, config non rechargée).
 
 #### Rapport de fin de release (format imposé)
 
 À **chaque** release, clore par ce bloc de synthèse, **exactement** dans cet ordre et ce libellé (une ligne par
-brique AVEC + D²). Cocher ce qui a été fait ; pour une brique non concernée, l'écrire (« n/a — … ») au lieu de la
+brique AVEC + D² + sécurité). Cocher ce qui a été fait ; pour une brique non concernée, l'écrire (« n/a — … ») au lieu de la
 retirer, pour prouver qu'elle a été considérée.
 
 ```
@@ -62,6 +68,7 @@ Méthode projet appliquée (release vX.Y.Z)
 - A — AVANCEMENT.md : version, date, tableau, « Faites (vX.Y.Z) ».
 - É — EVENEMENTS.md : entrée (…)  [ou : n/a — pas de diagnostic non trivial].
 - D² — documentation-fonctionnelle.md §X et documentation-technique.md (fonction) mises à jour  [ou : n/a — sans impact].
+- S — SECURITY.md : revue sécurité du diff consignée (constats Haut/Moyen/Bas + statut)  [ou : n/a — diff sans surface sécurité].
 ```
 
 Compléter ce bloc par : une **preuve de vérification** (tests `npm test` +, si UI/layout, une mesure ou capture au
