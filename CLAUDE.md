@@ -6,9 +6,11 @@ Notion. Recodage v2 propre de la v1 (`4.9.4`). Documentation d'origine dans `doc
 
 ## Suivi de projet — méthode AVEC (à lire et tenir à jour)
 
-> Ce projet s'inscrit dans la méthode **CAP³** (BSP · AVEC · D²) : **cadrer** (BSP, via le plugin Superpowers,
-> non codifié ici) → **mémoriser** (AVEC) → **documenter** (D²). Ce fichier opère les deux briques codifiables :
-> **AVEC** (ci-dessous) et **D²** (plus bas).
+> Ce projet s'inscrit dans la méthode **CAP⁴** (BSP · AVEC · D² · Audit de sécurité) : **cadrer** (BSP, via le
+> plugin Superpowers, non codifié ici) → **mémoriser** (AVEC) → **documenter** (D²) → **sécuriser** (audit de
+> sécurité du code, à chaque commit). Ce fichier opère les briques codifiables : **AVEC** (ci-dessous), **D²**
+> (plus bas) et **l'audit de sécurité** (routine + garde-fou ; cf. `docs/SECURITY.md` et `docs/SETUP.md`).
+> Guide de pratique complet des 4 briques : `docs/MEMO-methode-CAP4.md`.
 
 Le projet tient sa mémoire selon la **méthode AVEC** : `CLAUDE.md` (le chef d'orchestre) pilote **trois**
 fichiers vivants dans `docs/`, dont les initiales forment le mot **AVEC** :
@@ -46,7 +48,10 @@ toujours le code livré ; si une doc est absente, on la crée.
 - **Nouvelle version décidée** → bumper `manifest.json` + `package.json` + `package-lock.json`, ajouter la section
   correspondante dans `docs/VERSIONS.md`, refléter la version dans `docs/AVANCEMENT.md`, **et appliquer D²** : mettre à
   jour `docs/documentation-fonctionnelle.md` et `docs/documentation-technique.md` si le changement les impacte (les créer
-  si elles manquent) — le tout dans le commit de release (`release: vX.Y.Z`).
+  si elles manquent) — le tout dans le commit de release (`release: vX.Y.Z`). Un garde-fou local
+  (`release-gate`, hook sur `git commit`) **bloque** le commit de bump si les 3 versions divergent ou si la
+  section `VERSIONS.md` / la mention `AVANCEMENT.md` manque ; il **rappelle** (sans bloquer) D² et EVENEMENTS.md.
+  Cf. `docs/SETUP.md` (bootstrap versionné des garde-fous).
 - **Feature terminée, nouvelle demande, ou idée écartée** → mettre à jour `docs/AVANCEMENT.md`.
 - **Revue sécurité avant chaque commit** → analyser le diff (`git diff HEAD`) selon la grille sécurité (token
   Notion jamais loggé/en URL, CSP + `innerHTML`/XSS, message passing popup↔SW, injection de champs Notion,
@@ -161,7 +166,7 @@ src/
   fav-icon.js                    favIconSvg() — picto SVG, partagé popup + config (DOM ⇒ hors core/)
   theme.js
 test/      *.test.js (Vitest)
-docs/      AVANCEMENT.md · VERSIONS.md · EVENEMENTS.md (méthode AVEC) · MEMO-suivi-projet.md
+docs/      AVANCEMENT.md · VERSIONS.md · EVENEMENTS.md (méthode AVEC) · MEMO-methode-CAP4.md
            documentation-fonctionnelle.md · documentation-technique.md (principe D²) (+ spec de design)
 ```
 
