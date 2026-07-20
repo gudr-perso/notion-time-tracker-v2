@@ -49,6 +49,14 @@ Contenu **verbatim** — recréer tel quel. **En cas de modification d'un hook p
 
 set -uo pipefail
 
+# Auto-filtre : ne s'active que sur un vrai `git commit` (lit la commande depuis le JSON du hook sur stdin).
+# Neutralise les faux positifs : meme si le filtre `if` du settings.json declenche le hook par precaution
+# sur une commande complexe, on sort en "laisser passer" pour tout ce qui n'est pas un git commit.
+case "$(cat 2>/dev/null)" in
+  *"git commit"*) : ;;
+  *) exit 0 ;;
+esac
+
 proj="${CLAUDE_PROJECT_DIR:-}"
 if [ -z "$proj" ]; then
   proj="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
@@ -92,6 +100,14 @@ exit 0
 # Fail-open : toute anomalie => laisse passer (exit 0 sans sortie). On ne bloque jamais sur un bug de hook.
 
 set -uo pipefail
+
+# Auto-filtre : ne s'active que sur un vrai `git commit` (lit la commande depuis le JSON du hook sur stdin).
+# Neutralise les faux positifs : meme si le filtre `if` du settings.json declenche le hook par precaution
+# sur une commande complexe, on sort en "laisser passer" pour tout ce qui n'est pas un git commit.
+case "$(cat 2>/dev/null)" in
+  *"git commit"*) : ;;
+  *) exit 0 ;;
+esac
 
 proj="${CLAUDE_PROJECT_DIR:-}"
 [ -z "$proj" ] && proj="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
