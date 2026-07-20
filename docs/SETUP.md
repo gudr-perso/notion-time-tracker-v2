@@ -87,6 +87,7 @@ exit 0
 # Rappels DOUX (non bloquants, systemMessage) :
 #   - D2 : du code (src/) a change mais documentation-technique/fonctionnelle.md n'ont pas bouge
 #   - EVENEMENTS.md : rappel de penser a une entree si un bug non trivial a ete corrige
+#   - Revue de code : rappel de passer /code-review sur le diff si du code (src/) a change
 #
 # Fail-open : toute anomalie => laisse passer (exit 0 sans sortie). On ne bloque jamais sur un bug de hook.
 
@@ -125,6 +126,7 @@ if echo "$changed" | grep -qE '^src/' && ! echo "$changed" | grep -qE 'documenta
   notes="${notes} D2: du code (src/) a change mais documentation-technique/fonctionnelle.md n'ont pas bouge — verifier l'impact (ou n/a).";
 fi
 echo "$changed" | grep -qF 'docs/EVENEMENTS.md' || notes="${notes} E: si un bug non trivial a ete corrige dans cette version, penser a une entree EVENEMENTS.md.";
+echo "$changed" | grep -qE '^src/' && notes="${notes} R: du code (src/) a change — passer /code-review sur le diff de la version avant de figer la release.";
 
 if [ -n "$notes" ]; then
   printf '{"systemMessage":"Release v%s — rappels non bloquants :%s"}\n' "$new" "$notes"

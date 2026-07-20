@@ -6,11 +6,11 @@ Notion. Recodage v2 propre de la v1 (`4.9.4`). Documentation d'origine dans `doc
 
 ## Suivi de projet — méthode AVEC (à lire et tenir à jour)
 
-> Ce projet s'inscrit dans la méthode **CAP⁴** (BSP · AVEC · D² · Audit de sécurité) : **cadrer** (BSP, via le
-> plugin Superpowers, non codifié ici) → **mémoriser** (AVEC) → **documenter** (D²) → **sécuriser** (audit de
-> sécurité du code, à chaque commit). Ce fichier opère les briques codifiables : **AVEC** (ci-dessous), **D²**
-> (plus bas) et **l'audit de sécurité** (routine + garde-fou ; cf. `docs/SECURITY.md` et `docs/SETUP.md`).
-> Guide de pratique complet des 4 briques : `docs/MEMO-methode-CAP4.md`.
+> Ce projet s'inscrit dans la méthode **CAP⁴** (BSP · AVEC · D² · S&R) : **cadrer** (BSP, via le plugin
+> Superpowers, non codifié ici) → **mémoriser** (AVEC) → **documenter** (D²) → **vérifier** (S&R — Security &
+> Review : audit de sécurité **à chaque commit**, revue de code **à la release**). Ce fichier opère les briques
+> codifiables : **AVEC** (ci-dessous), **D²** (plus bas) et **S&R** (routines + garde-fous ; cf. `docs/SECURITY.md`
+> et `docs/SETUP.md`). Guide de pratique complet des 4 briques : `docs/MEMO-methode-CAP4.md`.
 
 Le projet tient sa mémoire selon la **méthode AVEC** : `CLAUDE.md` (le chef d'orchestre) pilote **trois**
 fichiers vivants dans `docs/`, dont les initiales forment le mot **AVEC** :
@@ -63,7 +63,7 @@ toujours le code livré ; si une doc est absente, on la crée.
 #### Rapport de fin de release (format imposé)
 
 À **chaque** release, clore par ce bloc de synthèse, **exactement** dans cet ordre et ce libellé (une ligne par
-brique AVEC + D² + sécurité). Cocher ce qui a été fait ; pour une brique non concernée, l'écrire (« n/a — … ») au lieu de la
+brique AVEC + D² + sécurité + revue de code). Cocher ce qui a été fait ; pour une brique non concernée, l'écrire (« n/a — … ») au lieu de la
 retirer, pour prouver qu'elle a été considérée.
 
 ```
@@ -74,6 +74,7 @@ Méthode projet appliquée (release vX.Y.Z)
 - É — EVENEMENTS.md : entrée (…)  [ou : n/a — pas de diagnostic non trivial].
 - D² — documentation-fonctionnelle.md §X et documentation-technique.md (fonction) mises à jour  [ou : n/a — sans impact].
 - S — SECURITY.md : revue sécurité du diff consignée (constats Haut/Moyen/Bas + statut)  [ou : n/a — diff sans surface sécurité].
+- R — Revue de code : `/code-review` passé sur le diff de la version, findings traités ou notés  [ou : n/a — diff sans code].
 ```
 
 Compléter ce bloc par : une **preuve de vérification** (tests `npm test` +, si UI/layout, une mesure ou capture au

@@ -4,15 +4,16 @@
 > Ce n'est pas un argumentaire commercial (pour ça, voir la page CAP du site) : c'est le **mode d'emploi** —
 > ce que font les 4 briques, et comment le dispositif est **paramétré** et **opéré** au quotidien.
 
-**CAP⁴** = piloter un vrai projet avec un assistant IA, **du cadrage à la sécurité**. Quatre briques : les
-trois de CAP³ (BSP · AVEC · D²) **+ l'audit de sécurité du code**, qui fait passer de ³ à ⁴.
+**CAP⁴** = piloter un vrai projet avec un assistant IA, **du cadrage à la vérification du code**. Quatre
+briques : les trois de CAP³ (BSP · AVEC · D²) **+ S&R (Security & Review)** — vérifier le code produit —, qui
+fait passer de ³ à ⁴.
 
 | # | Brique | Temps | Verbe | Rôle en une ligne |
 |---|---|---|---|---|
 | 1 | **BSP** | en amont | cadrer | Brainstorming → Spécification → Plan avant d'écrire du code |
 | 2 | **AVEC** | pendant | mémoriser | La mémoire vivante du projet, tenue et relue par l'assistant |
 | 3 | **D²** | en complément | documenter | Deux documentations de référence, alignées sur chaque version |
-| 4 | **Audit de sécurité** | à chaque commit | sécuriser | Revue de sécurité du code, consignée avant chaque commit |
+| 4 | **S&R** (Security & Review) | en aval | vérifier | Vérifier le code produit : sécurité (bloquant, chaque commit) + revue de code (rappel, release) |
 
 > Deux niveaux de lecture : d'abord **les 4 briques** (la méthode), puis **le paramétrage technique** (fichiers,
 > routines, garde-fous). Le consultant lit la 1ʳᵉ partie ; le développeur qui reprend le projet lit les deux.
@@ -60,15 +61,22 @@ trois de CAP³ (BSP · AVEC · D²) **+ l'audit de sécurité du code**, qui fai
 | `docs/documentation-fonctionnelle.md` | *Qu'est-ce que ça fait ?* | Fonctionnalités vues par l'utilisateur (écrans, comportements, options). Aucun code. |
 | `docs/documentation-technique.md` | *Comment c'est fait ?* | Stack, architecture, rôle technique des grandes fonctions de chaque module. |
 
-### 4 · Audit de sécurité — sécuriser le code *(à chaque commit)*
+### 4 · S&R — Security & Review : vérifier le code produit *(en aval)*
 
-- **Rôle** : passer le code au crible des vulnérabilités **avant** qu'il ne parte au commit.
-- **But** : ne pas livrer de faille par inadvertance ; **tracer** les risques (corrigés / à suivre / acceptés).
-- **Ce que ça fait** : à chaque `git commit`, l'assistant **analyse le diff** selon une grille (ici adaptée à
-  une extension Chrome MV3 + Notion) et **consigne** une entrée datée dans `docs/SECURITY.md`.
-- **Grille** : token Notion (jamais loggé / en URL) · `innerHTML`/XSS · CSP · message passing popup↔SW ·
-  injection de champs Notion · permissions MV3 / `host_permissions` · secrets en dur.
-- **C'est cette brique qui fait passer CAP³ → CAP⁴.** Les **constats** restent **internes**
+- **Rôle** : scruter le code **après** l'avoir écrit, avant qu'il ne parte — sur deux fronts : **sécurité** et **qualité**.
+- **But** : ne livrer ni faille par inadvertance, ni code bancal ; **tracer** les risques (corrigés / à suivre / acceptés).
+- **Ce que ça fait** : **deux facettes**, à **deux régimes** et **deux cadences** — c'est le point à garder net :
+
+| Facette | Régime | Cadence | Ce que ça fait |
+|---|---|---|---|
+| **S** — Sécurité | **bloque** le commit (frontière dure) | **à chaque commit** | Analyse du diff selon la grille sécu → entrée dans `docs/SECURITY.md` |
+| **R** — Revue de code | **rappelle** sans bloquer (gradient) | **à la release** | `/code-review` sur le diff de la version (bugs + qualité) ; findings traités ou notés |
+
+- **Grille sécurité** (S) : token Notion (jamais loggé / en URL) · `innerHTML`/XSS · CSP · message passing
+  popup↔SW · injection de champs Notion · permissions MV3 / `host_permissions` · secrets en dur.
+- **Pourquoi S bloque et R rappelle** : la sécurité est une **frontière** au coût d'oubli asymétrique ; la
+  qualité est un **gradient** dont la valeur dépend du volume de code → on ne bloque que ce qui doit l'être.
+- **C'est cette brique qui fait passer CAP³ → CAP⁴.** Les **constats sécu** restent **internes**
   (`docs/SECURITY.md` gitignoré, jamais poussé sur GitHub).
 
 ---
@@ -85,7 +93,7 @@ trois de CAP³ (BSP · AVEC · D²) **+ l'audit de sécurité du code**, qui fai
 | `docs/EVENEMENTS.md` | AVEC (É) | versionné | Pièges résolus. **Ajout** à chaque galère non triviale |
 | `docs/documentation-fonctionnelle.md` | D² | versionné | Ce que fait l'app. MàJ à chaque version impactante |
 | `docs/documentation-technique.md` | D² | versionné | Comment c'est fait. MàJ à chaque version impactante |
-| `docs/SECURITY.md` | Audit sécu | **gitignoré** | **Registre** des revues + points ouverts (constats internes) |
+| `docs/SECURITY.md` | S&R (S) | **gitignoré** | **Registre** des revues + points ouverts (constats internes) |
 | `docs/SETUP.md` | paramétrage | versionné | **Bootstrap** : recréer les garde-fous à l'identique sur un autre PC |
 | `.claude/hooks/*.sh` + `.claude/settings.json` | paramétrage | **gitignoré** | Les garde-fous mécaniques (hooks) |
 | `docs/superpowers/specs/` · `.../plans/` | BSP | versionné | Spécifications et plans de cadrage |
@@ -105,7 +113,7 @@ Le moteur, c'est le bloc **« Routines à appliquer de moi-même »** de `CLAUDE
 | **Bug non trivial corrigé** | Ajoute une entrée dans `docs/EVENEMENTS.md` | AVEC (É) |
 | **Nouvelle version décidée** (« on passe en vX.Y.Z ») | Bump `manifest`+`package`+`lock`, section `VERSIONS.md`, reflet `AVANCEMENT.md`, **applique D²** — dans `release: vX.Y.Z` | AVEC (V) + D² |
 | **Feature finie / demande / idée écartée** | Met à jour `docs/AVANCEMENT.md` | AVEC (A) |
-| **Avant chaque commit** | **Revue de sécurité** du diff → entrée dans `docs/SECURITY.md` | Audit sécu |
+| **Avant chaque commit** | **Revue de sécurité** du diff → entrée dans `docs/SECURITY.md` | S&R (S) |
 
 ### Les garde-fous mécaniques (hooks)
 
@@ -116,8 +124,8 @@ faillible), le hook garantit le déclenchement (pilier 1, déterministe).
 
 | Hook | Enforce la brique | Vérifie (mécanique) | Effet |
 |---|---|---|---|
-| `security-gate.sh` | **Audit de sécurité** | qu'une revue du diff a été **consignée** | **bloque** le commit tant que non faite |
-| `release-gate.sh` | **V** (d'AVEC) | sur bump : `manifest`=`package`=`lock`, section `VERSIONS.md`, mention `AVANCEMENT.md` | **bloque** si incohérent ; **rappelle** (sans bloquer) D² et É |
+| `security-gate.sh` | **S&R** (S) | qu'une revue du diff a été **consignée** | **bloque** le commit tant que non faite |
+| `release-gate.sh` | **V** (d'AVEC) | sur bump : `manifest`=`package`=`lock`, section `VERSIONS.md`, mention `AVANCEMENT.md` | **bloque** si incohérent ; **rappelle** (sans bloquer) D², É et la revue de code (`/code-review`) |
 
 > **Principe directeur** : un hook n'automatise que ce qui est **mécaniquement vérifiable**. Les **jugements**
 > (un bug est-il « non trivial » ? le diff impacte-t-il la doc ?) ne peuvent **pas** être tranchés par un script
@@ -184,7 +192,7 @@ marchait pas »). Critère : une entrée n'existe que si, relue plus tard, elle 
 - **Reprendre le projet** → ouvrir `docs/AVANCEMENT.md` en premier.
 - **Démarrer une feature** → **cadrer d'abord** (BSP : brainstorming → spec → plan) avant de coder.
 - **Sortir une version** → dire « on passe en vX.Y.Z » ; l'assistant fait bump + VERSIONS + reflet + D². Le
-  garde-fou release **bloque** si un morceau manque.
+  garde-fou release **bloque** si un morceau manque, et **rappelle** de passer `/code-review` sur le diff.
 - **Committer** → la **revue de sécurité** du diff est faite et consignée (le garde-fou sécurité l'impose).
 - **Comprendre un vieux bug** → chercher dans `docs/EVENEMENTS.md` avant de re-fouiller le code.
 - **Repartir sur un PC neuf** → suivre `docs/SETUP.md` pour rétablir les garde-fous.
