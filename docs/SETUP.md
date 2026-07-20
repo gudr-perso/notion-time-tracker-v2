@@ -256,7 +256,45 @@ s'affichent en `systemMessage` sans bloquer — à traiter ou marquer n/a.
 
 - Ne couvre que les commits faits **via l'assistant** (Claude Code). Un `git commit` tapé **manuellement**
   dans un terminal n'est pas intercepté (il faudrait un hook git natif `.git/hooks/pre-commit`).
-- Les gates ne se déclenchent que si le commit **commence** par `git commit` (filtre `if`) → éviter les
-  formes chaînées type `git add … && git commit …` pour ne pas les contourner.
+- Le déclenchement combine le filtre `if` (`settings.json`) et l'**auto-filtre du script** (présence de
+  `git commit` dans la commande, lue sur stdin) → couvre aussi les formes chaînées ; préférer tout de même
+  un `git commit` **autonome** par sûreté.
 - La config (`.claude/`, `docs/SECURITY.md`) est **gitignorée** : elle ne suit pas le clone. D'où ce fichier
   versionné pour la reconstruire. Ne jamais committer le **contenu des constats**.
+
+## 7. Prompts de reprise (à coller sur un autre PC)
+
+Deux scénarios, deux prompts à coller dans Claude Code selon le cas. Ils s'appuient sur ce fichier comme
+source de vérité (ils suivent les §2–§4) — rien de recopié qui pourrait dériver.
+
+### 7.1 · Phaser un PC neuf (dossier vide)
+
+```text
+Bootstrap CAP⁴ de ce projet sur un PC neuf (ce dossier est vide).
+
+1. Clone le dépôt ici : git clone https://github.com/gudr-perso/notion-time-tracker-v2.git .
+2. Installe les dépendances de test : npm install
+3. Lis docs/SETUP.md et reconstruis les garde-fous locaux EXACTEMENT d'après lui (§2) :
+   - .claude/hooks/security-gate.sh et .claude/hooks/release-gate.sh (contenu verbatim),
+   - .claude/settings.json (verbatim),
+   - docs/SECURITY.md à partir du squelette de SETUP.md §2d.
+4. Vérifie le dispositif avec les commandes de SETUP.md §4.
+5. Ne committe rien : .claude/ et docs/SECURITY.md sont gitignorés (volontaire).
+6. Rappelle-moi d'ouvrir /hooks (ou de redémarrer Claude Code) puis d'approuver les hooks du projet (SETUP.md §3).
+Lis d'abord docs/MEMO-methode-CAP4.md pour le contexte de la méthode.
+```
+
+### 7.2 · Mettre à jour un PC en retard sur Git
+
+```text
+Mets ce dépôt CAP⁴ à jour (il est en retard sur Git) et rafraîchis les garde-fous.
+
+/!\ Ce dossier est sous pCloud -> le .git peut être PÉRIMÉ. Procède ainsi :
+1. git fetch origin  — NE te fie PAS au "up to date with origin/main" tant que ce fetch n'est pas fait.
+2. Compare l'état réel local <-> origin/main :
+   - si les fichiers SUIVIS == origin/main (aucune vraie modif locale) -> git reset --hard origin/main (fast-forward sûr) ;
+   - s'il existe de vraies modifs locales non poussées -> montre-les-moi et DEMANDE avant d'écraser.
+   Fichiers volontairement locaux, à NE PAS toucher/écraser : docs/SECURITY.md, docs/brief-commercial-CAP3.md, tout .claude/.
+3. Rafraîchis les garde-fous : si .claude/hooks/*.sh ou .claude/settings.json diffèrent du verbatim de docs/SETUP.md (§2), recrée-les à l'identique. NE touche PAS à docs/SECURITY.md (mes constats).
+4. Si les hooks ont changé, rappelle-moi d'ouvrir /hooks (ou de redémarrer) + approuver.
+```
