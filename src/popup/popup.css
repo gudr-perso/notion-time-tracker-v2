@@ -26,6 +26,19 @@
 /* Réserve en permanence la gouttière de scroll sur l'élément racine (le conteneur de
    défilement du popup) pour que la largeur ne saute pas quand la scrollbar apparaît. */
 html { scrollbar-gutter:stable; }
+/* ── Scrollbar bleue, thème navy (repris de planner-proto) ──────────────────
+   Les pseudo-éléments WebKit habillent le défilement du document et des
+   conteneurs (modale, sessions récentes). `scrollbar-color` — propriété
+   *héritée* et standard — atteint en plus la liste <select size=6> du timer,
+   que les pseudo-éléments WebKit ne stylent pas. Teinte dérivée de --cyan
+   (via color-mix) pour suivre automatiquement le thème clair/sombre. */
+::-webkit-scrollbar { width:10px; height:10px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { border:2px solid transparent; border-radius:99px;
+  background:color-mix(in srgb, var(--cyan) 45%, transparent); background-clip:padding-box; }
+::-webkit-scrollbar-thumb:hover { background:color-mix(in srgb, var(--cyan) 70%, transparent);
+  background-clip:padding-box; }
+html { scrollbar-color:color-mix(in srgb, var(--cyan) 55%, transparent) transparent; }
 body { margin:0; width:700px; font-family:"Inter","Segoe UI",system-ui,sans-serif;
   color:var(--text); background:var(--bg-deep); }
 .app-header { display:flex; align-items:center; gap:8px; padding:14px 16px;

@@ -6,6 +6,17 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.7.3] — 2026-07-21
+
+### Modifié
+- **Scrollbar bleue, thème navy** (reprise de l'esprit du projet planner-proto) : la barre de défilement
+  passe du gris natif à une teinte dérivée de `--cyan` (`color-mix`), donc bleue et cohérente en thème
+  **sombre** (`#2aa6e8`) comme **clair** (`#138fdb`). Deux mécanismes complémentaires : pseudo-éléments
+  `::-webkit-scrollbar` (document, modale « stop-at », panneaux) + `scrollbar-color` (propriété **héritée**
+  standard) qui, elle, atteint la liste `<select size="6">` du timer — que les pseudo-éléments WebKit ne
+  stylent pas. Pouce discret (bordure transparente + `background-clip:padding-box`), plus foncé au survol.
+  `popup/popup.css` et `config/config.css` seuls, **CSS pur**, aucun test impacté (rendu vérifié au navigateur).
+
 ## [5.7.2] — 2026-07-18
 
 ### Modifié

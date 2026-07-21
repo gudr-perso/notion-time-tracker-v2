@@ -1,9 +1,9 @@
 # Notion Time Tracker — État du projet & comment continuer
 
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
-> Dernière mise à jour : 2026-07-19.
+> Dernière mise à jour : 2026-07-21.
 
-**Version courante : `5.7.2`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
+**Version courante : `5.7.3`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -32,10 +32,17 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Stats : jour mixte travail+congés (barres empilées) + congés comptés en heures** | ✅ v5.5.5 |
 | **Stats : objectif dérivé d'un planning hebdo + congés en jours + repère de cible par barre** | ✅ v5.6.0 |
 | **Congés : saisie en demi-journées (plage + détailler, 1 ligne/demi-journée)** | ✅ v5.7.0 |
+| **Scrollbar bleue thème navy (dérivée de `--cyan`, clair + sombre)** | ✅ v5.7.3 |
 
 **Tests** : `npm test` → `151 passed (10 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.7.3)
+- **Scrollbar bleue, thème navy** (reprise de planner-proto) — la barre de défilement, grise en natif, prend
+  une teinte dérivée de `--cyan` via `color-mix` (bleue en sombre **et** clair). `::-webkit-scrollbar` habille
+  document/modale/panneaux ; `scrollbar-color` (héritée) atteint en plus la liste `<select size="6">` du timer.
+  `popup.css` + `config.css`, CSS pur, aucun test impacté (rendu vérifié au navigateur).
 
 ### ✅ Faites (v5.7.2)
 - **Récap congés : message d'état vide clarifié** — au lieu de « Aucune demi-journée sélectionnée » (trompeur un
