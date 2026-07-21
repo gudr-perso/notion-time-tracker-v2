@@ -291,6 +291,12 @@ et ferme le popup. Sinon applique le thème, câble le bouton thème + config, g
 Notion au chargement (token, base, propriété de filtre…) s'affiche dans le bandeau `#load-error` avec le message
 brut de Notion, au lieu de devenir une *unhandled rejection* laissant la liste vide sans explication.
 
+**Modèle de défilement (`popup.css`)** : le popup a une **hauteur figée** (`html, body { height:600px }`, plafond
+d'un popup Chrome) ; `.app` est une colonne flex, en-tête + onglets `flex:0 0 auto`, et `<main>` est l'**unique**
+zone de défilement (`flex:1 1 auto; min-height:0; overflow-y:auto; scrollbar-gutter:stable`). Sans hauteur bornée,
+la fenêtre se dimensionnait au contenu, que du contenu **asynchrone** (tâches, sessions récentes) allongeait après
+que Chrome ait figé la hauteur → bas coupé et inatteignable (cf. `docs/EVENEMENTS.md` 2026-07-21).
+
 ### `popup/timer.js` — état partagé + chargement des tâches
 
 - Objet **`T`** : état partagé de l'onglet Timer (config, tokens, mappings, `tasks`, `history`, `selectedTaskId`,

@@ -6,6 +6,18 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.7.4] — 2026-07-21
+
+### Corrigé
+- **Popup : contenu parfois coupé et inatteignable** (bas de la liste / sessions récentes) selon le timing réseau.
+  Le popup n'avait aucune hauteur bornée et défilait **au niveau du document** ; or le contenu Notion arrive en
+  asynchrone **après** que Chrome a figé la hauteur de la fenêtre → débordement sans barre de défilement, donc
+  contenu inaccessible tant qu'on ne rechargeait pas l'extension. Le popup a désormais une **hauteur déterministe
+  (600 px = plafond d'un popup Chrome)** : en-tête + onglets **figés**, et `<main>` est l'**unique** zone de
+  défilement (barre bleue, `scrollbar-gutter:stable` déplacé de `html` vers `main`). Le contenu reste **toujours
+  atteignable** quel que soit le moment où le contenu async arrive. `popup.css` seul ; modale/toast (`position:fixed`)
+  non impactés. Détail : `docs/EVENEMENTS.md`.
+
 ## [5.7.3] — 2026-07-21
 
 ### Modifié

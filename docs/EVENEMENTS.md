@@ -10,7 +10,35 @@
 
 ---
 
-## 2026-07-18 — Bloc congés affiché en permanence (le `[hidden]` rebattu, encore)
+## 2026-07-21 — Popup : contenu coupé et inatteignable, mais seulement au reload de l'extension
+
+- **Contexte** : v5.7.4, après avoir coloré la scrollbar en bleu (v5.7.3). Symptôme rapporté : la barre de
+  défilement verticale du **popup entier** apparaît quand on **recharge l'extension**, mais pas quand on **rouvre**
+  le popup ensuite — et dans ce cas du contenu (bas de la liste / sessions récentes) est **coupé et inaccessible**,
+  obligeant à recharger l'extension.
+- **Erreur** : pas d'exception. Symptôme d'affichage **intermittent**, corrélé au reload (donc au **timing réseau**,
+  pas à un état déterministe).
+- **Hypothèse (écartée)** : un bug de la scrollbar bleue ajoutée en v5.7.3. **Faux** : le CSS `::-webkit-scrollbar`
+  n'a fait que **recolorer** une barre déjà là ; le comportement intermittent lui **préexistait**, juste invisible
+  tant que la barre grise passait inaperçue.
+- **Hypothèse (retenue)** : le popup n'a **aucune hauteur bornée** (`html`/`body`/`.app`/`main` sans `height`) et son
+  **unique conteneur de défilement est le document**. Or `initTimer` remplit la liste puis `#recent-sessions` en
+  **asynchrone** (fetch Notion), **après** le premier paint. Chrome mesure et **fige** la hauteur du popup tôt ; le
+  contenu qui s'ajoute ensuite déborde la fenêtre déjà figée. À froid (reload, réseau lent) → débordement + barre ;
+  à chaud (réouverture, réponses en cache) → la fenêtre se cale trop court **sans** re-grandir → bas coupé, aucune
+  barre pour l'atteindre.
+- **Action** : rendre le défilement **déterministe** plutôt que dépendant du timing. `html, body { height:600px }`
+  (600 px = plafond d'un popup Chrome), `.app { height:100%; display:flex; flex-direction:column }`, en-tête/onglets
+  `flex:0 0 auto`, et `main { flex:1 1 auto; min-height:0; overflow-y:auto; scrollbar-gutter:stable }`. `main`
+  devient l'**unique** zone de défilement. `scrollbar-gutter:stable` déplacé de `html` (qui ne défile plus) vers
+  `main`. Modale et toast en `position:fixed` → hors flux, non impactés.
+- **Résultat** : hauteur du popup stable à chaque ouverture ; quel que soit le moment où le contenu async arrive, il
+  reste **atteignable** via la barre de `main`. Mécaniques vérifiées au navigateur (harnais reproduisant l'injection
+  tardive de contenu : hauteur inchangée, barre présente, contenu accessible). 151 tests verts.
+- **Leçon** : dans un popup MV3, **ne jamais** laisser le document se dimensionner au contenu quand celui-ci arrive
+  en asynchrone — Chrome fige la hauteur avant l'arrivée du contenu et ne re-grandit pas, ce qui coupe le bas **sans
+  barre**. Modèle sûr : hauteur bornée (≤ 600 px) + en-tête figé + un `main` en `overflow-y:auto`. Corollaire :
+  `scrollbar-gutter:stable` va sur **le conteneur qui défile réellement** (ici `main`), pas par réflexe sur `html`.
 
 - **Contexte** : v5.7.1. Le bloc de saisie des congés (`#vac-range`) apparaissait dès l'ouverture de la saisie
   manuelle, « Marquer comme congés » **décoché** — alors qu'il porte l'attribut `hidden` par défaut.

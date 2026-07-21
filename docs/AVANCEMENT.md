@@ -3,7 +3,7 @@
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
 > Dernière mise à jour : 2026-07-21.
 
-**Version courante : `5.7.3`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
+**Version courante : `5.7.4`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -33,10 +33,17 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Stats : objectif dérivé d'un planning hebdo + congés en jours + repère de cible par barre** | ✅ v5.6.0 |
 | **Congés : saisie en demi-journées (plage + détailler, 1 ligne/demi-journée)** | ✅ v5.7.0 |
 | **Scrollbar bleue thème navy (dérivée de `--cyan`, clair + sombre)** | ✅ v5.7.3 |
+| **Popup à hauteur figée + `<main>` défilant (contenu toujours atteignable)** | ✅ v5.7.4 |
 
 **Tests** : `npm test` → `151 passed (10 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.7.4)
+- **Popup : contenu coupé/inatteignable corrigé** — la fenêtre défilait au niveau du document, dont la hauteur
+  dépendait du contenu Notion async ; Chrome figeait la fenêtre trop court selon le timing → bas inaccessible sans
+  recharger l'extension. Popup à **hauteur figée (600 px)**, en-tête/onglets figés, `<main>` = unique zone de
+  défilement (barre bleue). `popup.css` seul. Diagnostic : `docs/EVENEMENTS.md`.
 
 ### ✅ Faites (v5.7.3)
 - **Scrollbar bleue, thème navy** (reprise de planner-proto) — la barre de défilement, grise en natif, prend

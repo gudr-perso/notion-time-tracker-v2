@@ -23,9 +23,13 @@
   --fav-lime:#4d7c0f; --fav-slate:#64748b;
 }
 * { box-sizing:border-box; }
-/* Réserve en permanence la gouttière de scroll sur l'élément racine (le conteneur de
-   défilement du popup) pour que la largeur ne saute pas quand la scrollbar apparaît. */
-html { scrollbar-gutter:stable; }
+/* Popup à hauteur déterministe : en-tête + onglets figés, <main> est l'UNIQUE zone de
+   défilement (barre bleue). Sans hauteur bornée, la fenêtre se dimensionne au contenu ;
+   or du contenu asynchrone (tâches, sessions récentes) l'allonge APRÈS que Chrome a figé
+   la hauteur du popup → bas du contenu coupé et inatteignable selon le timing réseau
+   (cf. docs/EVENEMENTS.md). 600px = plafond de hauteur d'un popup Chrome. */
+html, body { height:600px; }
+.app { height:100%; display:flex; flex-direction:column; }
 /* ── Scrollbar bleue, thème navy (repris de planner-proto) ──────────────────
    Les pseudo-éléments WebKit habillent le défilement du document et des
    conteneurs (modale, sessions récentes). `scrollbar-color` — propriété
@@ -41,21 +45,21 @@ html { scrollbar-gutter:stable; }
 html { scrollbar-color:color-mix(in srgb, var(--cyan) 55%, transparent) transparent; }
 body { margin:0; width:700px; font-family:"Inter","Segoe UI",system-ui,sans-serif;
   color:var(--text); background:var(--bg-deep); }
-.app-header { display:flex; align-items:center; gap:8px; padding:14px 16px;
+.app-header { flex:0 0 auto; display:flex; align-items:center; gap:8px; padding:14px 16px;
   background:linear-gradient(180deg,rgba(10,24,112,.5),transparent); }
 .app-header .title { flex:1; text-align:center; font-weight:800; font-size:18px; }
 .icon-btn { background:rgba(255,255,255,.06); border:1px solid var(--border-soft);
   color:var(--text); border-radius:999px; width:34px; height:34px; cursor:pointer; }
-.tabs { display:flex; border-bottom:1px solid var(--border); }
+.tabs { flex:0 0 auto; display:flex; border-bottom:1px solid var(--border); }
 .tab { flex:1; background:transparent; border:none; color:var(--text-muted);
   padding:12px; font-weight:700; cursor:pointer; border-bottom:2px solid transparent; }
 .tab.active { color:var(--cyan); border-bottom-color:var(--cyan); }
-.load-error { margin:16px 16px 0; padding:12px 14px; border-radius:12px;
+.load-error { flex:0 0 auto; margin:16px 16px 0; padding:12px 14px; border-radius:12px;
   border:1px solid var(--red); background:rgba(248,113,113,.12); color:var(--red);
   font-size:13px; line-height:1.45; white-space:pre-wrap; word-break:break-word; }
 .load-error[hidden] { display:none; }
 .load-error b { display:block; margin-bottom:2px; }
-main { padding:16px; }
+main { flex:1 1 auto; min-height:0; overflow-y:auto; scrollbar-gutter:stable; padding:16px; }
 .card, .card-lite { border-radius:14px; border:1px solid var(--border); padding:14px; margin-bottom:14px; }
 .card { background:var(--card-bg); }
 .card-lite { background:linear-gradient(180deg,rgba(220,235,255,.06),transparent); display:flex; align-items:center; gap:10px; }
