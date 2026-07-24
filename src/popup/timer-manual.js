@@ -1,7 +1,7 @@
 // src/popup/timer-manual.js — mode saisie manuelle, congés, favoris (enregistrement rapide).
 import { createPage, updatePage } from '../core/notion-api.js';
 import { sessionPropertiesForCreate, sessionPropertiesForUpdate } from '../core/mapping.js';
-import { roundToNearestFiveMinutes, formatDateTimeLocalValue } from '../core/time.js';
+import { roundToNearestFiveMinutes, formatDateTimeLocalValue, endValueForStartChange, endDayDiffersFromStart } from '../core/time.js';
 import { normalizeFavorite } from '../core/fav-presets.js';
 import { favIconSvg } from '../fav-icon.js';
 import { hasAnySchedule, generateLeaveSpans, leaveDays, scheduledMsForDate } from '../core/schedule.js';
@@ -118,11 +118,17 @@ function setSaving(on, sourceBtn) {
   }
 }
 
+// « Fin » figée un autre jour que « début », posée volontairement (session à cheval sur minuit) :
+// dans ce cas seulement on cesse d'aligner le jour de fin sur celui de début. C'est le champ Fin
+// qui met à jour ce drapeau — aucun historique de la valeur de début n'est mémorisé.
+let endDayPinned = false;
+
 function prefillManual() {
   const now = roundToNearestFiveMinutes(new Date());
   const start = new Date(now.getTime() - 60 * 60_000);
   $('manual-start').value = formatDateTimeLocalValue(start);
   $('manual-end').value = formatDateTimeLocalValue(now);
+  endDayPinned = false; // prérempli sur le même jour
 }
 
 function toggleManual(on) {
@@ -276,6 +282,16 @@ export function wireManual(sharedT, sharedHelpers) {
   $('manual-comment-label').textContent = T.config.prefs?.requireComment
     ? 'COMMENTAIRE (OBLIGATOIRE)' : 'COMMENTAIRE (OPTIONNEL)';
   $('manual-mode').addEventListener('change', (e) => toggleManual(e.target.checked));
+  // Changer la date de début (rattrapage d'un autre jour) reporte ce jour sur la fin — plus besoin
+  // de retaper la date de fin ; l'heure de fin est conservée. Sauf si la fin a été placée
+  // volontairement un autre jour (endDayPinned, tenu par le champ Fin ci-dessous).
+  $('manual-start').addEventListener('change', () => {
+    $('manual-end').value = endValueForStartChange($('manual-start').value, $('manual-end').value, endDayPinned);
+  });
+  // Toucher la date de fin fige (ou libère) le jour de fin selon qu'il diffère du début ou non.
+  $('manual-end').addEventListener('change', () => {
+    endDayPinned = endDayDiffersFromStart($('manual-start').value, $('manual-end').value);
+  });
   $('manual-vacation').addEventListener('change', onVacationToggle);
   $('vacation-hint').hidden = true;
   $('vac-from').addEventListener('change', () => {

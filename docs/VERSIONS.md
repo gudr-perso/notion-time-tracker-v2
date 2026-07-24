@@ -6,6 +6,20 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.7.5] — 2026-07-24
+
+### Corrigé
+- **Saisie manuelle : la date de fin suit automatiquement le jour de la date de début.** En rattrapant une
+  saisie d'un autre jour (ex. passer le début de `23/07` à `22/07`), le **jour** de la date de fin est reporté tout
+  seul (l'**heure** de fin est conservée) — plus besoin de le retaper. Une fin délibérément posée un **autre jour**
+  (session à cheval sur minuit) reste respectée. Corrige aussi un bug de la 1ʳᵉ implémentation où le report ne
+  marchait qu'**au premier changement** : passer `23→22` puis `22→21` laissait la fin bloquée sur `22`. Cause :
+  la logique mémorisait la « valeur précédente du début » entre deux événements `change` du champ `datetime-local`,
+  état qui devenait périmé. Nouvelle logique **sans historique**, idempotente (`endValueForStartChange` +
+  `endDayDiffersFromStart` dans `core/time.js`, drapeau `endDayPinned` tenu par le champ Fin). `core/time.js` +
+  `popup/timer-manual.js` ; 8 tests unitaires (dont non-régression `23→22→21`), vérifié aussi au navigateur.
+  Diagnostic : `docs/EVENEMENTS.md`.
+
 ## [5.7.4] — 2026-07-21
 
 ### Corrigé

@@ -1,9 +1,9 @@
 # Notion Time Tracker — État du projet & comment continuer
 
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
-> Dernière mise à jour : 2026-07-21.
+> Dernière mise à jour : 2026-07-24.
 
-**Version courante : `5.7.4`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
+**Version courante : `5.7.5`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -21,7 +21,7 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Onglet Timer** (start/pause/stop, stop-at, saisie manuelle, congés, favoris, récents) | ✅ |
 | **Service worker** (badge + notifications via `chrome.alarms`) | ✅ |
 | **Thème clair / sombre** (bascule persistée) | ✅ |
-| **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`, `stats`, `schedule`, `fav-presets`, `fav-icons`, `schema-injection`, `config-io`, `tasks-query`) | ✅ **151 tests verts** |
+| **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`, `stats`, `schedule`, `fav-presets`, `fav-icons`, `schema-injection`, `config-io`, `tasks-query`) | ✅ **159 tests verts** |
 | **Onglet Stats** | ✅ v5.2.0 |
 | **Favoris : couleur + picto** | ✅ v5.3.0 |
 | **Export / import de la config** | ✅ v5.4.0 |
@@ -34,10 +34,18 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Congés : saisie en demi-journées (plage + détailler, 1 ligne/demi-journée)** | ✅ v5.7.0 |
 | **Scrollbar bleue thème navy (dérivée de `--cyan`, clair + sombre)** | ✅ v5.7.3 |
 | **Popup à hauteur figée + `<main>` défilant (contenu toujours atteignable)** | ✅ v5.7.4 |
+| **Saisie manuelle : la date de fin suit le jour de la date de début** | ✅ v5.7.5 |
 
-**Tests** : `npm test` → `151 passed (10 files)`.
+**Tests** : `npm test` → `159 passed (10 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.7.5)
+- **Saisie manuelle : la date de fin suit le jour de la date de début** — en rattrapant une saisie d'un autre
+  jour (début `23/07` → `22/07`), le **jour** de la fin est reporté automatiquement (heure de fin conservée). Une
+  fin volontairement posée un autre jour (à cheval sur minuit) reste respectée. Correction d'un bug de la 1ʳᵉ
+  version (report actif seulement au 1ᵉʳ changement : `23→22→21` restait bloqué sur `22`) : logique **sans
+  historique** et idempotente. `core/time.js` + `timer-manual.js`. Diagnostic : `docs/EVENEMENTS.md`.
 
 ### ✅ Faites (v5.7.4)
 - **Popup : contenu coupé/inatteignable corrigé** — la fenêtre défilait au niveau du document, dont la hauteur

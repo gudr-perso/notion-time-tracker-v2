@@ -1,6 +1,6 @@
 // test/time.test.js
 import { describe, it, expect } from 'vitest';
-import { formatDuration, roundToNearestFiveMinutes, toNotionDate, workedMs, startOfDay } from '../src/core/time.js';
+import { formatDuration, roundToNearestFiveMinutes, toNotionDate, workedMs, startOfDay, endDayDiffersFromStart, endValueForStartChange } from '../src/core/time.js';
 
 describe('formatDuration', () => {
   it('formate HH:MM:SS par défaut', () => {
@@ -55,5 +55,48 @@ describe('startOfDay', () => {
     expect(d.getHours()).toBe(0);
     expect(d.getMinutes()).toBe(0);
     expect(d.getDate()).toBe(9);
+  });
+});
+
+describe('endValueForStartChange', () => {
+  it('aligne le jour de fin sur celui de début, heure de fin conservée', () => {
+    expect(endValueForStartChange('2026-07-22T09:50', '2026-07-23T10:50', false))
+      .toBe('2026-07-22T10:50');
+  });
+  it('est idempotente : ré-appliquer sur le même jour ne change rien', () => {
+    expect(endValueForStartChange('2026-07-22T09:50', '2026-07-22T10:50', false))
+      .toBe('2026-07-22T10:50');
+  });
+  it('respecte une fin délibérément posée un autre jour (endPinned)', () => {
+    expect(endValueForStartChange('2026-07-22T23:50', '2026-07-23T00:50', true))
+      .toBe('2026-07-23T00:50');
+  });
+  it('renvoie la fin inchangée si une valeur est vide', () => {
+    expect(endValueForStartChange('', '2026-07-23T10:50', false)).toBe('2026-07-23T10:50');
+    expect(endValueForStartChange('2026-07-22T09:50', '', false)).toBe('');
+  });
+
+  // Le bug rapporté : 23 → 22 (la fin suit) → 21 (la fin doit encore suivre). On rejoue la logique
+  // de câblage (drapeau + report) SANS mémoriser la valeur précédente : chaque édition est traitée
+  // indépendamment, donc le 3e changement n'est pas piégé par un état resté sur « 23 ».
+  it("suit à CHAQUE changement de jour, y compris le 2e (régression du bug 22→21)", () => {
+    let end = '2026-07-23T10:50';
+    let pinned = false; // début et fin le même jour au départ
+    for (const start of ['2026-07-22T09:50', '2026-07-21T09:50']) {
+      end = endValueForStartChange(start, end, pinned);
+    }
+    expect(end).toBe('2026-07-21T10:50');
+  });
+});
+
+describe('endDayDiffersFromStart', () => {
+  it('faux quand début et fin sont le même jour', () => {
+    expect(endDayDiffersFromStart('2026-07-22T09:50', '2026-07-22T10:50')).toBe(false);
+  });
+  it('vrai quand la fin est un autre jour (session à cheval sur minuit)', () => {
+    expect(endDayDiffersFromStart('2026-07-22T23:50', '2026-07-23T00:50')).toBe(true);
+  });
+  it('faux si une valeur manque', () => {
+    expect(endDayDiffersFromStart('', '2026-07-23T00:50')).toBe(false);
   });
 });

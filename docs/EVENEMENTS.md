@@ -10,6 +10,33 @@
 
 ---
 
+## 2026-07-24 — Saisie manuelle : le report du jour début→fin ne marchait qu'au 1ᵉʳ changement
+
+- **Contexte** : v5.7.5. Nouvelle commodité — en saisie manuelle, changer la **date de début** doit reporter ce jour
+  sur la **date de fin** (heure de fin conservée), pour rattraper une saisie de la veille sans retaper la date de fin.
+  1ʳᵉ implémentation : à chaque `change` du champ début, une fonction pure comparait le jour de fin au **jour du début
+  précédent** (mémorisé dans `lastStartValue`) et, s'ils coïncidaient, reportait le nouveau jour.
+- **Erreur** : pas d'exception. Symptôme rapporté : « ça marche si je change la première fois, mais si je mets 22 au
+  lieu de 23 et que finalement je mets 21, ça maintient 22 et non remet 21 ». Donc `23→22` : la fin suit (22) ; puis
+  `22→21` : la fin **reste bloquée sur 22**.
+- **Hypothèse** : le garde-fou `fin.jour !== débutPrécédent.jour` s'appuie sur `lastStartValue`, censé refléter « la
+  valeur du début juste avant **ce** `change` ». Or un `<input type="datetime-local">` émet ses `change` de façon
+  imprévisible (cadence par segment, valeurs intermédiaires à la frappe). Résultat : au 2ᵉ changement, `lastStartValue`
+  était **périmé** (resté sur `23`), le garde-fou voyait `fin(22) ≠ 23` et refusait de bouger. La justesse dépendait
+  d'un **état maintenu entre événements** dont le navigateur ne garantit pas le rythme.
+- **Action** : supprimer toute mémoire de la « valeur précédente ». Décision rendue **sans historique** et
+  **idempotente** : `endValueForStartChange(start, end, pinned)` aligne le **jour** de fin sur celui de début (heure
+  conservée) à chaque `change`, quelle qu'en soit la cadence ; une fin volontairement posée un autre jour reste
+  protégée par un simple booléen `endDayPinned` que **le champ Fin** met à jour (`endDayDiffersFromStart`), et non par
+  une comparaison à un début mémorisé.
+- **Résultat** : `23→22→21` fait suivre la fin à chaque étape. Vérifié par test de non-régression rejouant la séquence
+  (avec segment intermédiaire `02`) + harnais navigateur émettant une cadence d'événements « sale » → tout PASS,
+  protection overnight incluse. 159 tests verts.
+- **Leçon** : ne pas faire dépendre la justesse d'un **état reconstruit entre plusieurs `change`** d'un `datetime-local`
+  (ni d'aucun contrôle dont le navigateur pilote la cadence d'événements). Préférer une décision **idempotente et sans
+  historique**, calculée à partir de l'**état courant** des champs à chaque événement. Un flag « intention » (ici la fin
+  posée un autre jour) se tient sur le champ qui porte l'intention, pas via un diff avec une valeur mémorisée.
+
 ## 2026-07-21 — Popup : contenu coupé et inatteignable, mais seulement au reload de l'extension
 
 - **Contexte** : v5.7.4, après avoir coloré la scrollbar en bleu (v5.7.3). Symptôme rapporté : la barre de

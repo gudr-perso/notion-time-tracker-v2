@@ -223,6 +223,11 @@ l'exige). Quand active : affiche **Début** / **Fin** (préremplis à « il y a 
 apparaissent. À l'enregistrement : validation (début & fin présents, fin > début, commentaire si obligatoire),
 création puis clôture de la page en une passe (sans chronomètre), reset du formulaire et **toast de confirmation**.
 
+**Report du jour début → fin** : quand on change la **date de début** (typiquement pour rattraper une saisie de la
+veille, ex. `23/07` → `22/07`), le **jour** de la date de fin suit automatiquement — l'**heure** de fin est conservée,
+inutile de la retaper. Si l'on a **volontairement** placé la fin un autre jour que le début (session à cheval sur
+minuit), ce choix est respecté et le début ne l'écrase plus.
+
 ### 3.8 Mode congés
 
 Case **« Marquer comme congés »** (en saisie manuelle) : vérifie qu'une tâche congés est configurée (sinon alerte et

@@ -57,3 +57,20 @@ export function formatDateTimeLocalValue(date) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
          `T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
+
+// La fin est-elle sur un autre jour que le début ? Sert à « figer » le jour de fin quand
+// l'utilisateur l'a placé volontairement un autre jour (session à cheval sur minuit).
+// Valeurs = <input type="datetime-local"> ('YYYY-MM-DDTHH:mm').
+export function endDayDiffersFromStart(startValue, endValue) {
+  return Boolean(startValue && endValue && startValue.slice(0, 10) !== endValue.slice(0, 10));
+}
+
+// Nouvelle valeur de « fin » quand « début » change : on aligne le jour de fin sur celui de début
+// (heure de fin conservée), pour ne pas avoir à retaper la date de fin en rattrapant une saisie
+// d'un autre jour. Décision SANS historique (aucune comparaison à une valeur mémorisée) → idempotente
+// et robuste au nombre d'événements 'change' émis par le champ. `endPinned` (tenu par l'appelant)
+// respecte une fin délibérément posée un autre jour. Valeurs = <input type="datetime-local">.
+export function endValueForStartChange(startValue, endValue, endPinned) {
+  if (endPinned || !startValue || !endValue) return endValue;
+  return startValue.slice(0, 10) + endValue.slice(10);
+}

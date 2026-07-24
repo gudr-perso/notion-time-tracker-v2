@@ -93,6 +93,11 @@ concerné, **sans erreur**. Deux tests les verrouillent nommément (`test/fav-pr
 - `startOfDay(date)` : minuit local (bornes des filtres « aujourd'hui / hier »).
 - `formatClock` / `formatStartedLabel` / `formatDateTimeLocalValue` : libellés FR pour l'UI (via `Intl`) et valeur
   pour les `<input type="datetime-local">`.
+- `endValueForStartChange(startValue, endValue, endPinned)` / `endDayDiffersFromStart(startValue, endValue)` :
+  logique du **report du jour début → fin** en saisie manuelle (valeurs `datetime-local`). La 1ʳᵉ aligne le **jour** de
+  fin sur celui de début (heure conservée) **sauf** si `endPinned` ; la 2ᵉ dit si la fin est un autre jour que le début.
+  Décision **sans historique et idempotente** — volontairement, pour ne pas dépendre du rythme des événements `change`
+  d'un `datetime-local` (bug de la v5.7.5 : `23→22→21` bloquait sur `22`, cf. `EVENEMENTS.md`).
 
 ### `core/notion-api.js` — accès HTTP Notion (pur)
 
@@ -344,6 +349,11 @@ que Chrome ait figé la hauteur → bas coupé et inatteignable (cf. `docs/EVENE
 
 - `toggleManual(on)` : bascule le formulaire de saisie a posteriori (préremplit début/fin via
   `roundToNearestFiveMinutes`), transforme le bouton principal en « ENREGISTRER », montre la boîte de favoris.
+- **Report du jour début → fin** : sur `change` du champ **début**, `#manual-end` est recalculé via
+  `endValueForStartChange(...)` (le jour de fin suit celui de début, heure conservée). Sur `change` du champ **fin**,
+  le drapeau **`endDayPinned`** est mis à jour (`endDayDiffersFromStart`) pour figer une fin délibérément posée un autre
+  jour. `endDayPinned` est remis à `false` par `prefillManual` (début/fin préremplis le même jour). Aucun état « valeur
+  précédente du début » n'est conservé — cf. `EVENEMENTS.md` (2026-07-24).
 - **`saveManualFor(taskId, sourceBtn)`** : crée **puis** clôture la ligne en un coup (`createPage` +
   `updatePage`). **Garde anti double-enregistrement** (`saving`) + gel des boutons (`setSaving`, avec « ⏳ … » sur le
   bouton source). Toast de confirmation via `showToast`.
