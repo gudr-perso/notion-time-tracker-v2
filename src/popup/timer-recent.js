@@ -5,6 +5,8 @@ import { startOfDay, formatClock, formatDuration, toNotionDate, workedMs } from 
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const COMMENT_MAX = 45;
+const truncComment = (c) => (c.length > COMMENT_MAX ? c.slice(0, COMMENT_MAX) + '…' : c);
 let T = null;
 
 function sessionDurationMs(s) {
@@ -34,7 +36,10 @@ export async function reloadRecent() {
       const dur = formatDuration(sessionDurationMs(s));
       const range = `${formatClock(s.startTime)} → ${formatClock(s.endTime)}`;
       const name = s.name.length > 70 ? s.name.slice(0, 70) + '…' : s.name;
-      return `<div class="sess"><div><div>${esc(name)}</div><div class="muted">${range}</div></div>` +
+      const commentHtml = s.comment
+        ? ` <span class="sess-comment">— ${esc(truncComment(s.comment))}</span>`
+        : '';
+      return `<div class="sess"><div><div>${esc(name)}</div><div class="muted">${range}${commentHtml}</div></div>` +
         `<div class="sess-right"><span class="dur">${dur}</span>` +
         `<button class="icon-link sess-link" data-page="${esc(s.pageId)}" title="Ouvrir dans Notion">🔗</button></div></div>`;
     }).join('');
