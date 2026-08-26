@@ -1,6 +1,6 @@
-# Documentation technique — Notion Time Tracker
+# Documentation technique — CAP Temps - Notion Time Tracker
 
-Version : `5.4.0` (source de vérité : `manifest.json`). Le **D-technique** du principe D² : décrit *comment
+Version : `5.7.5` (source de vérité : `manifest.json`). Le **D-technique** du principe D² : décrit *comment
 c'est fait*. Pour *ce que fait* l'app côté utilisateur, voir [`documentation-fonctionnelle.md`](documentation-fonctionnelle.md).
 
 ---

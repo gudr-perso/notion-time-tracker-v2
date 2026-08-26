@@ -1,6 +1,6 @@
 # Versions — historique des changements
 
-Toutes les évolutions notables de Notion Time Tracker (le **V** de la méthode AVEC).
+Toutes les évolutions notables de CAP Temps - Notion Time Tracker (le **V** de la méthode AVEC).
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version = `manifest.json`.
 
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,

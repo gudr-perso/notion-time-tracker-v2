@@ -44,7 +44,9 @@ je n'ai plus jamais eu à taper une date à la main.
 ---
 
 ## Notes de cadrage
-- **Nom provisoire** : la doc l'appelle *Notion Time Tracker*. Nom définitif à trancher.
-- Ce brief décrit **l'existant (v4.9.4)**. Une [`specification-v2.md`](specification-v2.md) recense de
+- **Nom définitif** *(tranché le 2026-07-27)* : **CAP Temps - Notion Time Tracker** — champ `name` du
+  `manifest.json` (source de vérité), publié sur le Chrome Web Store. La doc historique v1 l'appelait *Notion Time
+  Tracker*.
+- Ce brief décrit **l'existant (v4.9.4)**. Une [`specification-v2-old.md`](specification-v2-old.md) recense de
   la dette technique à corriger (ex. ID de base codé en dur dans les notifications). Si l'objectif est
   de recoder une **v2**, réorienter le périmètre en conséquence.

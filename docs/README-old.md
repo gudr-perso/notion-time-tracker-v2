@@ -25,8 +25,8 @@ stockage et chaque écran est décrit.
 |---------|---------|--------------|
 | [`documentation-fonctionnelle.md`](documentation-fonctionnelle.md) | Ce que fait l'application, fonctionnalité par fonctionnalité, parcours utilisateur | Product, utilisateurs avancés, QA |
 | [`documentation-technique.md`](documentation-technique.md) | Architecture, fichiers, modèle de données, API Notion, algorithmes | Développeurs |
-| [`design-ecrans.md`](design-ecrans.md) | Maquettes (wireframes) de tous les écrans et états, charte graphique | Designers, développeurs front |
-| [`specification-v2.md`](specification-v2.md) | Cahier des charges pour recoder une v2 propre, dette technique à corriger | Équipe v2 |
+| [`design-ecrans-old.md`](design-ecrans-old.md) | Maquettes (wireframes) de tous les écrans et états, charte graphique | Designers, développeurs front |
+| [`specification-v2-old.md`](specification-v2-old.md) | Cahier des charges pour recoder une v2 propre, dette technique à corriger | Équipe v2 |
 
 ---
 

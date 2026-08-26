@@ -1,8 +1,11 @@
-# Documentation fonctionnelle — Notion Time Tracker
+# Documentation fonctionnelle — CAP Temps - Notion Time Tracker
 
-Version : `5.4.0`. Le **D-fonctionnel** du principe D² : décrit **ce que fait** l'application, du point de vue de
+Version : `5.7.5`. Le **D-fonctionnel** du principe D² : décrit **ce que fait** l'application, du point de vue de
 l'utilisateur, fonctionnalité par fonctionnalité. Aucun code ; pour l'implémentation, voir
 [`documentation-technique.md`](documentation-technique.md).
+
+> **Nom publié** (Chrome Web Store) : **CAP Temps - Notion Time Tracker** (champ `name` du `manifest.json`, source
+> de vérité). Nom de code interne / paquet npm : `notion-timer-v2`.
 
 ---
 

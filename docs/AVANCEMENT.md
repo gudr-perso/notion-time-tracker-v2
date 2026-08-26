@@ -1,4 +1,4 @@
-# Notion Time Tracker — État du projet & comment continuer
+# CAP Temps - Notion Time Tracker — État du projet & comment continuer
 
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
 > Dernière mise à jour : 2026-08-26.

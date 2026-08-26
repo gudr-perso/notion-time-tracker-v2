@@ -1,4 +1,4 @@
-# Événements techniques — Notion Time Tracker
+# Événements techniques — CAP Temps - Notion Time Tracker
 
 > Le **É** de la méthode AVEC. Mémoire des événements techniques marquants (pièges rencontrés et **résolus**,
 > décisions de contournement), pour ne pas re-déboguer deux fois la même chose.
