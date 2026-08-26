@@ -5,7 +5,7 @@ import { startOfDay, formatClock, formatDuration, toNotionDate, workedMs } from 
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const COMMENT_MAX = 45;
+const COMMENT_MAX = 70;
 const truncComment = (c) => (c.length > COMMENT_MAX ? c.slice(0, COMMENT_MAX) + '…' : c);
 let T = null;
 

@@ -10,7 +10,7 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 
 ### Ajouté
 - Sessions récentes : le commentaire de fin de session (déjà écrit dans Notion) s'affiche désormais
-  en italique sur la ligne d'horaire (`17:00 → 17:55 — commentaire…`), tronqué à 45 caractères. Rien
+  en italique sur la ligne d'horaire (`17:00 → 17:55 — commentaire…`), tronqué à 70 caractères. Rien
   ne s'affiche si le champ commentaire n'est pas mappé ou si la session n'en a pas.
 
 ## [5.7.5] — 2026-07-24

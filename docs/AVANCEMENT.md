@@ -44,7 +44,7 @@ L'onglet **Stats** est **livré en v5.2.0**.
 ### ✅ Faites (v5.7.6)
 - **Sessions récentes : commentaire affiché** — le commentaire de fin de session, déjà écrit dans
   Notion mais jamais relu par le popup, s'affiche désormais en italique sur la ligne d'horaire,
-  tronqué à 45 caractères. `core/mapping.js` (`sessionFromPage`) + `timer-recent.js` + `popup.css`.
+  tronqué à 70 caractères. `core/mapping.js` (`sessionFromPage`) + `timer-recent.js` + `popup.css`.
 
 ### ✅ Faites (v5.7.5)
 - **Saisie manuelle : la date de fin suit le jour de la date de début** — en rattrapant une saisie d'un autre
