@@ -1,9 +1,9 @@
 # Notion Time Tracker — État du projet & comment continuer
 
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
-> Dernière mise à jour : 2026-07-24.
+> Dernière mise à jour : 2026-08-26.
 
-**Version courante : `5.7.5`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
+**Version courante : `5.7.6`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -35,10 +35,16 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Scrollbar bleue thème navy (dérivée de `--cyan`, clair + sombre)** | ✅ v5.7.3 |
 | **Popup à hauteur figée + `<main>` défilant (contenu toujours atteignable)** | ✅ v5.7.4 |
 | **Saisie manuelle : la date de fin suit le jour de la date de début** | ✅ v5.7.5 |
+| **Sessions récentes : commentaire affiché (italique, ligne d'horaire)** | ✅ v5.7.6 |
 
-**Tests** : `npm test` → `159 passed (10 files)`.
+**Tests** : `npm test` → `162 passed (10 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.7.6)
+- **Sessions récentes : commentaire affiché** — le commentaire de fin de session, déjà écrit dans
+  Notion mais jamais relu par le popup, s'affiche désormais en italique sur la ligne d'horaire,
+  tronqué à 45 caractères. `core/mapping.js` (`sessionFromPage`) + `timer-recent.js` + `popup.css`.
 
 ### ✅ Faites (v5.7.5)
 - **Saisie manuelle : la date de fin suit le jour de la date de début** — en rattrapant une saisie d'un autre

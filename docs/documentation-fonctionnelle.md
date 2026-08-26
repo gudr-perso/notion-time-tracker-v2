@@ -262,7 +262,10 @@ bascule ☀️/🌙 sans rechargement.
 ### 3.10 Sessions récentes
 
 En bas de l'onglet Timer : bloc regroupant les sessions par **📅 Aujourd'hui** et **📅 Hier**, avec un **total par
-jour**. Chaque ligne : nom de tâche (tronqué), plage horaire `10:00 → 11:00`, durée, et 🔗 pour ouvrir dans Notion.
+jour**. Chaque ligne : nom de tâche (tronqué), plage horaire `10:00 → 11:00` — suivie, si la session a un
+commentaire, de ce commentaire **en italique** (tronqué à 45 caractères, ex. `10:00 → 11:00 — RAS, terminé`) —,
+durée, et 🔗 pour ouvrir dans Notion. Le commentaire n'apparaît que si le champ correspondant est mappé en
+config et renseigné sur la session.
 
 ---
 

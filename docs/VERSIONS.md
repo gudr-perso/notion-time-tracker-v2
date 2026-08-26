@@ -6,6 +6,13 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.7.6] — 2026-08-26
+
+### Ajouté
+- Sessions récentes : le commentaire de fin de session (déjà écrit dans Notion) s'affiche désormais
+  en italique sur la ligne d'horaire (`17:00 → 17:55 — commentaire…`), tronqué à 45 caractères. Rien
+  ne s'affiche si le champ commentaire n'est pas mappé ou si la session n'en a pas.
+
 ## [5.7.5] — 2026-07-24
 
 ### Corrigé

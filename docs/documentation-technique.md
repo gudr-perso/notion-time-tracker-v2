@@ -125,9 +125,10 @@ concerné, **sans erreur**. Deux tests les verrouillent nommément (`test/fav-pr
   session (titre = nom + `[projet]`, date de début, relations/ID externe/projets si mappés).
 - `sessionPropertiesForUpdate({endTime, comment, pauseMin}, f)` : propriétés de clôture (date de fin, commentaire,
   minutes de pause si > 0).
-- `sessionFromPage(page, f)` : page → **Session** (`pageId, name, startTime, endTime, pauseMin, tasksRelIds`) pour
-  l'affichage des récents, les totaux et l'onglet Stats (`tasksRelIds` = IDs de la relation Tâches, utilisés par
-  `isVacationSession` de `core/stats.js` pour détecter les congés).
+- `sessionFromPage(page, f)` : page → **Session** (`pageId, name, startTime, endTime, pauseMin, comment,
+  tasksRelIds`) pour l'affichage des récents, les totaux et l'onglet Stats (`tasksRelIds` = IDs de la relation
+  Tâches, utilisés par `isVacationSession` de `core/stats.js` pour détecter les congés ; `comment` = texte du
+  champ mappé sur `f.comment`, `''` si non mappé ou vide — affiché en italique par `timer-recent.js`).
 - `extractProject` / `titleWithProject` : gestion de la convention `Nom [Projet]`.
 
 ### `core/schema-injection.js` — planification de l'injection des champs (pur)
