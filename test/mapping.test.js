@@ -129,4 +129,36 @@ describe('sessionFromPage', () => {
     const s = sessionFromPage(page, { taskName: 'Nom' });
     expect(s.tasksRelIds).toEqual([]);
   });
+
+  it('lit le commentaire quand le champ est mappé et rempli', () => {
+    const page = {
+      id: 'sess-2',
+      properties: {
+        'Nom': titleProp('Refonte API'),
+        'Début session': { type: 'date', date: { start: '2026-07-09T09:00:00+02:00' } },
+        'Commentaire': textProp('RAS, terminé'),
+      },
+    };
+    const s = sessionFromPage(page, timeFields);
+    expect(s.comment).toBe('RAS, terminé');
+  });
+
+  it('comment = "" quand le champ est mappé mais vide', () => {
+    const page = {
+      id: 'sess-3',
+      properties: {
+        'Nom': titleProp('Refonte API'),
+        'Début session': { type: 'date', date: { start: '2026-07-09T09:00:00+02:00' } },
+        'Commentaire': { type: 'rich_text', rich_text: [] },
+      },
+    };
+    const s = sessionFromPage(page, timeFields);
+    expect(s.comment).toBe('');
+  });
+
+  it('comment = "" quand le champ n\'est pas mappé dans la config', () => {
+    const page = { id: 'sess-4', properties: { Nom: { title: [{ plain_text: 'X' }] } } };
+    const s = sessionFromPage(page, { taskName: 'Nom' });
+    expect(s.comment).toBe('');
+  });
 });
