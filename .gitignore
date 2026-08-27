@@ -14,3 +14,6 @@ docs/brief-commercial-CAP3.md
 
 # Suivi sécurité interne (points non corrigés — hors dépôt, ne pas exposer sur GitHub)
 docs/SECURITY.md
+
+# Paquets de distribution (ZIP Chrome Web Store) — reconstructibles depuis les sources
+dist/
