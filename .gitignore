@@ -17,3 +17,6 @@ docs/SECURITY.md
 
 # Paquets de distribution (ZIP Chrome Web Store) — reconstructibles depuis les sources
 dist/
+
+# Étude de faisabilité Lucca (exploratoire, hors dépôt)
+LUCCA.md
