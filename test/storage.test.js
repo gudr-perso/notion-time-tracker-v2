@@ -1,6 +1,6 @@
 // test/storage.test.js
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { pushTaskHistory, getTaskHistory, getConfig, saveConfig } from '../src/core/storage.js';
+import { pushTaskHistory, getTaskHistory, getConfig, saveConfig, getVersionVue, saveVersionVue } from '../src/core/storage.js';
 
 // Mock minimal de chrome.storage.local
 beforeEach(() => {
@@ -36,5 +36,15 @@ describe('config', () => {
   it('round-trip', async () => {
     await saveConfig({ notionToken: 'x', theme: 'dark' });
     expect((await getConfig()).notionToken).toBe('x');
+  });
+});
+
+describe('versionVue', () => {
+  it('rend une chaîne vide tant que rien n’a été lu', async () => {
+    expect(await getVersionVue()).toBe('');
+  });
+  it('round-trip', async () => {
+    await saveVersionVue('5.8.0');
+    expect(await getVersionVue()).toBe('5.8.0');
   });
 });

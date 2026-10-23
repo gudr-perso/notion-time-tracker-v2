@@ -13,6 +13,16 @@
       <button type="button" id="theme-toggle" class="icon-btn" title="Thème">🌙</button>
     </header>
 
+    <nav class="tabs" role="tablist" aria-label="Sections de la configuration">
+      <button type="button" class="tab active" id="tabbtn-settings" role="tab"
+              aria-selected="true" aria-controls="tab-settings">Paramètres</button>
+      <button type="button" class="tab" id="tabbtn-updates" role="tab"
+              aria-selected="false" aria-controls="tab-updates">Mises à jour<span
+              id="updates-badge" class="tab-badge" hidden></span></button>
+    </nav>
+
+    <section id="tab-settings" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-settings">
+
     <div id="flash" class="flash" hidden></div>
 
     <!-- ① Connexion -->
@@ -143,6 +153,18 @@
       <button type="button" id="btn-save" class="btn btn-primary">✅ Enregistrer</button>
       <span id="save-status" class="status"></span>
     </div>
+
+    </section>
+
+    <!-- ⑦ Mises à jour -->
+    <section id="tab-updates" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-updates" hidden>
+      <section class="card">
+        <div class="card-head">Historique des versions</div>
+        <div id="changelog-list" class="changelog"></div>
+        <p class="help-note">ℹ️ Les dix dernières versions. Les versions antérieures à la 5.0.0
+          relèvent de la v1 de l'extension et ne sont pas listées ici.</p>
+      </section>
+    </section>
   </div>
   <script type="module" src="config.js"></script>
 </body>

@@ -40,7 +40,8 @@ de config et le service worker. Les fichiers sont chargés tels quels (zéro tra
 │  └───────────┬──────────────┘                    │             │
 │   ┌──────────▼────────────────────────────────────▼────────┐  │
 │   │              chrome.storage.local                       │  │
-│   │   config · currentSession · taskHistory · notifFlags    │  │
+│   │  config · currentSession · taskHistory · versionVue ·   │
+   │  notifFlags                                             │  │
 │   └─────────────────────────────────────────────────────────┘ │
 └───────────────────────────────┬──────────────────────────────┘
                                  │ HTTPS (fetch)
@@ -67,6 +68,7 @@ des objets métier `Task` / `Session`. `core/*` n'importe aucune API Chrome (sau
 | `currentSession` | `{ pageId, taskId, taskName, startTime, isPaused, pauseStartTime, totalPauseDuration }` | Le chronomètre actif (ou en pause), persisté pour survivre à la fermeture du popup. |
 | `taskHistory` | `[taskId]` (max 20, LRU) | Tâches récemment utilisées, pour trier la liste. |
 | `notifFlags` | `{ lastLongTimerNotif, endOfDayNotified, dailyGoalNotified, dayStamp }` | Flags anti-répétition des notifications, persistés car le SW MV3 est recyclé. |
+| `versionVue` | `'5.8.0'` (chaîne) | Dernière version dont l'onglet « Mises à jour » a été ouvert. Absente au premier lancement → pastille visible. |
 
 `config.timeDb.fields` (base d'écriture) et `config.tasksDb.fields` (base de lecture) sont les **mappings** entre
 champs logiques de l'app et propriétés réelles Notion. Aucun ID ni nom de propriété n'est en dur. `config.projetsDb`
@@ -183,8 +185,27 @@ place que `theme.js`, pour la même raison (partagé entre les deux pages).
 ### `core/storage.js` — accès typé `chrome.storage.local`
 
 Encapsule la persistance : `getConfig`/`saveConfig`, `getCurrentSession`/`setCurrentSession`/`clearCurrentSession`,
-`getTaskHistory`/`pushTaskHistory` (**LRU** : dédoublonne, préfixe, tronque à 20). Seul module qui touche
-directement `chrome.storage.local` côté UI.
+`getTaskHistory`/`pushTaskHistory` (**LRU** : dédoublonne, préfixe, tronque à 20),
+`getVersionVue`/`saveVersionVue` (dernière version dont l'onglet « Mises à jour » a été ouvert ; absente au
+premier lancement → chaîne vide, donc pastille visible). Seul module qui touche directement
+`chrome.storage.local` côté UI.
+
+### `core/changelog.js` — historique des versions (données pures)
+
+**Contenu rédigé pour l'utilisateur final**, pas une copie de `docs/VERSIONS.md` : ni chemin de fichier, ni nom
+de fonction, ni nombre de tests (un test l'impose). La duplication est assumée — deux lecteurs, deux niveaux
+de langue.
+
+- `CHANGELOG` : tableau d'entrées `{ version, date, resume, ajoute[], modifie[], corrige[] }`, **trié du plus
+  récent au plus ancien**. Une puce vaut `{ titre, texte }` ; `titre` se rend en `<strong>`, `texte` à la suite.
+- `MAX_ENTREES` = 10 ; `dixDernieres(entrees = CHANGELOG)` tronque (et rend `[]` sur une entrée qui n'est pas
+  un tableau).
+- `estNouvelleVersion(versionVue, versionCourante)` : vrai quand l'onglet mérite sa pastille. Une
+  `versionCourante` vide rend **faux** — on ne signale pas une nouveauté qu'on ne sait pas nommer.
+
+**Garde-fou de release** (`test/changelog.test.js`) : `CHANGELOG[0].version` doit valoir
+`manifest.json#version`, et la `date` de chaque entrée doit correspondre au titre de sa section dans
+`docs/VERSIONS.md`. Bumper sans écrire l'entrée utilisateur fait rougir la suite.
 
 ### `core/config-io.js` — export/import de la configuration (pur)
 
@@ -451,6 +472,19 @@ que Chrome ait figé la hauteur → bas coupé et inatteignable (cf. `docs/EVENE
   conflits + relations sautées) et n'écrit qu'**après confirmation** (`addDatabaseProperties`), avant de recharger le
   schéma et de re-mapper. Le bouton est désactivé pendant les appels (anti-double-clic). `injectTargets` fournit les
   cibles de relation (`tasksDbId`, `projetsDbId`).
+- **Onglets de la page** : `initOnglets` câble `activerOnglet` (bascule `active` / `aria-selected` sur les
+  boutons et `hidden` sur les panneaux `#tab-settings` / `#tab-updates`). Les sections ①→⑥ et la barre
+  « Enregistrer » vivent dans `#tab-settings` ; l'historique dans `#tab-updates`.
+- **Historique des versions** : `rendreChangelog` (synchrone, sans I/O) construit la liste à partir de
+  `dixDernieres(CHANGELOG)` et de `chrome.runtime.getManifest().version`, via `entreeChangelog` →
+  `groupeChangelog` → `puceChangelog`. Rendu en `createElement` + `textContent` (helper local `el`),
+  **jamais `innerHTML`**, bien que le texte soit le nôtre. `libelleDate` met la date ISO en toutes lettres ;
+  un groupe vide ne rend **ni intertitre ni liste**.
+- **Pastille** : `majPastille` lit `getVersionVue()` et applique `estNouvelleVersion` ; `marquerVersionVue`
+  (sur le clic de l'onglet) l'efface et écrit `saveVersionVue`. Le drapeau `ongletMajVisite` existe parce que
+  la lecture du storage de `majPastille` peut se résoudre **après** un clic rapide : sans lui, elle
+  rallumerait la pastille sur l'onglet qu'on vient de lire. Une écriture refusée est avalée — la pastille
+  reparaîtra au prochain chargement, et cet onglet n'a pas de zone de statut où porter le message.
 - `loadTasksList` : peuple les sélecteurs de tâche congés et de favoris.
 - **Filtre d'état** : `renderStatusExclude` (appelée par `remapTasks` et sur `change` du sélecteur de propriété)
   affiche **une case à cocher par valeur réelle** de la propriété `status`/`select` mappée (lues via le champ

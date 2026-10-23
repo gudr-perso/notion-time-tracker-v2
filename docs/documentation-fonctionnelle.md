@@ -48,6 +48,12 @@ On choisit une tâche dans la base des tâches ; l'extension crée alors une pag
 automatiquement au premier lancement (ou tant que la configuration est incomplète), et reste accessible via le
 bouton ⚙️ du popup.
 
+La page est divisée en **deux onglets** :
+
+- **Paramètres** — tout le réglage de l'extension (§2.1 à §2.6), sur une page qui défile, terminée par le
+  bouton **✅ Enregistrer**.
+- **Mises à jour** — l'historique des versions (§2.7). Un onglet purement consultatif : rien n'y est réglé.
+
 ### 2.1 Connexion & choix des bases
 
 1. **Token Notion** : créer une intégration interne sur `notion.so/my-integrations` et coller le token.
@@ -166,6 +172,23 @@ Carte **« ⑥ Sauvegarde & transfert »**, en bas de la page de config, avec de
 sécurité — **au sein d'un même workspace Notion** (les bases et propriétés référencées dans le fichier doivent
 exister côté Notion pour que le mapping soit valide après import). Ce n'est pas pensé pour partager sa config à
 un tiers ni pour gérer plusieurs profils multi-workspace.
+
+### 2.7 Onglet « Mises à jour »
+
+Liste les **dix dernières versions** de l'extension, de la plus récente à la plus ancienne. Chaque version
+affiche :
+
+- son **numéro** et sa **date** en toutes lettres (ex. « 23 octobre 2026 ») ;
+- un **résumé** d'une phrase ;
+- le détail, regroupé en **Ajouté / Modifié / Corrigé** (un groupe vide n'apparaît pas).
+
+La version **que vous utilisez** est encadrée en cyan et porte la mention **« Installée »**.
+
+**Pastille de nouveauté** : après une mise à jour automatique de l'extension, une pastille apparaît sur
+l'onglet. Elle **s'efface à la visite de l'onglet** — venir sur la page pour changer un réglage ne la
+consomme pas. Elle reparaît à la mise à jour suivante.
+
+Les versions antérieures à la 5.0.0 relèvent de la v1 de l'extension et ne sont pas listées.
 
 ---
 

@@ -1,6 +1,7 @@
 // src/config/config.js
 import { testToken, searchDatabases, getDatabaseSchema, queryAll, addDatabaseProperties } from '../core/notion-api.js';
-import { getConfig, saveConfig } from '../core/storage.js';
+import { getConfig, saveConfig, getVersionVue, saveVersionVue } from '../core/storage.js';
+import { CHANGELOG, dixDernieres, estNouvelleVersion } from '../core/changelog.js';
 import { planInjection, FIELD_SPECS_TIME, FIELD_SPECS_TASKS } from '../core/schema-injection.js';
 import { taskFromPage } from '../core/mapping.js';
 import { readExcludeValues } from '../core/tasks-query.js';
@@ -537,7 +538,126 @@ async function onImportFile(e) {
   location.reload();
 }
 
+// ── Onglets et historique des versions ───────────────────────────────────────
+const ONGLETS = [
+  { bouton: 'tabbtn-settings', panneau: 'tab-settings' },
+  { bouton: 'tabbtn-updates', panneau: 'tab-updates' },
+];
+
+const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août',
+  'septembre', 'octobre', 'novembre', 'décembre'];
+
+function libelleDate(date) {
+  if (typeof date !== 'string') return 'non publiée';
+  const [annee, mois, jour] = date.split('-').map(Number);
+  if (!MOIS[mois - 1] || !Number.isInteger(jour) || !Number.isInteger(annee)) return 'non publiée';
+  return `${jour} ${MOIS[mois - 1]} ${annee}`;
+}
+
+// createElement + textContent, jamais d'innerHTML : la règle vaut même pour notre propre texte.
+function el(tag, cls, texte) {
+  const node = document.createElement(tag);
+  if (cls) node.className = cls;
+  if (texte != null) node.textContent = texte;
+  return node;
+}
+
+function puceChangelog({ titre, texte }) {
+  const item = el('li');
+  if (titre) {
+    item.append(el('strong', null, titre));
+    if (texte) item.append(document.createTextNode(` ${texte}`));
+  } else if (texte) {
+    item.textContent = texte;
+  }
+  return item;
+}
+
+// Un groupe vide ne rend rien : pas d'intertitre orphelin au-dessus du vide.
+function groupeChangelog(titre, puces) {
+  if (!Array.isArray(puces) || puces.length === 0) return [];
+  const liste = el('ul', 'release-list');
+  for (const puce of puces) liste.append(puceChangelog(puce));
+  return [el('p', 'release-group', titre), liste];
+}
+
+function entreeChangelog(release, versionCourante) {
+  const courante = release.version === versionCourante;
+  const bloc = el('div', courante ? 'release release-current-box' : 'release');
+  const tete = el('div', 'release-head');
+  tete.append(el('span', 'release-version', release.version));
+  if (courante) tete.append(el('span', 'release-current', 'Installée'));
+  tete.append(el('span', 'release-date', libelleDate(release.date)));
+  bloc.append(tete);
+  if (release.resume) bloc.append(el('p', 'release-summary', release.resume));
+  bloc.append(
+    ...groupeChangelog('Ajouté', release.ajoute),
+    ...groupeChangelog('Modifié', release.modifie),
+    ...groupeChangelog('Corrigé', release.corrige),
+  );
+  return bloc;
+}
+
+// Synchrone et sans I/O : la liste ne dépend que du module de données et du manifeste.
+function rendreChangelog() {
+  const versionCourante = chrome.runtime.getManifest().version;
+  const releases = dixDernieres(CHANGELOG);
+  $('changelog-list').replaceChildren(
+    ...releases.map((release) => entreeChangelog(release, versionCourante)),
+  );
+  $('updates-badge').textContent = String(releases.length);
+}
+
+// Vrai dès que l'onglet « Mises à jour » a été ouvert dans cette page. `majPastille` peut se
+// résoudre APRÈS ce clic (sa lecture du storage est en vol pendant que les onglets sont déjà
+// cliquables) : sans ce drapeau, elle rallumerait la pastille sur l'onglet qu'on vient de lire.
+let ongletMajVisite = false;
+
+async function majPastille() {
+  const versionCourante = chrome.runtime.getManifest().version;
+  const nouvelle = estNouvelleVersion(await getVersionVue(), versionCourante);
+  $('updates-badge').hidden = ongletMajVisite || !nouvelle;
+}
+
+function activerOnglet(cible) {
+  for (const { bouton, panneau } of ONGLETS) {
+    const actif = bouton === cible;
+    $(bouton).classList.toggle('active', actif);
+    $(bouton).setAttribute('aria-selected', String(actif));
+    $(panneau).hidden = !actif;
+  }
+}
+
+// La pastille s'efface à la VISITE de l'onglet, pas à l'ouverture de la page : venir changer son
+// token ne doit pas consommer le signal sans avoir rien lu.
+async function marquerVersionVue() {
+  if (ongletMajVisite) return; // déjà visité dans cette page : rien à réécrire
+  ongletMajVisite = true;
+  $('updates-badge').hidden = true;
+  try {
+    await saveVersionVue(chrome.runtime.getManifest().version);
+  } catch {
+    // Écriture refusée : la pastille reparaîtra au prochain chargement, et rien d'autre n'est perdu.
+  }
+}
+
+function initOnglets() {
+  for (const { bouton } of ONGLETS) {
+    $(bouton).addEventListener('click', () => activerOnglet(bouton));
+  }
+  $('tabbtn-updates').addEventListener('click', marquerVersionVue);
+}
+
 async function init() {
+  initOnglets();
+  try {
+    rendreChangelog();
+  } catch {
+    // L'historique est consultatif : une entrée malformée ne doit pas emporter avec elle le
+    // câblage des réglages (token, bases, Enregistrer, import/export), fait plus bas dans cette
+    // même fonction. La carte reste vide, le reste de la page marche.
+  }
+  majPastille().catch(() => { /* pastille absente : l'historique reste lisible */ });
   await applyStoredTheme();
   $('theme-toggle').textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '🌙' : '☀️';
   $('theme-toggle').addEventListener('click', async () => {

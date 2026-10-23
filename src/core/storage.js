@@ -30,3 +30,13 @@ export async function pushTaskHistory(taskId) {
   await local().set({ taskHistory: next });
   return next;
 }
+
+// Dernière version dont l'utilisateur a ouvert l'onglet « Mises à jour ». Absente au premier
+// lancement : la pastille paraît, et c'est voulu — un nouvel arrivant a tout à lire.
+export async function getVersionVue() {
+  const { versionVue } = await local().get('versionVue');
+  return typeof versionVue === 'string' ? versionVue : '';
+}
+export async function saveVersionVue(versionVue) {
+  await local().set({ versionVue });
+}

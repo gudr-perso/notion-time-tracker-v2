@@ -3,7 +3,7 @@
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
 > Dernière mise à jour : 2026-10-23.
 
-**Version courante : `5.7.7`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
+**Version courante : `5.8.0`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -21,7 +21,7 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Onglet Timer** (start/pause/stop, stop-at, saisie manuelle, congés, favoris, récents) | ✅ |
 | **Service worker** (badge + notifications via `chrome.alarms`) | ✅ |
 | **Thème clair / sombre** (bascule persistée) | ✅ |
-| **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`, `stats`, `schedule`, `fav-presets`, `fav-icons`, `schema-injection`, `config-io`, `tasks-query`) | ✅ **166 tests verts** |
+| **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`, `stats`, `schedule`, `fav-presets`, `fav-icons`, `schema-injection`, `config-io`, `tasks-query`, `changelog`) | ✅ **186 tests verts** |
 | **Onglet Stats** | ✅ v5.2.0 |
 | **Favoris : couleur + picto** | ✅ v5.3.0 |
 | **Export / import de la config** | ✅ v5.4.0 |
@@ -37,10 +37,21 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Saisie manuelle : la date de fin suit le jour de la date de début** | ✅ v5.7.5 |
 | **Sessions récentes : commentaire affiché (italique, ligne d'horaire)** | ✅ v5.7.6 |
 | **Saisie manuelle enchaînée : le début repart de la fin enregistrée** | ✅ v5.7.7 |
+| **Config en 2 onglets + onglet « Mises à jour » (10 dernières versions, pastille)** | ✅ v5.8.0 |
 
-**Tests** : `npm test` → `166 passed (10 files)`.
+**Tests** : `npm test` → `186 passed (11 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.8.0)
+- **Onglet « Mises à jour » dans la config** — la page passe en deux onglets (« Paramètres » /
+  « Mises à jour »). Le second liste les **10 dernières versions** avec résumé et puces
+  Ajouté / Modifié / Corrigé ; la version installée porte la mention « Installée ». Une **pastille**
+  signale une version non lue et s'efface à la visite de l'onglet (`versionVue` en
+  `chrome.storage.local`). Contenu **rédigé pour l'utilisateur final** dans le nouveau module pur
+  `core/changelog.js` — duplication assumée avec `VERSIONS.md`, deux lecteurs différents.
+  Un test lie la tête de `CHANGELOG` à `manifest.json` : **oublier l'entrée lors d'un bump fait
+  rougir la suite**. Repris de `gmail-notion-extension-v2`.
 
 ### ✅ Faites (v5.7.7)
 - **Saisie manuelle enchaînée** — après un enregistrement, **Début** reprend la **fin** de la ligne créée

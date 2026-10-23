@@ -155,7 +155,7 @@ src/
     timer-actions.js             start/pause/stop, stop-at (modale)
     timer-manual.js              saisie manuelle, congés, favoris (enregistrement rapide)
     timer-recent.js              sessions récentes
-  config/  config.html/.css/.js  page de config (onglet plein écran)
+  config/  config.html/.css/.js  page de config (onglet plein écran : Paramètres + Mises à jour)
   core/                          logique pure, testée (sans API Chrome ni DOM)
     notion-api.js                fetch, pagination has_more, retry 429, normId
     mapping.js                   Page Notion ⇄ Task / Session
@@ -164,6 +164,7 @@ src/
     fav-icons.js                 table des 23 pictos (données, tracés Tabler/MIT)
     fav-presets.js               palette 10 couleurs, normalizeFavorite, nextFreeColor
     config-io.js                 export/import config : buildExport, parseImport, exportFileName (token exclu)
+    changelog.js                 historique des versions rédigé pour l'utilisateur (onglet « Mises à jour »)
   fav-icon.js                    favIconSvg() — picto SVG, partagé popup + config (DOM ⇒ hors core/)
   theme.js
 test/      *.test.js (Vitest)
@@ -176,5 +177,6 @@ docs/      AVANCEMENT.md · VERSIONS.md · EVENEMENTS.md (méthode AVEC) · MEMO
 - `config` : `{ notionToken, timeDb{id,name,fields}, tasksDb{id,name,fields}, prefs{…}, theme }`
 - `currentSession` : `{ pageId, taskId, taskName, startTime, isPaused, pauseStartTime, totalPauseDuration }`
 - `taskHistory` : `[taskId]` max 20, LRU.
+- `versionVue` : dernière version dont l'onglet « Mises à jour » a été ouvert (pastille).
 
 Détail complet et contrats `core/` : voir la spec de design.

@@ -123,3 +123,41 @@ header { display:flex; align-items:center; gap:16px; margin-bottom:24px; }
 .sched-row input[type=time] { width:96px; }
 .sched-sep { color:var(--text-muted); }
 .sched-total { margin-top:8px; color:var(--text-muted); font-size:13px; }
+
+/* ── Onglets de la page ────────────────────────────────────────────────────── */
+/* Même patron que les onglets du popup (soulignement cyan sur l'onglet actif), posé ici à gauche
+   plutôt qu'en colonnes égales : deux onglets étirés sur 1040 px seraient démesurés. */
+.tabs { display:flex; gap:4px; margin-bottom:24px; border-bottom:1px solid var(--border); }
+.tab { position:relative; display:inline-flex; align-items:center; gap:8px; background:transparent;
+  border:none; color:var(--text-muted); padding:12px 20px; font:inherit; font-weight:700;
+  font-size:14px; cursor:pointer; border-bottom:2px solid transparent; }
+.tab:hover { color:var(--text); }
+.tab.active { color:var(--cyan); border-bottom-color:var(--cyan); }
+.tab:focus-visible { outline:2px solid var(--cyan); outline-offset:-2px; border-radius:6px 6px 0 0; }
+.tab-badge { display:inline-flex; align-items:center; justify-content:center; min-width:20px;
+  padding:0 6px; border-radius:999px; background:var(--cyan); color:#031024;
+  font-size:11px; font-weight:700; }
+.tab-badge[hidden] { display:none; }
+.tab-panel { display:block; }
+.tab-panel[hidden] { display:none; }
+
+/* ── Onglet « Mises à jour » ───────────────────────────────────────────────── */
+/* Une grille de blocs posés sur la couleur de page, dans une carte : même profondeur que les
+   aperçus d'injection, un cran sous la carte qui les porte. */
+.changelog { display:grid; gap:12px; padding:16px 22px; }
+.changelog:empty { display:none; }
+.release { border:1px solid var(--border-soft); border-radius:12px; background:var(--bg-deep);
+  padding:12px 14px; }
+/* Variante accentuée : la version installée porte une bordure cyan, visible d'un coup d'œil. */
+.release-current-box { border:1.5px solid var(--cyan); }
+.release-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.release-version { font-size:14px; font-weight:800; color:var(--text); }
+.release-current { padding:2px 9px; border-radius:999px; background:var(--cyan); color:#031024;
+  font-size:11px; font-weight:700; }
+.release-date { margin-left:auto; font-size:12px; color:var(--text-muted); }
+.release-summary { margin:6px 0 0; font-size:13px; line-height:1.55; color:var(--text-muted); }
+.release-group { margin:10px 0 4px; font-size:12px; font-weight:700; color:var(--cyan); }
+.release-list { margin:0; padding-left:18px; font-size:13px; line-height:1.55;
+  color:var(--text-muted); }
+.release-list strong { color:var(--text); font-weight:700; }
+:root[data-theme="light"] .release { background:#f7f9ff; }

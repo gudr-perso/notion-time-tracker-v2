@@ -6,6 +6,43 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.8.0] — 2026-10-23
+
+La page de configuration passe en **deux onglets** (« Paramètres » / « Mises à jour »), le second
+affichant les **dix dernières versions** rédigées pour l'utilisateur final. Reprise du dispositif
+déjà en place dans l'extension `gmail-notion-extension-v2`.
+
+### Ajouté
+- **Onglet « Mises à jour »** dans `config.html` : liste les 10 dernières versions (version, date en
+  toutes lettres, résumé, puis les groupes **Ajouté / Modifié / Corrigé**). La version installée
+  (`chrome.runtime.getManifest().version`) porte une bordure cyan et la pastille « Installée ».
+- **Nouveau module pur `core/changelog.js`** : la constante `CHANGELOG` (contenu **rédigé pour
+  l'utilisateur final**, pas une copie de ce fichier — ni chemin, ni nom de fonction, ni nombre de
+  tests), `MAX_ENTREES = 10`, `dixDernieres()` et `estNouvelleVersion()`.
+- **Pastille de nouveauté** sur l'onglet : visible tant que la version installée n'a pas été lue,
+  effacée à la **visite** de l'onglet (pas à l'ouverture de la page). L'état est tenu par
+  `versionVue` dans `chrome.storage.local` (nouveaux accesseurs `getVersionVue` / `saveVersionVue`
+  dans `core/storage.js`). Un drapeau `ongletMajVisite` empêche la lecture asynchrone du storage,
+  résolue **après** un clic rapide, de rallumer la pastille sur l'onglet qu'on vient de lire.
+- **Garde-fou de release** (`test/changelog.test.js`, 18 tests) : la tête de `CHANGELOG` doit valoir
+  la version de `manifest.json`, et la date de chaque entrée doit correspondre au titre de sa section
+  ici même. Oublier l'entrée utilisateur lors d'un bump fait rougir la suite.
+
+### Modifié
+- `config.html` : les sections ①→⑥ et la barre « Enregistrer » sont réunies dans le panneau
+  `#tab-settings`, l'historique dans `#tab-updates`. La décision de cadrage « page unique qui
+  défile » vaut désormais **à l'intérieur de l'onglet Paramètres**.
+- `config.css` : patron d'onglets repris du popup (soulignement cyan), aligné à gauche plutôt qu'en
+  colonnes égales — deux onglets étirés sur 1040 px seraient démesurés. Les pastilles cyan portent
+  un texte **sombre** (`#031024`, précédent de `.seg-half button.on` dans `popup.css`) et non blanc :
+  blanc sur `--cyan` tombe à ~2,6:1.
+
+### Notes
+- Rendu en `createElement` + `textContent` (jamais `innerHTML`), bien que le texte soit le nôtre.
+- **186 tests verts** (+20 : 18 sur `changelog.js`, 2 sur `versionVue`). Vérifié au navigateur (harnais temporaire stubant `chrome.runtime` /
+  `chrome.storage.local`) : bascule des onglets, 10 entrées de 5.8.0 à 5.6.0, pastille à 10 puis
+  effacée, `versionVue` écrit, thèmes clair et sombre, aucun débordement horizontal.
+
 ## [5.7.7] — 2026-10-23
 
 ### Ajouté
