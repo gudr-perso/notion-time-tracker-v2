@@ -1,9 +1,9 @@
 # CAP Temps - Notion Time Tracker — État du projet & comment continuer
 
 > Point de reprise. Lis ce fichier en premier quand tu rouvres le projet.
-> Dernière mise à jour : 2026-08-26.
+> Dernière mise à jour : 2026-10-23.
 
-**Version courante : `5.7.6`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
+**Version courante : `5.7.7`** — source de vérité = `manifest.json` (reflet ici, historique dans `docs/VERSIONS.md`).
 
 ---
 
@@ -21,7 +21,7 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Onglet Timer** (start/pause/stop, stop-at, saisie manuelle, congés, favoris, récents) | ✅ |
 | **Service worker** (badge + notifications via `chrome.alarms`) | ✅ |
 | **Thème clair / sombre** (bascule persistée) | ✅ |
-| **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`, `stats`, `schedule`, `fav-presets`, `fav-icons`, `schema-injection`, `config-io`, `tasks-query`) | ✅ **159 tests verts** |
+| **Socle `core/` testé** (`time`, `mapping`, `notion-api`, `storage`, `stats`, `schedule`, `fav-presets`, `fav-icons`, `schema-injection`, `config-io`, `tasks-query`) | ✅ **166 tests verts** |
 | **Onglet Stats** | ✅ v5.2.0 |
 | **Favoris : couleur + picto** | ✅ v5.3.0 |
 | **Export / import de la config** | ✅ v5.4.0 |
@@ -36,10 +36,18 @@ L'onglet **Stats** est **livré en v5.2.0**.
 | **Popup à hauteur figée + `<main>` défilant (contenu toujours atteignable)** | ✅ v5.7.4 |
 | **Saisie manuelle : la date de fin suit le jour de la date de début** | ✅ v5.7.5 |
 | **Sessions récentes : commentaire affiché (italique, ligne d'horaire)** | ✅ v5.7.6 |
+| **Saisie manuelle enchaînée : le début repart de la fin enregistrée** | ✅ v5.7.7 |
 
-**Tests** : `npm test` → `162 passed (10 files)`.
+**Tests** : `npm test` → `166 passed (10 files)`.
 
 ## Features / demandes — suivi
+
+### ✅ Faites (v5.7.7)
+- **Saisie manuelle enchaînée** — après un enregistrement, **Début** reprend la **fin** de la ligne créée
+  et **Fin** se pose une heure plus tard, au lieu de revenir à « il y a 1 h → maintenant ». Permet de
+  rattraper plusieurs créneaux d'affilée sans retaper la date. Uniquement en saisie manuelle ; les congés
+  (plage avec planning) gardent le préremplissage habituel. `core/time.js` (`manualRangeAfter`) +
+  `timer-manual.js` (`prefillManual(chainFrom)`), +4 tests.
 
 ### ✅ Faites (v5.7.6)
 - **Sessions récentes : commentaire affiché** — le commentaire de fin de session, déjà écrit dans

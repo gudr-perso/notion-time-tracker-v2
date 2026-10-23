@@ -98,6 +98,11 @@ concerné, **sans erreur**. Deux tests les verrouillent nommément (`test/fav-pr
   fin sur celui de début (heure conservée) **sauf** si `endPinned` ; la 2ᵉ dit si la fin est un autre jour que le début.
   Décision **sans historique et idempotente** — volontairement, pour ne pas dépendre du rythme des événements `change`
   d'un `datetime-local` (bug de la v5.7.5 : `23→22→21` bloquait sur `22`, cf. `EVENEMENTS.md`).
+- `manualRangeAfter(prevEnd)` : couple `{ start, end }` (valeurs `datetime-local`) proposé pour la saisie manuelle
+  **suivante** — `start` = fin de la ligne qu'on vient d'enregistrer, `end` = une heure plus tard, minutes reprises
+  telles quelles (pas d'arrondi) pour que les lignes s'enchaînent bord à bord. L'heure est ajoutée sur l'**horloge**
+  (`setHours(+1)`) et non en millisecondes, sans quoi le jour du retour à l'heure d'hiver la fin retomberait sur
+  l'heure du début (heure répétée) et l'enregistrement suivant serait refusé.
 
 ### `core/notion-api.js` — accès HTTP Notion (pur)
 
@@ -353,8 +358,13 @@ que Chrome ait figé la hauteur → bas coupé et inatteignable (cf. `docs/EVENE
 - **Report du jour début → fin** : sur `change` du champ **début**, `#manual-end` est recalculé via
   `endValueForStartChange(...)` (le jour de fin suit celui de début, heure conservée). Sur `change` du champ **fin**,
   le drapeau **`endDayPinned`** est mis à jour (`endDayDiffersFromStart`) pour figer une fin délibérément posée un autre
-  jour. `endDayPinned` est remis à `false` par `prefillManual` (début/fin préremplis le même jour). Aucun état « valeur
+  jour. `prefillManual` **recalcule** `endDayPinned` depuis les valeurs qu'il vient de poser (`endDayDiffersFromStart`)
+  plutôt que de le forcer à `false` : un préremplissage à cheval sur minuit reste figé. Aucun état « valeur
   précédente du début » n'est conservé — cf. `EVENEMENTS.md` (2026-07-24).
+- **`prefillManual(chainFrom)` / `resetManual(chainFrom)`** : sans argument, préremplissage « il y a 1 h →
+  maintenant » (arrondi 5 min) — ouverture du popup, bascule du mode, après des congés. Avec `chainFrom` (une `Date`,
+  la fin de la ligne enregistrée), le couple début/fin vient de `manualRangeAfter` : **saisie enchaînée**.
+  `saveManualFor` appelle `resetManual(end)`, `saveVacation` appelle `resetManual()` sans argument.
 - **`saveManualFor(taskId, sourceBtn)`** : crée **puis** clôture la ligne en un coup (`createPage` +
   `updatePage`). **Garde anti double-enregistrement** (`saving`) + gel des boutons (`setSaving`, avec « ⏳ … » sur le
   bouton source). Toast de confirmation via `showToast`.

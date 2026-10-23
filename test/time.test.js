@@ -1,6 +1,6 @@
 // test/time.test.js
 import { describe, it, expect } from 'vitest';
-import { formatDuration, roundToNearestFiveMinutes, toNotionDate, workedMs, startOfDay, endDayDiffersFromStart, endValueForStartChange } from '../src/core/time.js';
+import { formatDuration, roundToNearestFiveMinutes, toNotionDate, workedMs, startOfDay, endDayDiffersFromStart, endValueForStartChange, manualRangeAfter } from '../src/core/time.js';
 
 describe('formatDuration', () => {
   it('formate HH:MM:SS par défaut', () => {
@@ -98,5 +98,31 @@ describe('endDayDiffersFromStart', () => {
   });
   it('faux si une valeur manque', () => {
     expect(endDayDiffersFromStart('', '2026-07-23T00:50')).toBe(false);
+  });
+});
+
+describe('manualRangeAfter', () => {
+  it('repart de la fin de la ligne enregistrée et propose une heure devant', () => {
+    expect(manualRangeAfter(new Date(2026, 9, 19, 16, 0))).toEqual({
+      start: '2026-10-19T16:00', end: '2026-10-19T17:00',
+    });
+  });
+  it("garde les minutes telles quelles (pas d'arrondi)", () => {
+    expect(manualRangeAfter(new Date(2026, 9, 19, 15, 37))).toEqual({
+      start: '2026-10-19T15:37', end: '2026-10-19T16:37',
+    });
+  });
+  it('passe au lendemain quand la fin était dans la dernière heure du jour', () => {
+    expect(manualRangeAfter(new Date(2026, 9, 19, 23, 30))).toEqual({
+      start: '2026-10-19T23:30', end: '2026-10-20T00:30',
+    });
+  });
+  // Changement d'heure : l'heure se compte sur l'horloge, pas en millisecondes. Sinon, le jour du
+  // retour à l'heure d'hiver, 02:30 + 1 h de temps réel retombe sur 02:30 (heure répétée) → fin
+  // égale au début, et l'enregistrement suivant refusé (`end <= start`).
+  it('avance toujours la fin sur l’horloge, même un jour de changement d’heure', () => {
+    const r = manualRangeAfter(new Date(2026, 9, 25, 2, 30));
+    expect(r.start).toBe('2026-10-25T02:30');
+    expect(r.end).toBe('2026-10-25T03:30');
   });
 });

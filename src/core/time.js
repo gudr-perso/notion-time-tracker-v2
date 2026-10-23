@@ -74,3 +74,18 @@ export function endValueForStartChange(startValue, endValue, endPinned) {
   if (endPinned || !startValue || !endValue) return endValue;
   return startValue.slice(0, 10) + endValue.slice(10);
 }
+
+// Couple début/fin proposé pour la saisie manuelle SUIVANTE, juste après une ligne enregistrée :
+// on repart de la fin de cette ligne (rattrapage à la chaîne, sans retaper la date) et on propose
+// une heure devant, comme le préremplissage d'ouverture du popup. Les minutes sont reprises telles
+// quelles (pas d'arrondi) pour que les lignes s'enchaînent bord à bord, sans trou ni recouvrement.
+// L'heure est ajoutée sur l'HORLOGE (`setHours(+1)`), pas en millisecondes : le jour du passage à
+// l'heure d'hiver, 02:30 + 3 600 000 ms retombe sur 02:30 (heure répétée) — la fin proposée serait
+// égale au début, et l'enregistrement suivant refusé. `prevEnd` = Date ; retour = valeurs
+// <input type="datetime-local">.
+export function manualRangeAfter(prevEnd) {
+  const start = new Date(prevEnd);
+  const end = new Date(start);
+  end.setHours(end.getHours() + 1);
+  return { start: formatDateTimeLocalValue(start), end: formatDateTimeLocalValue(end) };
+}

@@ -1,7 +1,7 @@
 // src/popup/timer-manual.js — mode saisie manuelle, congés, favoris (enregistrement rapide).
 import { createPage, updatePage } from '../core/notion-api.js';
 import { sessionPropertiesForCreate, sessionPropertiesForUpdate } from '../core/mapping.js';
-import { roundToNearestFiveMinutes, formatDateTimeLocalValue, endValueForStartChange, endDayDiffersFromStart } from '../core/time.js';
+import { roundToNearestFiveMinutes, formatDateTimeLocalValue, endValueForStartChange, endDayDiffersFromStart, manualRangeAfter } from '../core/time.js';
 import { normalizeFavorite } from '../core/fav-presets.js';
 import { favIconSvg } from '../fav-icon.js';
 import { hasAnySchedule, generateLeaveSpans, leaveDays, scheduledMsForDate } from '../core/schedule.js';
@@ -118,17 +118,30 @@ function setSaving(on, sourceBtn) {
   }
 }
 
-// « Fin » figée un autre jour que « début », posée volontairement (session à cheval sur minuit) :
-// dans ce cas seulement on cesse d'aligner le jour de fin sur celui de début. C'est le champ Fin
-// qui met à jour ce drapeau — aucun historique de la valeur de début n'est mémorisé.
+// « Fin » figée un autre jour que « début » (session à cheval sur minuit) : dans ce cas seulement on
+// cesse d'aligner le jour de fin sur celui de début. Le drapeau est tenu par le champ Fin (saisie de
+// l'utilisateur) et par `prefillManual` (valeurs préremplies) — aucun historique de la valeur de
+// début n'est mémorisé.
 let endDayPinned = false;
 
-function prefillManual() {
-  const now = roundToNearestFiveMinutes(new Date());
-  const start = new Date(now.getTime() - 60 * 60_000);
-  $('manual-start').value = formatDateTimeLocalValue(start);
-  $('manual-end').value = formatDateTimeLocalValue(now);
-  endDayPinned = false; // prérempli sur le même jour
+// `chainFrom` (Date) = fin de la ligne qu'on vient d'enregistrer : la saisie suivante repart de là,
+// pour rattraper plusieurs créneaux d'affilée sans retaper la date. Sans lui (ouverture du popup,
+// bascule du mode, congés) : l'heure écoulée jusqu'à maintenant.
+function prefillManual(chainFrom) {
+  if (chainFrom) {
+    const next = manualRangeAfter(chainFrom);
+    $('manual-start').value = next.start;
+    $('manual-end').value = next.end;
+  } else {
+    const now = roundToNearestFiveMinutes(new Date());
+    const start = new Date(now.getTime() - 60 * 60_000);
+    $('manual-start').value = formatDateTimeLocalValue(start);
+    $('manual-end').value = formatDateTimeLocalValue(now);
+  }
+  // Le préremplissage peut tomber à cheval sur minuit (fin à 23:30 → +1 h, ou popup ouvert après
+  // minuit) : on pose le drapeau d'après les valeurs posées, pour qu'un changement de début n'aille
+  // pas ramener la fin sur le jour du début et la faire passer AVANT lui.
+  endDayPinned = endDayDiffersFromStart($('manual-start').value, $('manual-end').value);
 }
 
 function toggleManual(on) {
@@ -212,7 +225,7 @@ async function saveManualFor(taskId, sourceBtn) {
   try {
     const pageId = await createPage(T.token, T.config.timeDb.id, sessionPropertiesForCreate(task, start, T.timeFields));
     await updatePage(T.token, pageId, sessionPropertiesForUpdate({ endTime: end, comment, pauseMin: 0 }, T.timeFields));
-    resetManual();
+    resetManual(end); // la saisie suivante repart de cette fin (congés exclus : voir saveVacation)
     await helpers.reloadRecent();
     showToast('✅ Ligne créée dans Notion');
   } catch (e) {
@@ -263,14 +276,14 @@ async function onManualSave() {
   await saveManualFor(task.id, $('btn-primary'));
 }
 
-function resetManual() {
+function resetManual(chainFrom) {
   $('manual-comment').value = '';
   $('manual-vacation').checked = false;
   $('vacation-hint').hidden = true;
   $('vac-range').hidden = true;
   collapseVacDetail();
   setStartEndHidden(false);
-  prefillManual();
+  prefillManual(chainFrom);
 }
 
 export function wireManual(sharedT, sharedHelpers) {

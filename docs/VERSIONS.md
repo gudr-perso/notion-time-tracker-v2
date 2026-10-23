@@ -6,6 +6,23 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Version =
 > Numérotation : le projet reprend l'historique personnel de la v1 (`4.9.4`). Le recodage propre,
 > nommé « v2 » en interne, est diffusé à partir de **5.0.0** (continuité de version côté utilisateur).
 
+## [5.7.7] — 2026-10-23
+
+### Ajouté
+- **Saisie manuelle enchaînée : le début repart de la fin qu'on vient d'enregistrer.** En rattrapant
+  plusieurs créneaux d'affilée (ex. `19/10 15:30 → 16:00`), le formulaire ne revient plus à
+  « il y a 1 h → maintenant » : **Début** prend la **fin** de la ligne créée (`16:00`) et **Fin** une heure
+  plus tard (`17:00`), minutes reprises telles quelles — les lignes s'enchaînent bord à bord, sans retaper
+  la date. N'a lieu qu'en **saisie manuelle** (coche active) ; après un enregistrement de **congés**
+  (plage avec planning), le préremplissage habituel est conservé. Le commentaire reste vidé à chaque fois.
+  Nouvelle fonction pure `manualRangeAfter` (`core/time.js`) + `popup/timer-manual.js` (`prefillManual`
+  accepte désormais une fin à enchaîner) ; +4 tests (166 verts). L'heure d'écart est comptée sur
+  l'**horloge** (`setHours`), pas en millisecondes : le jour du retour à l'heure d'hiver, `02:30 + 1 h`
+  de temps réel retomberait sur `02:30` (heure répétée) et la fin proposée serait égale au début.
+- Au passage : `endDayPinned` est désormais déduit des valeurs préremplies (`endDayDiffersFromStart`) au lieu
+  d'être forcé à `false` — un préremplissage à cheval sur minuit (fin à `23:30` → `00:30`, ou popup ouvert
+  juste après minuit) n'est plus ramené sur le jour du début au premier changement de date.
+
 ## [5.7.6] — 2026-08-26
 
 ### Ajouté

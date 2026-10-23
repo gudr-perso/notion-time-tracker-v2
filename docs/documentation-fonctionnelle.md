@@ -231,6 +231,12 @@ veille, ex. `23/07` → `22/07`), le **jour** de la date de fin suit automatique
 inutile de la retaper. Si l'on a **volontairement** placé la fin un autre jour que le début (session à cheval sur
 minuit), ce choix est respecté et le début ne l'écrase plus.
 
+**Saisie enchaînée** : après un enregistrement, le formulaire ne revient pas à « il y a 1 h → maintenant » : **Début**
+reprend la **fin** de la ligne qu'on vient de créer et **Fin** se place une heure plus tard (minutes conservées). On
+rattrape ainsi plusieurs créneaux d'affilée sans retaper la date — ex. après `19/10 15:30 → 16:00`, le formulaire
+propose `19/10 16:00 → 17:00`. Le commentaire, lui, est vidé à chaque enregistrement. Ce report n'a lieu qu'en **saisie
+manuelle** ; après un enregistrement de **congés** (plage avec planning, cf. §3.8), le préremplissage habituel revient.
+
 ### 3.8 Mode congés
 
 Case **« Marquer comme congés »** (en saisie manuelle) : vérifie qu'une tâche congés est configurée (sinon alerte et
